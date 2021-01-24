@@ -69,7 +69,7 @@ class tx_usrp(gr.top_block):
         self.waveform    = self.convert_waveform(waveform)
         self.cbsdId      = cbsdId
         self.mode        = mode
-        self.type        = type # TODO @Joseph is this data type?
+        self.type        = "type" # TODO @Joseph is this data type?
         self.grantId     = grantId
 
         ##################################################
