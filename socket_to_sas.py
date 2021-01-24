@@ -21,8 +21,8 @@ from argparse import ArgumentParser
 from gnuradio import uhd
 import socketio
 import json
+from usrps import tx_usrp # TX Usrp object 
 from WinnForum import *		# File containing object definitions used
-from tx_usrp import tx_usrp # TX Usrp object 
 from cmd_prompts import * 	# User defined library for cmd prompts
 
 
