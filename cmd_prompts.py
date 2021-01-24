@@ -61,7 +61,7 @@ def promptUsrpType():
 		usrpType = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
 		if(usrpType == 'T' or usrpType == 't'):
 			return 'T'
-		elif(usrpType == 'R' or usrpType == 'r')
+		elif(usrpType == 'R' or usrpType == 'r'):
 			return 'R'
 		else:
 			print("Please enter T for a Transmitter or R for a Receiver...")
@@ -198,7 +198,7 @@ def promptInstallationParam():
 	latitude = getValidFloat("Enter latitude: ")
 	longitude = getValidFloat("Enter longitude: ")
 	height = getValidFloat("Enter antenna height (in meters): ")
-	while(True)
+	while(True):
 		heightType = input("Enter height type ('AGL' for relative to ground level or 'AMSL' for realtive to mean sea level: ")
 		if(heightType != 'AGL' and heightType != 'AMSL' and heightType != ""):
 			print("Please enter 'AGL' or 'AMSL'...")
