@@ -68,38 +68,46 @@ class tx_usrp(gr.top_block):
         self.signal_amp  = signalAmp
         self.waveform    = self.convert_waveform(waveform)
         self.cbsdId      = cbsdId
-        self.mode        = mode
-        self.type        = "type" # TODO @Joseph is this data type?
+        self.mode        = mode   # Either build a TX or RX for this parameter
+        self.type        = "type" # TODO @Joseph is this data type? Video vs Text?
         self.grantId     = grantId
 
-        ##################################################
-        # Blocks
-        ##################################################
-        self.interest_signal = analog.sig_source_c(self.sample_rate, self.waveform, 0, self.signal_amp, 0, 0)
-        self.SDR_A = uhd.usrp_sink(
-            ",".join(("addr="+self.SDR_Address, '')),
-            uhd.stream_args(
-                cpu_format="fc32",
-                args='',
-                channels=list(range(0,1)),
-            ),
-            '',
-        )
-        self.SDR_A.set_center_freq(self.freq, 0)
-        self.SDR_A.set_gain(self.gain, 0)
-        self.SDR_A.set_antenna('TX/RX', 0) # May need to add controls to this param
-        self.SDR_A.set_samp_rate(self.sample_rate)
+        if(mode == "TX"):
+            # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
+            # ...then that code can be pasted in here to simply update to this system
+            ##################################################
+            # Blocks
+            ##################################################
+            self.interest_signal = analog.sig_source_c(self.sample_rate, self.waveform, 0, self.signal_amp, 0, 0)
+            self.SDR_A = uhd.usrp_sink(
+                ",".join(("addr="+self.SDR_Address, '')),
+                uhd.stream_args(
+                    cpu_format="fc32",
+                    args='',
+                    channels=list(range(0,1)),
+                ),
+                '',
+            )
+            self.SDR_A.set_center_freq(self.freq, 0)
+            self.SDR_A.set_gain(self.gain, 0)
+            self.SDR_A.set_antenna('TX/RX', 0) # May need to add controls to this param
+            self.SDR_A.set_samp_rate(self.sample_rate)
 
-        # This is used to coordinate changes across mulitple devices it seems like
-        # It looks as though an external LO is used to get this nanosecond timing correct
-        # Can look into this feature at a later time when mulitple devices are working for the SAS
-        self.SDR_A.set_time_unknown_pps(uhd.time_spec()) # Need to learn more about this ^
+            # This is used to coordinate changes across mulitple devices it seems like
+            # It looks as though an external LO is used to get this nanosecond timing correct
+            # Can look into this feature at a later time when mulitple devices are working for the SAS
+            self.SDR_A.set_time_unknown_pps(uhd.time_spec()) # Need to learn more about this ^
 
 
-        ##################################################
-        # Connections
-        ##################################################
-        self.connect((self.interest_signal, 0), (self.SDR_A, 0))
+            ##################################################
+            # Connections
+            ##################################################
+            self.connect((self.interest_signal, 0), (self.SDR_A, 0))
+        elif(mode == "RX"):
+            pass
+        else:
+            print("'" + mode + "' is an invalid mode.. {usrps.py line 107}")
+            #exit?
 
     def set_GrantId(self, grantId):
         self.grantId = grantId

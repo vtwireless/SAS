@@ -60,9 +60,9 @@ def promptUsrpType():
 	while True:
 		usrpType = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
 		if(usrpType == 'T' or usrpType == 't'):
-			return 'T'
+			return 'TX'
 		elif(usrpType == 'R' or usrpType == 'r'):
-			return 'R'
+			return 'RX'
 		else:
 			print("Please enter T for a Transmitter or R for a Receiver...")
 

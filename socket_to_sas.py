@@ -28,11 +28,11 @@ from cmd_prompts import * 	# User defined library for cmd prompts
 
 
 # Globals
-# blocked: used to ensure recieved socket messages display on the terminal before the main menu blocks the interface 
+# blocked: used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface 
 blocked = False
 
-# tempNodeRegList: used to hold the order of which nodes are registered 
-#					so that when the registration requests comes in, cbsdIDs can be properly assigned in order
+# tempNodeRegList: used to hold the order of which nodes are registered...
+#	...so that when the registration requests comes in, cbsdIDs can be properly assigned in order
 tempNodeRegList = []
 
 # created_nodes: used to hold all created CRTS USRP Nodes objects
@@ -53,6 +53,13 @@ parser.add_argument('-p','--port',\
 		default='5000')
 #------------------------------------------------------------------------------------------
 
+# Use Simulation File----------------------------------------------------------------------
+parser.add_argument('-s','--sim',\
+		help='Simulation File path. Example: -s sim_one.json',\
+		default=None)
+#------------------------------------------------------------------------------------------
+
+
 def isVaildInt(value):
 	"""
 	Returns True if a value can be casted to an int
@@ -72,6 +79,13 @@ def printUsrpsAvailable():
 	for usrp in usrps:
 		print(usrp)
 
+
+def simCreateNode(data):
+	"""
+	Create a node based on simulation file
+	"""
+	pass
+
 def cmdCreateNode():
 	"""
 	Walks a user through the command line to configure a USRP node
@@ -84,13 +98,13 @@ def cmdCreateNode():
 	sdrAddr = promptUsrpIpAddr()
 	# ** Now that IP is entered, maybe just pull more info from UHD and save it?
 	cFreq = promptCenterFreq()
-	if(usrpType == 'T'):
+	if(usrpType == 'TX'):
 		usrpGain = input("Enter the gain of the Tx Device (in dB): ")
 		sampleRate = input("Enter Sample Rate of the node (in Hz): ")
 		signalAmp = promptSignalAmp()
 		waveform = promptWaveform()
-		node = tx_usrp(sdrAddr, cFreq, usrpGain, sampleRate, signalAmp, waveform, "", "TX") # Create instance of Tx with given params
-	elif(usrpType == 'R'):
+		node = tx_usrp(sdrAddr, cFreq, usrpGain, sampleRate, signalAmp, waveform, "", usrpType) # Create instance of Tx with given params
+	elif(usrpType == 'RX'):
 		pass # Big TODO
 	else:
 		print("Error")
@@ -712,41 +726,54 @@ def init(clientio, args):
 	# Create global array of USRPs for use across functions
 	global created_nodes
 	created_nodes = []
-	created_nodes.append(cmdCreateNode())	
 
-
-	print("Enter 'h' for help/list of commands")
-	# Main Menu
-	# CMD is blocking sockets from printing until user enters another value
-	# To remedy this, I may add a boolean that is True when the socket is busy 
-	# Once the socket is done completeing the action the user entered, the bool
-	# should allow the loop to proceed... TODO
-	while True:
-		user_input = input()
-		print("User Input: " + user_input)
-		if(user_input == 'h'):
-			print("""Commands Include:
-					0 - Exit Interface
-					1 - Create USRP
-					2 - Create Registration Request
-					3 - Create Grant Request
-					4 - View Created USRPs
-					5 - Unblock Terminal (For allowing socket prints to occur)
-				""")
-		if(user_input == '0'):
-			print("Exiting System...")
-			sys.exit()
-		elif(user_input == '1'):
-			created_nodes.append(cmdCreateNode())
-		elif(user_input == '2'):
-			registrationReq()
-		elif(user_input == '3'):
-			pass # Create Grant Request
-		elif(user_input == '4'):
-			for node in created_nodes:
-				print(node.get_CbsdId())
-		elif(user_input == '5'):
-			pass
+	if(args['sim']):
+		'''
+		Simulation file includes all requests to make and at what times
+		This requires no human interaction with the code
+		'''
+		#load sim file
+		path = args['sim']
+		with open(path) as config:
+			data = json.load(config)
+		pass
+		
+	else:
+		# Main Menu
+		# CMD is blocking sockets from printing until user enters another value
+		# To remedy this, I may add a boolean that is True when the socket is busy 
+		# Once the socket is done completeing the action the user entered, the bool
+		# should allow the loop to proceed... TODO
+		created_nodes.append(cmdCreateNode())	
+		print("Enter 'h' for help/list of commands")
+		while True:
+			user_input = input("User Input: ")
+			if(user_input == 'h'):
+				print("""Commands Include:
+						0 - Exit Interface
+						1 - Create USRP
+						2 - Create Registration Request
+						3 - Create Grant Request
+						4 - View Created USRPs
+					""")
+			elif(user_input == '0'):
+				break
+			elif(user_input == '1'):
+				created_nodes.append(cmdCreateNode())
+			elif(user_input == '2'):
+				registrationReq()
+			elif(user_input == '3'):
+				pass # Create Grant Request
+			elif(user_input == '4'):
+				for node in created_nodes:
+					print(node.get_CbsdId())
+			elif(user_input == '5'):
+				pass
+			else:
+				pass
+		
+	print("Exiting System...")
+	sys.exit()
 
 
 if __name__ == '__main__':
