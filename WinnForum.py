@@ -117,7 +117,7 @@ class RegistrationRequest:
 
 	cbsdCategory : string (conditional)
 		Device Category of the CBSD. 
-		Allowed values are “A” or “B” as defined in Part 96.
+		Allowed values are "A" or "B" as defined in Part 96.
 
 	cbsdInfo : object CbsdInfo (optional)
 		Information about this CBSD model.
@@ -411,7 +411,7 @@ class CpiSignatureData:
 	CpiSignatureData - Note: The JOSE JSON Web Signature per RFC-7515(see [n.19]) is used to ensure data integrity 
 		and CPI non-repudiation of the signed parameters.
 		The JOSE compact serialization is formed by concatenating the protectedHeader, encodedCpiSignedData, and 
-		digitalSignaturefields with “.” Characters, as described in section 3 of RFC 7515[n.19].
+		digitalSignaturefields with "." Characters, as described in section 3 of RFC 7515[n.19].
 
 	Attributes
 	----------
@@ -419,7 +419,7 @@ class CpiSignatureData:
 		The value of this parameter is the BASE64-encoded JOSE protected header. 
 		This is a JSON object equivalent to the JWT RS256 method or the ES256 method described in RFC 7515 [n.19] Section 3. 
 		BASE64 encoding is per RFC 4648 (see [n.20]).
-		Valid values are equivalent to the JSON:{ “typ”: “JWT”, “alg”: “RS256” } or  { “typ”: “JWT”, “alg”: “ES256” }
+		Valid values are equivalent to the JSON:{ "typ": "JWT", "alg": "RS256" } or  { "typ": "JWT", "alg": "ES256" }
 
 	encodedCpiSignedData : string (required)
 		The value of this parameter is the encoded JOSE payload data to be signed by the CPI’s private key.
@@ -824,10 +824,10 @@ class AvailableChannel:
 		This parameter is the frequency range of the available channel, see Table 17.
 	
 	channelType : string (required)
-		“PAL”: the frequency range is a PAL channel. “GAA”: the frequency range is for GAA use.
+		"PAL": the frequency range is a PAL channel. "GAA": the frequency range is for GAA use.
 
 	ruleApplied : string (required)
-		The regulatory rule used to generate this response, e.g., “FCC_PART_96”.
+		The regulatory rule used to generate this response, e.g., "FCC_PART_96".
 
 	maxEirp : number (optional)
 		Maximum EIRP likely to be permitted for a Grant on this frequencyRange, given the CBSD registration parameters, including location, antenna orientation and antenna pattern. The maximum EIRP is in the units of dBm/MHzand is an integer or a floating point value between -137 and +37 (dBm/MHz) inclusive.
@@ -999,7 +999,7 @@ class GrantResponse:
 		The grantExpireTime indicates the time when the Grant associated with the grantId expires. 
 		This parameter is UTC time expressed in the format, YYYY-MM-DDThh:mm:ssZ as defined by [n.7].
 		This parameter shall be included if and only if the responseCodeparameter indicates SUCCESS.
-		If the channelTypeparameter is included in this object and the value is set to “PAL”, the grantExpireTimeparameter shall be set to the value that does not extend beyond the licenseExpiration of the corresponding PAL recorded in the PAL Database [n.23].
+		If the channelTypeparameter is included in this object and the value is set to "PAL", the grantExpireTimeparameter shall be set to the value that does not extend beyond the licenseExpiration of the corresponding PAL recorded in the PAL Database [n.23].
 
 	heartbeatInterval : number (conditional)
 		This parameter is a positive integer and indicates the maximum time interval in units of seconds between two consecutive heartbeat requests that the CBSD should attempt to meet. 
@@ -1011,10 +1011,10 @@ class GrantResponse:
 		The permitted enumerations arespecified in [n.21]
 
 	operationParam : object OperationParam (optional)
-		If the Grant request is disapproved, using this object the SAS can optionally provide a new set of operation parameters to the CBSDfor use in a new Grant request.
+		If the Grant request is disapproved, using this object the SAS can optionally provide a new set of operation parameters to the CBSD for use in a new Grant request.
 
 	channelType : string (conditional)
-		This parameter is included if and only if the responseCodeparameter indicates SUCCESS, i.e., the Grant request was successful.“PAL”: the frequency range is a PAL channel.“GAA”: the frequency range is for GAA use.
+		This parameter is included if and only if the responseCodeparameter indicates SUCCESS, i.e., the Grant request was successful."PAL": the frequency range is a PAL channel."GAA": the frequency range is for GAA use.
 
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14.
@@ -1069,7 +1069,7 @@ class HeartbeatRequest:
 		If set to True, the CBSD asks for renewal of the current Grant. SAS shall include a grantExpireTimeparameter in the following HeartbeatResponseobject.
 
 	operationState : string (required)
-		This parameter contains the CBSD operation state (“AUTHORIZED” or “GRANTED”).
+		This parameter contains the CBSD operation state ("AUTHORIZED" or "GRANTED").
 
 	measReport : object MeasReport (conditional)
 		The CBSD uses this parameter to report measurements to the SAS. The format of the MeasReport object is provided in [n.21]. 
@@ -1117,7 +1117,7 @@ class HeartbeatResponse:
 
 	grantExpireTime : string (conditional)
 		Required if the responseCode parameter indicates SUCCESS or SUSPENDED_GRANT and the grantRenew parameter was included and set to True in the corresponding HeartbeatRequestobject. 
-		This parameter may be included at other times by SAS choice.When included, if the channelTypeof this Grantis “PAL”, thisparameter shall be set to the value that does not extend beyond the licenseExpirationof the corresponding PAL recorded in the PAL Database [n.23].
+		This parameter may be included at other times by SAS choice.When included, if the channelTypeof this Grantis "PAL", thisparameter shall be set to the value that does not extend beyond the licenseExpirationof the corresponding PAL recorded in the PAL Database [n.23].
 		
 	heartbeatInterval : number (optional)
 		This parameter is a positive integer and indicates the maximum time interval in units of seconds between two consecutive heartbeat requeststhat the CBSD should attempt to meet. 
@@ -1196,7 +1196,7 @@ class RelinquishmentRequest:
 class RelinquishmentResponse:
 	"""
 	RelinquishmentResponse - Array of RelinquishmentResponse objects. 
-		Each RelinquishmentResponseobject represents a relinquishment response to a relinquishment request of a CBSD.
+		Each RelinquishmentResponse object represents a relinquishment response to a relinquishment request of a CBSD.
 	
 	Attributes
 	----------
