@@ -458,13 +458,13 @@ class CpiSignedData:
 		The value of this parameter is the CBSD serial number.Shallbe equal to the cbsdSerialNumber of the enclosing registration request.
 
 	installationParam : object InstallParam (required)
-			The value of this parameter is the InstallationParamobject containing the parameters being certified by the CPI, and only those.
+			The value of this parameter is the InstallationParam object containing the parameters being certified by the CPI, and only those.
 	
 	professionalInstallerData : object ProfessionalInstallerData (required)
 		The value of this parameter is the data identifying the CPI vouching for the installation parameters included in the installationParamvalue contained in this object.
 
 	"""
-	def __init__(self, fccId, cbsdSerialNumber, InstallParam, professionalInstallerData):
+	def __init__(self, fccId, cbsdSerialNumber, installationParam, professionalInstallerData):
 		self.fccId = fccId #R
 		self.cbsdSerialNumber = cbsdSerialNumber #R
 		self.installationParam = installationParam #R
@@ -658,7 +658,7 @@ class SpectrumInquiryRequest:
 	def asdict(self):
 		return_dict = {}
 		if(self.cbsdId):
-			return_dict["cbsdInfo"] = self.cbsdInfo
+			return_dict["cbsdId"] = self.cbsdInfo
 		if(self.inquiredSpectrum):
 			return_dict["inquiredSpectrum"] = _toJsonDictArray(self.inquiredSpectrum)
 		if(self.measReport):
