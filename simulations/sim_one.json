@@ -1,7 +1,7 @@
 {
 	"0":[
 			{
-				"createNode":{
+				"createNode":[{
 					"mode":"TX",
 					"address":"192.168.40.101",
 					"centerFreq":"915000000",
@@ -9,10 +9,8 @@
 					"sampleRate":"0",
 					"signalAmp":"1",
 					"waveform":"SINE"
-				}
-			},
-			{
-				"createNode":{
+				},
+				{
 					"mode":"TX",
 					"address":"192.168.40.201",
 					"centerFreq":"914000000",
@@ -20,12 +18,23 @@
 					"sampleRate":"0",
 					"signalAmp":"0",
 					"waveform":"SAWTOOTH"	
-				}
+				}]
+			},
+			{
+				"createNode":[{
+					"mode":"TX",
+					"address":"192.168.40.201",
+					"centerFreq":"914000000",
+					"gain":"1",
+					"sampleRate":"0",
+					"signalAmp":"0",
+					"waveform":"SAWTOOTH"	
+				}]
 			}
 		],
 	"10":[
 			{
-				"registrationRequest":{
+				"registrationRequest":[{
 					"nodeIp":"192.168.40.101",
 					"userID":"JohnS",
 					"fccId":"FCCIDEXAMPLE123",
@@ -60,24 +69,24 @@
 						"groupId":"John See: A"
 					},
 					"cpiSignatureData":"None"
-				}
+				}]
 			}
 		],
 	"20":[
 			{
-				"spectrumInquiryRequest":{
+				"spectrumInquiryRequest":[{
 					"nodeIp":"192.168.40.101",
 					"inquiredSpectrum":{
 						"lowFreq":"914500000",
 						"highFreq":"915500000"
 					},
 					"measReport":""
-				}
+				}]
 			}
 		],
 	"30":[
 			{
-				"grantRequest":{
+				"grantRequest":[{
 					"nodeIp":"192.168.40.101",
 					"operationParam":{
 						"maxEirp":"0",
@@ -88,7 +97,17 @@
 					},
 					"measReport":"",
 					"vtGrantParams":""
-				}
+				}]
 			}
-		]
+		],
+	"40":[
+			{
+			"heartbeatRequest":[{
+					"nodeIp":"192.168.40.101",
+					"operationParam":{},
+					"measReport":"",
+					"vtGrantParams":""
+				}]
+			}
+	]
 }
