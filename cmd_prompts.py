@@ -53,15 +53,15 @@ def getValidInt(prompt):
 			return value
 
 # Create Node
-def promptUsrpType():
+def promptUsrpMode():
 	"""
-	Prompts User for USRP Type (Either TX or RX)
+	Prompts User for USRP Mode (Either TX or RX)
 	"""
 	while True:
-		usrpType = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
-		if(usrpType == 'T' or usrpType == 't'):
+		usrpMode = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
+		if(usrpMode == 'T' or usrpMode == 't'):
 			return 'TX'
-		elif(usrpType == 'R' or usrpType == 'r'):
+		elif(usrpMode == 'R' or usrpMode == 'r'):
 			return 'RX'
 		else:
 			print("Please enter T for a Transmitter or R for a Receiver...")
