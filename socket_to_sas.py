@@ -13,6 +13,7 @@
 # TODO: Decide how SAS assigned info (i.e. cbsdId) is stored
 # TODO: Create some command line keyword that works at all instances to exit from the prompt...
 # TODO: Create a function to handle the "response" field from all the SAS responses
+# TODO: Maybe add menu option to view all history to see what has been done and their responses
 #./socket_tx.py -p 5000 -a "127.0.0.1"
 
 
@@ -29,7 +30,7 @@ from cmd_prompts import * 	# User defined library for cmd prompts
 
 # Globals
 # blocked: used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface 
-blocked = False
+__blocked = False
 
 # tempNodeRegList: used to hold the order of which nodes are registered...
 #	...so that when the registration requests comes in, cbsdIDs can be properly assigned in order
@@ -55,7 +56,7 @@ parser.add_argument('-p','--port',\
 
 # Use Simulation File----------------------------------------------------------------------
 parser.add_argument('-s','--sim',\
-		help='Simulation File path. Example: -s sim_one.json',\
+		help='Simulation File path (realative to socket_to_sas.py). Example: -s simulations/sim_one.json',\
 		default=None)
 #------------------------------------------------------------------------------------------
 
@@ -68,7 +69,7 @@ def isVaildInt(value):
 		int(value)
 		return True
 	except ValueError:
-		print(value + "is not a vaild int")
+		print("'" + value + "' is not a vaild int")
 	return False
 
 def printUsrpsAvailable():
@@ -79,12 +80,68 @@ def printUsrpsAvailable():
 	for usrp in usrps:
 		print(usrp)
 
-
-def simCreateNode(data):
+def _grabPossibleEntry():
 	"""
-	Create a node based on simulation file
+	Takes a dictionary entry and checks to see if it exists
+	TODO
 	"""
 	pass
+
+
+def simCreateNode(items):
+	"""
+	Creates nodes based on simulation file and adds them to created_nodes array
+
+	Parameters
+	----------
+	items : array of dictionaries with Node data
+
+	TODO: Make sure the data can create a vaild USRP
+	"""
+	global created_nodes
+	for data in item:
+		mode = address = centerFreq = gain = sampleRate = signalAmp = waveform = None
+		try:
+			if(data["mode"] != ""):
+				usrpMode = data["mode"]
+		except KeyError:
+			print("No mode found for simCreateNode (socket_to_usrp.py line 101)")
+		try:
+			if(data["address"] != ""):
+				address = data["address"]
+		except KeyError:
+			print("No address found for simCreateNode (socket_to_usrp.py line 113)")
+		try:
+			if(data["centerFreq"] != ""):
+				centerFreq = data["centerFreq"]
+		except KeyError:
+			print("No centerFreq found for simCreateNode (socket_to_usrp.py line 118)")
+		try:
+			if(data["gain"] != ""):
+				gain = data["gain"]
+		except KeyError:
+			print("No gain found for simCreateNode (socket_to_usrp.py line 123)")
+		try:
+			if(data["sampleRate"] != ""):
+				sampleRate = data["sampleRate"]
+		except KeyError:
+			print("No sampleRate found for simCreateNode (socket_to_usrp.py line 128)")
+		try:
+			if(data["signalAmp"] != ""):
+				signalAmp = data["signalAmp"]
+		except KeyError:
+			print("No signalAmp found for simCreateNode (socket_to_usrp.py line 133)")
+		try:
+			if(data["waveform"] != ""):
+				waveform = data["waveform"]
+		except KeyError:
+			print("No waveform found for simCreateNode (socket_to_usrp.py line 138)")
+		node = tx_usrp(address, centerFreq, gain, sampleRate, signalAmp, waveform, None, usrpMode) # Create instance of Tx with given params
+		if(node):
+			created_nodes.append(node)
+		else:
+			print("Node NOT created (socket_to_sas.py line 161)")
+
 
 def cmdCreateNode():
 	"""
@@ -93,22 +150,26 @@ def cmdCreateNode():
 	Depedancies: cmd_prompts.py, tx_usrp.py
 
 	"""
+	global created_nodes
 	node = None
-	usrpType = promptUsrpType()
+	usrpMode = promptUsrpMode()
 	sdrAddr = promptUsrpIpAddr()
 	# ** Now that IP is entered, maybe just pull more info from UHD and save it?
 	cFreq = promptCenterFreq()
-	if(usrpType == 'TX'):
+	if(usrpMode == 'TX'):
 		usrpGain = input("Enter the gain of the Tx Device (in dB): ")
 		sampleRate = input("Enter Sample Rate of the node (in Hz): ")
 		signalAmp = promptSignalAmp()
 		waveform = promptWaveform()
-		node = tx_usrp(sdrAddr, cFreq, usrpGain, sampleRate, signalAmp, waveform, "", usrpType) # Create instance of Tx with given params
-	elif(usrpType == 'RX'):
+		node = tx_usrp(sdrAddr, cFreq, usrpGain, sampleRate, signalAmp, waveform, "", usrpMode) # Create instance of Tx with given params
+	elif(usrpMode == 'RX'):
 		pass # Big TODO
 	else:
 		print("Error")
-	return node
+	if(node):
+		created_nodes.append(node)
+	else:
+		print("Node NOT created (socket_to_sas.py line 161)")
 
 def send_params(clientio, node):
 	"""
@@ -171,6 +232,84 @@ def updateRadio(node, params):
 	# send_params(clientio, node)
 
 
+def simRegistrationReq(items):
+	"""
+	Simulation file provides data to create a Registration Request
+
+	Parameters
+	----------
+	items : array of dictionaries with Registration Request data
+	"""
+	arr = []
+	global tempNodeRegList
+	tempNodeRegList = []
+	for data in items:
+		nodeIp = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
+		installationParam = measCapability = groupingParam = cpiSignatureData = None
+		try:
+			if(data["nodeIp"] != ""):
+				nodeIp = data["nodeIp"]
+		except KeyError:
+			print("No nodeIp found for simRegistrationReq (socket_to_usrp.py line 144)")
+		try:
+			if(data["userId"] != ""):
+				userId = data["userId"]
+		except KeyError:
+			print("No userId found for simRegistrationReq (socket_to_usrp.py line 149)")
+		try:
+			if(data["fccId"] != ""):
+				fccId = data["fccId"]
+		except KeyError:
+			print("No fccId found for simRegistrationReq (socket_to_usrp.py line 154)")
+		try:
+			if(data["callSign"] != ""):
+				callSign = data["callSign"]
+		except KeyError:
+			print("No callSign found for simRegistrationReq (socket_to_usrp.py line 159)")
+		try:
+			if(data["cbsdCategory"] != ""):
+				cbsdCategory = data["cbsdCategory"]
+		except KeyError:
+			print("No cbsdCategory found for simRegistrationReq (socket_to_usrp.py line 164)")
+		try:
+			if(data["cbsdInfo"] != ""):
+				cbsdInfo = data["cbsdInfo"]
+		except KeyError:
+			print("No cbsdInfo found for simRegistrationReq (socket_to_usrp.py line 169)")
+		try:
+			if(data["airInterface"] != ""):
+				airInterface = data["airInterface"]
+		except KeyError:
+			print("No airInterface found for simRegistrationReq (socket_to_usrp.py line 174)")
+		try:
+			if(data["installationParam"] != ""):
+				installationParam = data["installationParam"]
+		except KeyError:
+			print("No installationParam found for simRegistrationReq (socket_to_usrp.py line 179)")
+		try:
+			if(data["measCapability"] != ""):
+				measCapability = data["measCapability"]
+		except KeyError:
+			print("No measCapability found for simRegistrationReq (socket_to_usrp.py line 184)")
+		try:
+			if(data["groupingParam"] != ""):
+				groupingParam = data["groupingParam"]
+		except KeyError:
+			print("No groupingParam found for simRegistrationReq (socket_to_usrp.py line 189)")
+		try:
+			if(data["cpiSignatureData"] != ""):
+				cpiSignatureData = data["cpiSignatureData"]
+		except KeyError:
+			print("No cpiSignatureData found for simRegistrationReq (socket_to_usrp.py line 194)")
+
+
+		# node = tx_usrp(address, centerFreq, gain, sampleRate, signalAmp, waveform, None, usrpMode) # Create instance of Tx with given params
+		# if(node):
+		# 	created_nodes.append(node)
+		# else:
+		# 	print("Node NOT created (socket_to_sas.py line 161)")
+
+
 def configRegistrationReq():
 	"""
 	Pulls Registration Request Info from a file the user selects
@@ -225,21 +364,6 @@ def cmdRegistrationReq():
 def registrationReq(clientio):
 	"""
 	"""
-	# userId = "John Doe"
-	# fccId = "FCCIDEXAMPLE123"
-	# cbsdSerialNumber = "EXAMPLECBSDSERIALNO123"
-	# callSign = "A12"
-	# cbsdCategory = "A"
-	# cbsdInfo = CbsdInfo(vendor="NI - Ettus Research", model="B210", 
-	# 	softwareVersion="4.2.3", hardwareVersion="1.0", firmwareVersion="1.0")
-	# airInterface_radioTech ="NR"
-	# airInterface = AirInterface(airInterface_radioTech)
-	# installationParam = InstallationParam(latitude=12, longitude=12, height=10,
-	# 	heightType="AGL", horizontalAccuracy=1, verticalAccuracy=2, 
-	# 	indoorDeployment=0, antennaAzimuth=3, antennaDowntilt=4, antennaGain=5, 
-	# 	eirpCapability=6, antennaBeamwidth=7, antennaModel="ASXE11")
-	# measCapability = ["RECEIVED_POWER_WITHOUT_GRANT"]
-	# groupingParam = [GroupParam(groupType="INTERFERENCE_COORDINATION", groupId="John Doe: A")] 
 	while(True):
 		data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
 		if(data_source == 'E' or data_source == 'e'):
@@ -408,7 +532,7 @@ def grantRequest(clientio, txUsrp):
 			return
 		else:
 			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
-	payload = {"grantRequest": arr}
+	payload = {"grantRequest": arrOfRequest}
 	clientio.emit("grantRequest", json.dumps(payload))
 
 def handleGrantResponse(clientio, data):
@@ -643,10 +767,8 @@ def startNode(cbsdId):
 
 def defineSocketEvents(clientio):
 	"""
+	List of events the SAS may echo, and how to handle them
 	"""
-	#########################
-	# List of Socket Events #
-	#########################
 	@clientio.event
 	def connect():
 		print('connection established. Given sid: ' + clientio.sid)
@@ -657,33 +779,42 @@ def defineSocketEvents(clientio):
 		# send_params(clientio, txUsrp)
 		# registrationReq(clientio)
 
-	#
 	# Official WinnForum Predefined Functionality
-	# 
-
 	@clientio.event
 	def registrationResponse(data):
-		handleRegistrationRes(clientio, data)
-	
+		global __blocked
+		handleRegistrationResponse(clientio, data)
+		__blocked = False
+
 	@clientio.event
 	def sprectumInquiryResponse(data):
+		global __blocked
 		handleSpectrumInquiryResponse(clientio, data)
-	
+		__blocked = False
+
 	@clientio.event
 	def grantResponse(data):
+		global __blocked
 		handleGrantResponse(clientio, data)
+		__blocked = False
 
 	@clientio.event
 	def heartbeatResponse(data):
+		global __blocked
 		handleHeartbeatResponse(clientio, data)
+		__blocked = False
 
 	@clientio.event
 	def relinquishmentResponse(data):
+		global __blocked
 		handleRelinquishmentResponse(clientio, data)
+		__blocked = False
 
 	@clientio.event
 	def deregistrationResponse(data):
+		global __blocked
 		handleDeregistrationResponse(clientio, data)
+		__blocked = False
 	# end official WinnForum functions
 
 	@clientio.event
@@ -701,6 +832,14 @@ def defineSocketEvents(clientio):
 	@clientio.event
 	def start_radio(cbsdId):
 		startNode(cbsdId)
+
+	# TODO - cbsdID and measReport
+	# @clientio.event
+	# def sendSpectrumData():
+	# 	pass
+	# @clientio.event
+	# def operationParams(data):
+	# 	pass
 
 	@clientio.event
 	def disconnect():
@@ -724,18 +863,27 @@ def init(clientio, args):
 	clientio.connect(socket_addr)
 
 	# Create global array of USRPs for use across functions
-	global created_nodes
-	created_nodes = []
+	# TODO: I should not have to reiterate what created_node is in here since I READ_ONLY in here
+	# global created_nodes
+	# created_nodes = []
 
 	if(args['sim']):
 		'''
 		Simulation file includes all requests to make and at what times
-		This requires no human interaction with the code
+		This requires no human interaction with the program. There may be output to read in the terminal.
 		'''
 		#load sim file
+		# Check all actions to complete at a given time. If there are duplicates, 
+		# make sure they get sent in the same array/payload
 		path = args['sim']
 		with open(path) as config:
 			data = json.load(config)
+		for time in data:
+			for action in data[time]:
+				for func in action:
+					print("Going to execute: " + func)
+					payload = action[func]
+					#send payload to appropiate function
 		pass
 		
 	else:
@@ -744,33 +892,50 @@ def init(clientio, args):
 		# To remedy this, I may add a boolean that is True when the socket is busy 
 		# Once the socket is done completeing the action the user entered, the bool
 		# should allow the loop to proceed... TODO
-		created_nodes.append(cmdCreateNode())	
+		cmdCreateNode()
+		global __blocked
+		__blocked = False
 		print("Enter 'h' for help/list of commands")
 		while True:
-			user_input = input("User Input: ")
-			if(user_input == 'h'):
-				print("""Commands Include:
+			while not __blocked:
+				user_input = input("User Input: ")
+				if(user_input == 'h'):
+					print("""Commands Include:
 						0 - Exit Interface
 						1 - Create USRP
-						2 - Create Registration Request
-						3 - Create Grant Request
-						4 - View Created USRPs
-					""")
-			elif(user_input == '0'):
-				break
-			elif(user_input == '1'):
-				created_nodes.append(cmdCreateNode())
-			elif(user_input == '2'):
-				registrationReq()
-			elif(user_input == '3'):
-				pass # Create Grant Request
-			elif(user_input == '4'):
-				for node in created_nodes:
-					print(node.get_CbsdId())
-			elif(user_input == '5'):
-				pass
-			else:
-				pass
+						2 - View Nodes
+						3 - Create Registration Request
+						4 - Create Spectrum Inquiry Request
+						5 - Create Grant Request
+						6 - Create Heartbeat Request
+						7 - Create Relinquishment Request
+						8 - Create Deregistration Request
+						""")
+				elif(userInput == '0'):
+					print("Exiting System...")
+					sys.exit()
+				elif(userInput == '1'):
+					created_nodes.append(cmdCreateNode())
+				elif(userInput == '2'):
+					viewNodes()
+				elif(userInput == '3'):
+					__blocked = True
+					registrationRequest()
+				elif(userInput == '4'):
+					__blocked = True
+					spectrumInquiryRequest()
+				elif(userInput == '5'):
+					__blocked = True
+					grantRequest()
+				elif(userInput == '6'):
+					__blocked = True
+					heartbeatRequest()
+				elif(userInput == '7'):
+					__blocked = True
+					relinquishmentRequest()
+				elif(userInput == '8'):
+					__blocked = True
+					deregistrationRequest()
 		
 	print("Exiting System...")
 	sys.exit()
@@ -780,5 +945,5 @@ if __name__ == '__main__':
 	args = vars(parser.parse_args())	# Get command line arguments
 	clientio = socketio.Client()		# Create Client Socket
 	init(clientio, args)				# Init Tx USRP and Socket
-	clientio.wait()					 	# Wait for Socket Events
+	clientio.wait()					 	# Wait for Socket Events TODO: Doesn't reach here?
 	
