@@ -66,7 +66,7 @@ class tx_usrp(gr.top_block):
         self.gain        = gain
         self.sample_rate = sampRate
         self.signal_amp  = signalAmp
-        self.waveform    = self.convert_waveform(waveform)
+        self.waveform    = self._convert_waveform(waveform)
         self.cbsdId      = cbsdId
         self.mode        = mode   # Either build a TX or RX for this parameter
         self.type        = "type" # TODO @Joseph is this data type? Video vs Text?
@@ -106,7 +106,7 @@ class tx_usrp(gr.top_block):
         elif(mode == "RX"):
             pass
         else:
-            print("'" + mode + "' is an invalid mode.. {usrps.py line 107}")
+            print("'" + mode + "' is an invalid mode.. (usrps.py line 107)")
             #exit?
 
     def set_GrantId(self, grantId):
@@ -167,10 +167,10 @@ class tx_usrp(gr.top_block):
         return self.waveform
 
     def set_waveform(self, waveform):
-        self.waveform = self.convert_waveform(waveform)
+        self.waveform = self._convert_waveform(waveform)
         
 
-    def convert_waveform(self, waveform):
+    def __convert_waveform(self, waveform):
         """
         Converts User Input Wavefore into GNU Radio Waveform
         
