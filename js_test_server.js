@@ -61,10 +61,13 @@ server.on("connection", (socket) => {
 
     socket.on("grantRequest", (data) => {
         console.info("Grant Request Data: " + data);
+        socket.emit("grantResponse", JSON.stringify("you did a grant thing"));
+
     });
 
     socket.on("heartbeatRequest", (data) => {
         console.info("Heartbeat Request Data: " + data);
+        socket.emit("heartbeatResponse", JSON.stringify("you did a heartbeat thingy"))
     });
 
     socket.on("relinquishmentRequest", (data) => {
