@@ -80,12 +80,18 @@ def printUsrpsAvailable():
 	for usrp in usrps:
 		print(usrp)
 
-def _grabPossibleEntry():
+def _grabPossibleEntry(entry, key):
 	"""
 	Takes a dictionary entry and checks to see if it exists
 	TODO
 	"""
-	pass
+	try:
+		if(entry[key]):
+			print("entry not empty")
+		else:
+			print("entry empty")
+	except KeyError:
+		print("Entry does not have a '" + key + "'' as a key")
 
 
 def simCreateNode(items):
