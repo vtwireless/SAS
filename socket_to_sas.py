@@ -32,6 +32,9 @@ from cmd_prompts import * 	# User defined library for cmd prompts
 # blocked: used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface 
 __blocked = False
 
+# sim_mode: used to ensure functions do not attempt blocking user-input features 
+__sim_mode = False
+
 # tempNodeRegList: used to hold the order of which nodes are registered...
 #	...so that when the registration requests comes in, cbsdIDs can be properly assigned in order
 tempNodeRegList = []
@@ -60,7 +63,7 @@ parser.add_argument('-s','--sim',\
 		default=None)
 #------------------------------------------------------------------------------------------
 
-
+# Helper Functions -------------------------------------------------------------------------
 def isVaildInt(value):
 	"""
 	Returns True if a value can be casted to an int
@@ -92,6 +95,69 @@ def _grabPossibleEntry(entry, key):
 			print("entry empty")
 	except KeyError:
 		print("Entry does not have a '" + key + "'' as a key")
+
+def send_params(clientio, node):
+	"""
+	Collects current node parameters and sends to host via socket as JSON
+
+	Parameters
+	----------
+	clientio : socket object
+		socket connection to host
+	node : SDR object
+		USRP object to gather operating parameters from
+	"""
+
+	data = {
+		"SDR Address": node.get_SDR_Address(),
+		"Center Frequency": node.get_freq(),
+		"Gain": node.get_gain(),
+		"Sample Rate": node.get_signal_amp(),
+		"Signal Amplitude": node.get_signal_amp(),
+		"Waveform": str(node.get_waveform()),
+		"Status": node.get_status()
+	}
+	payload = json.dumps(data)
+	clientio.emit('getNodeParams', payload)
+
+def updateRadio(node, params):
+	"""
+	Updates radio operating parameters
+
+	Parameters
+	----------
+	node : SDR object
+		USRP object to gather operating parameters from
+	params : dictionary
+		JSON package of parameters to update
+	"""
+
+	# check params for every key:value pair
+	params = json.loads(newParams)
+	if "freq" in params:
+		node.set_freq(float(params['freq'])*1e6)
+	if "gain" in params:
+		node.set_gain(int(params['gain']))
+	if "samplerate" in params:
+		node.set_sample_rate(int(params['samplerate'])*1e6)
+	if "sigamp" in params:
+		signalAmp = float(params['sigamp'])
+		if signalAmp > 1:
+			signalAmp = 1
+		node.set_signal_amp(signalAmp)
+	if "waveform" in params:
+		waveform  = (params['waveform'])
+		node.set_waveform(waveform)
+	if "device" in params:
+		node.set_SDR_Address(params['device'])
+	if "status" in params:
+		node.set_status(params['status'])
+
+	# Ack to server with new params
+	# send_params(clientio, node)
+
+# End Helper Functions -------------------------------------------------------------------------
+
 
 
 def simCreateNode(items):
@@ -177,70 +243,13 @@ def cmdCreateNode():
 	else:
 		print("Node NOT created (socket_to_sas.py line 161)")
 
-def send_params(clientio, node):
-	"""
-	Collects current node parameters and sends to host via socket as JSON
-
-	Parameters
-	----------
-	clientio : socket object
-		socket connection to host
-	node : SDR object
-		USRP object to gather operating parameters from
-	"""
-
-	data = {
-		"SDR Address": node.get_SDR_Address(),
-		"Center Frequency": node.get_freq(),
-		"Gain": node.get_gain(),
-		"Sample Rate": node.get_signal_amp(),
-		"Signal Amplitude": node.get_signal_amp(),
-		"Waveform": str(node.get_waveform()),
-		"Status": node.get_status()
-	}
-	payload = json.dumps(data)
-	clientio.emit('getNodeParams', payload)
-
-def updateRadio(node, params):
-	"""
-	Updates radio operating parameters
-
-	Parameters
-	----------
-	node : SDR object
-		USRP object to gather operating parameters from
-	params : dictionary
-		JSON package of parameters to update
-	"""
-
-	# check params for every key:value pair
-	params = json.loads(newParams)
-	if "freq" in params:
-		node.set_freq(float(params['freq'])*1e6)
-	if "gain" in params:
-		node.set_gain(int(params['gain']))
-	if "samplerate" in params:
-		node.set_sample_rate(int(params['samplerate'])*1e6)
-	if "sigamp" in params:
-		signalAmp = float(params['sigamp'])
-		if signalAmp > 1:
-			signalAmp = 1
-		node.set_signal_amp(signalAmp)
-	if "waveform" in params:
-		waveform  = (params['waveform'])
-		node.set_waveform(waveform)
-	if "device" in params:
-		node.set_SDR_Address(params['device'])
-	if "status" in params:
-		node.set_status(params['status'])
-
-	# Ack to server with new params
-	# send_params(clientio, node)
-
 
 def simRegistrationReq(items):
 	"""
 	Simulation file provides data to create a Registration Request
+
+	Since there may be multiple registartion requests at once, there is a for loop. 
+	The value of 'data' should be a single registration request. 
 
 	Parameters
 	----------
@@ -367,27 +376,33 @@ def cmdRegistrationReq():
 		measCapability, groupingParam, cpiSignatureData=None).asdict())
 	return arr
 
-def registrationReq(clientio):
+def registrationRequest(clientio):
 	"""
+	Function that should always be called for a Registration Request
+
 	"""
-	while(True):
-		data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
-		if(data_source == 'E' or data_source == 'e'):
-			arrOfRequest = cmdRegistrationReq() # Prompt User
-			break
-		elif(data_source == 'L' or data_source == 'l'):
-			arrOfRequest = configRegistrationReq() # load config file
-			break
-		elif(data_source == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+
+	if(__sim_mode):
+		pass
+	else:
+		while(True):
+			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
+			if(data_source == 'E' or data_source == 'e'):
+				arrOfRequest = cmdRegistrationReq() # Prompt User
+				break
+			elif(data_source == 'L' or data_source == 'l'):
+				arrOfRequest = configRegistrationReq() # load config file
+				break
+			elif(data_source == 'exit'):
+				return
+			else:
+				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	# Need to save list of nodes being registered...
 	
 	payload = {"registrationRequest": arrOfRequest}
 	clientio.emit("registrationRequest", json.dumps(payload))
 
-def handleRegistrationRes(clientio, payload):
+def handleRegistrationResponse(clientio, payload):
 	"""
 	"""
 	json_data = json.loads(payload)
@@ -878,6 +893,8 @@ def init(clientio, args):
 		Simulation file includes all requests to make and at what times
 		This requires no human interaction with the program. There may be output to read in the terminal.
 		'''
+		global __sim_mode
+		__sim_mode = True
 		#load sim file
 		# Check all actions to complete at a given time. If there are duplicates, 
 		# make sure they get sent in the same array/payload
@@ -889,8 +906,21 @@ def init(clientio, args):
 				for func in action:
 					print("Going to execute: " + func)
 					payload = action[func]
+					if(func == "createNode"):
+						pass
+					elif(func == "registrationRequest"):
+						pass
+					elif(func == "spectrumInquiryRequest"):
+						pass
+					elif(func == "grantRequest"):
+						pass
+					elif(func == "heartbeatRequest"):
+						pass
+					elif(func == "relinquishmentRequest"):
+						pass
+					elif(func == "deregistrationRequest"):
+						pass
 					#send payload to appropiate function
-		pass
 		
 	else:
 		# Main Menu
