@@ -63,7 +63,7 @@ parser.add_argument('-s','--sim',\
 		default=None)
 #------------------------------------------------------------------------------------------
 
-# Helper Functions -------------------------------------------------------------------------
+# Helper Functions--------------------------------------------------------------------------
 def isVaildInt(value):
 	"""
 	Returns True if a value can be casted to an int
@@ -133,7 +133,7 @@ def updateRadio(node, params):
 	"""
 
 	# check params for every key:value pair
-	params = json.loads(newParams)
+	params = json.loads(params)
 	if "freq" in params:
 		node.set_freq(float(params['freq'])*1e6)
 	if "gain" in params:
@@ -156,7 +156,7 @@ def updateRadio(node, params):
 	# Ack to server with new params
 	# send_params(clientio, node)
 
-# End Helper Functions -------------------------------------------------------------------------
+# End Helper Functions--------------------------------------------------------------------------
 
 
 
@@ -169,10 +169,12 @@ def simCreateNode(items):
 	items : array of dictionaries with Node data
 
 	TODO: Make sure the data can create a vaild USRP
+	TODO: Is this just for TX? What params would RX need instead?
+	TODO: Decide what KeyErrors should hault node creation
 	"""
 	global created_nodes
-	for data in item:
-		mode = address = centerFreq = gain = sampleRate = signalAmp = waveform = None
+	for data in items:
+		usrpMode = address = centerFreq = gain = sampleRate = signalAmp = waveform = None
 		try:
 			if(data["mode"] != ""):
 				usrpMode = data["mode"]
@@ -208,7 +210,8 @@ def simCreateNode(items):
 				waveform = data["waveform"]
 		except KeyError:
 			print("No waveform found for simCreateNode (socket_to_usrp.py line 138)")
-		node = tx_usrp(address, centerFreq, gain, sampleRate, signalAmp, waveform, None, usrpMode) # Create instance of Tx with given params
+
+		node = tx_usrp(address, centerFreq, gain, sampleRate, signalAmp, waveform, None, usrpMode) # Create instance of USRP Node with given params
 		if(node):
 			created_nodes.append(node)
 		else:
@@ -352,12 +355,12 @@ def cmdRegistrationReq():
 		tempNodeRegList.append(cbsdSerialNumber)
 		callSign = input("Enter Call Sign (Optional - Press Enter to Skip): ")
 		cbsdCategory = promptCbsdCategory()
-		cbsdInfo = promptCbsdInfo(cbsdSerialNumber)
+		cbsdInfo = promptCbsdInfo(cbsdSerialNumber, created_nodes)
 		airInterface = promptAirInterface()
 		installationParam = None
 		installationInfoSelector = getSelectorBoolean(input("Do you want to enter Device Installation Information (Y)es or (N)o: "))
 		if(installationInfoSelector):
-			installationParam = propmtInstallationParam()
+			installationParam = promptInstallationParam()
 		measCapability = getMeasCapabilityFromUser()
 		groupingParam = None
 		groupingParamSelector = getSelectorBoolean(input("Would you like to enter Grouping Parameter Info? (Y)es or (N)o: "))
@@ -876,7 +879,7 @@ def init(clientio, args):
 		List of parameters extracted from command line flags
 	"""
 
-	# Create handlers for events the SAS may trigger
+	# Create handlers for events the SAS may emit
 	defineSocketEvents(clientio)
 
 	# Connect to SAS

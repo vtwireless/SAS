@@ -190,6 +190,8 @@ def promptAirInterface():
 			return None
 		elif(userInput not in ais):
 			print("Please enter a vaild Air Interface or Press Enter to skip...")
+		else:
+			return userInput
 
 def promptInstallationParam():
 	"""

@@ -28,7 +28,7 @@ class tx_usrp(gr.top_block):
     ------- 
     """
 
-    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform, cbsdId=None, mode=None, type=None, grantId=None):
+    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform, cbsdId=None, mode=None, data_type=None, grantId=None):
         """
         Constructs Tx USRP object
 
@@ -69,7 +69,7 @@ class tx_usrp(gr.top_block):
         self.waveform    = self._convert_waveform(waveform)
         self.cbsdId      = cbsdId
         self.mode        = mode   # Either build a TX or RX for this parameter
-        self.type        = "type" # TODO @Joseph is this data type? Video vs Text?
+        self.data_type   = "type" # TODO @Joseph is this data type? Video vs Text?
         self.grantId     = grantId
 
         if(mode == "TX"):
