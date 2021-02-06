@@ -1,13 +1,84 @@
 #!/usr/bin/env python3
+# TX Imports------------------------------------
 from gnuradio import analog
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
+# End TX Imports---------------------------------
+
 
 # TODO: 'type' may be a reserved word
 # TODO: make this 'usrp.py' and include both TX and RX flowgraphs in here
+
+class _Grant:
+    """
+    One node may have one grant object
+
+    Source: Page 7 of https://winnf.memberclicks.net/assets/CBRS/WINNF-TS-0016.pdf
+
+    Attributes
+    ----------
+    grantId : string
+        grantId assigned by the SAS upon sucessful Grant request
+    grantStatus : string
+        One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
+
+    Methods
+    -------
+    getGrantId()
+        returns grantId for the Grant the node is assigned to
+    setGrantId(id)
+        assigns instance variable grantId to passed parameter id
+    getGrantStatus()
+        returns grantStatus for the Grant the node is assigned to
+    setGrantStatus(status)
+        assigns instance variable grantStatus to passed parameter status
+    """
+    def __init__(self, grantId, grantStatus):
+        """
+        Constructor for a Grant Object
+
+        Parameters
+        ----------
+        grantId : string
+            grantId assigned by the SAS upon sucessful Grant request
+        grantStatus : string
+            One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
+        """
+        self.grantId = grantId
+        self.grantStatus = grantStatus
+    
+    def _getGrantId(self):
+        """
+        Returns grantId for the Grant the node is assigned to
+
+        Returns
+        -------
+        grantId : string
+            ID of grant the Node is assigned to 
+        """ 
+        return self.grantId
+
+    def _setGrantId(self, id):
+        """
+        Assigns instance variable grantId to passed parameter id
+        """
+        self.grantId = id
+    
+    def _getGrantStatus(self):
+        """
+        Returns grantStatus for the Grant the node is assigned to
+        """
+        return self.grantStatus
+
+    def _setGrantStatus(self, status):
+        """
+        Assigns instance variable grantStatus to passed parameter status
+        """
+        self.grantStatus = status
+
 
 class tx_usrp(gr.top_block):
     """
@@ -26,9 +97,10 @@ class tx_usrp(gr.top_block):
 
     Methods
     ------- 
+    TODO: Lots to add here
     """
 
-    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform, cbsdId=None, mode=None, data_type=None, grantId=None):
+    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform, cbsdId=None, mode=None, data_type=None):
         """
         Constructs Tx USRP object
 
@@ -57,20 +129,19 @@ class tx_usrp(gr.top_block):
 
         gr.top_block.__init__(self, "SAS USRP Transmitter")
 
-
         ##################################################
         # Variables
         ##################################################
-        self.SDR_Address = deviceAddr
-        self.freq        = centerFreq
-        self.gain        = gain
-        self.sample_rate = sampRate
-        self.signal_amp  = signalAmp
-        self.waveform    = self._convert_waveform(waveform)
+        self.SDR_Address = deviceAddr   # Required
+        self.freq        = centerFreq   # Required 
+        self.gain        = gain         # Required 
+        self.sample_rate = sampRate     # Required
+        self.signal_amp  = signalAmp    # Required
+        self.waveform    = self._convert_waveform(waveform)# Required
         self.cbsdId      = cbsdId
         self.mode        = mode   # Either build a TX or RX for this parameter
         self.data_type   = "type" # TODO @Joseph is this data type? Video vs Text?
-        self.grantId     = grantId
+        self.grant       = _Grant(None, "IDLE")
 
         if(mode == "TX"):
             # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
@@ -108,13 +179,20 @@ class tx_usrp(gr.top_block):
         else:
             print("'" + mode + "' is an invalid mode.. (usrps.py line 107)")
             #exit?
-
-    def set_GrantId(self, grantId):
-        self.grantId = grantId
-
-    def get_GrantId(self):
-        return self.grantId
  
+
+    def get_grantId(self):
+        return self.grant._getGrantId()
+
+    def set_grantId(self, id):
+        self.grant._setGrantId(id)
+
+    def get_grantStatus(self):
+        return self.grant._getGrantStatus()
+
+    def set_grantStatus(self, status):
+        self.grant._setGrantStatus(status)
+        
     def set_mode(self, mode):
         self.mode = mode
 

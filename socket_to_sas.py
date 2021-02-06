@@ -30,14 +30,15 @@ from cmd_prompts import * 	# User defined library for cmd prompts
 
 # Globals
 # blocked: used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface 
+# This variable is set to 'True' right before a client emit with an expected response executes. The response will set it back to False.
 __blocked = False
 
 # sim_mode: used to ensure functions do not attempt blocking user-input features 
 __sim_mode = False
 
-# tempNodeRegList: used to hold the order of which nodes are registered...
-#	...so that when the registration requests comes in, cbsdIDs can be properly assigned in order
-tempNodeRegList = []
+# tempNodeList: used to hold the order of which nodes are sending requests...
+#	...so that when the response comes in, data can be assigned properly
+tempNodeList = []
 
 # created_nodes: used to hold all created CRTS USRP Nodes objects
 created_nodes = []
@@ -156,6 +157,27 @@ def updateRadio(node, params):
 	# Ack to server with new params
 	# send_params(clientio, node)
 
+def findNodeFromTempListByIndex(index):
+	"""
+	Helper Function to find Nodes in created_nodes with a given identifier 
+
+	Parameters
+	----------
+	index : int
+		index of tempList
+
+	Returns
+	-------
+	node : Node Object
+		The Node object with the given identifier 
+	"""
+	iter = 0
+	for node in created_nodes:
+		if(node.get_SDR_Address() == tempNodeList[iter]):
+			return node
+		else:
+			iter = iter + 1
+	return None
 # End Helper Functions--------------------------------------------------------------------------
 
 
@@ -229,13 +251,14 @@ def cmdCreateNode():
 	node = None
 	usrpMode = promptUsrpMode()
 	sdrAddr = promptUsrpIpAddr()
-	# ** Now that IP is entered, maybe just pull more info from UHD and save it?
-	cFreq = promptCenterFreq()
+	# TODO: Now that IP is entered, maybe just pull more info from UHD and save it?
+	cFreq = promptUsrpCenterFreq()
 	if(usrpMode == 'TX'):
-		usrpGain = input("Enter the gain of the Tx Device (in dB): ")
-		sampleRate = input("Enter Sample Rate of the node (in Hz): ")
-		signalAmp = promptSignalAmp()
-		waveform = promptWaveform()
+		# TODO: find min/max for all of these
+		usrpGain = promptUsrpGain()
+		sampleRate = promptUsrpSampleRate()
+		signalAmp = promptUsrpSignalAmp()
+		waveform = promptUsrpWaveform()
 		node = tx_usrp(sdrAddr, cFreq, usrpGain, sampleRate, signalAmp, waveform, "", usrpMode) # Create instance of Tx with given params
 	elif(usrpMode == 'RX'):
 		pass # Big TODO
@@ -252,80 +275,77 @@ def simRegistrationReq(items):
 	Simulation file provides data to create a Registration Request
 
 	Since there may be multiple registartion requests at once, there is a for loop. 
-	The value of 'data' should be a single registration request. 
+	The value of 'request' should be a single registration request. 
 
 	Parameters
 	----------
-	items : array of dictionaries with Registration Request data
+	items : array of Registration Request data (dict format)
 	"""
 	arr = []
-	global tempNodeRegList
-	tempNodeRegList = []
-	for data in items:
+	global tempNodeList
+	tempNodeList = []
+	for request in items:
 		nodeIp = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = None
 		try:
-			if(data["nodeIp"] != ""):
-				nodeIp = data["nodeIp"]
+			if(request["nodeIp"] != ""):
+				nodeIp = request["nodeIp"]
 		except KeyError:
 			print("No nodeIp found for simRegistrationReq (socket_to_usrp.py line 144)")
 		try:
-			if(data["userId"] != ""):
-				userId = data["userId"]
+			if(request["userId"] != ""):
+				userId = request["userId"]
 		except KeyError:
 			print("No userId found for simRegistrationReq (socket_to_usrp.py line 149)")
 		try:
-			if(data["fccId"] != ""):
-				fccId = data["fccId"]
+			if(request["fccId"] != ""):
+				fccId = request["fccId"]
 		except KeyError:
 			print("No fccId found for simRegistrationReq (socket_to_usrp.py line 154)")
 		try:
-			if(data["callSign"] != ""):
-				callSign = data["callSign"]
+			if(request["callSign"] != ""):
+				callSign = request["callSign"]
 		except KeyError:
 			print("No callSign found for simRegistrationReq (socket_to_usrp.py line 159)")
 		try:
-			if(data["cbsdCategory"] != ""):
-				cbsdCategory = data["cbsdCategory"]
+			if(request["cbsdCategory"] != ""):
+				cbsdCategory = request["cbsdCategory"]
 		except KeyError:
 			print("No cbsdCategory found for simRegistrationReq (socket_to_usrp.py line 164)")
 		try:
-			if(data["cbsdInfo"] != ""):
-				cbsdInfo = data["cbsdInfo"]
+			if(request["cbsdInfo"] != ""):
+				cbsdInfo = request["cbsdInfo"]
 		except KeyError:
 			print("No cbsdInfo found for simRegistrationReq (socket_to_usrp.py line 169)")
 		try:
-			if(data["airInterface"] != ""):
-				airInterface = data["airInterface"]
+			if(request["airInterface"] != ""):
+				airInterface = request["airInterface"]
 		except KeyError:
 			print("No airInterface found for simRegistrationReq (socket_to_usrp.py line 174)")
 		try:
-			if(data["installationParam"] != ""):
-				installationParam = data["installationParam"]
+			if(request["installationParam"] != ""):
+				installationParam = request["installationParam"]
 		except KeyError:
 			print("No installationParam found for simRegistrationReq (socket_to_usrp.py line 179)")
 		try:
-			if(data["measCapability"] != ""):
-				measCapability = data["measCapability"]
+			if(request["measCapability"] != ""):
+				measCapability = request["measCapability"]
 		except KeyError:
 			print("No measCapability found for simRegistrationReq (socket_to_usrp.py line 184)")
 		try:
-			if(data["groupingParam"] != ""):
-				groupingParam = data["groupingParam"]
+			if(request["groupingParam"] != ""):
+				groupingParam = request["groupingParam"]
 		except KeyError:
 			print("No groupingParam found for simRegistrationReq (socket_to_usrp.py line 189)")
 		try:
-			if(data["cpiSignatureData"] != ""):
-				cpiSignatureData = data["cpiSignatureData"]
+			if(request["cpiSignatureData"] != ""):
+				cpiSignatureData = request["cpiSignatureData"]
 		except KeyError:
 			print("No cpiSignatureData found for simRegistrationReq (socket_to_usrp.py line 194)")
+		
+		# If all data is good, at Node IP to the list for the reponse handler to pull out
+		tempNodeList.append(nodeIp)
 
-
-		# node = tx_usrp(address, centerFreq, gain, sampleRate, signalAmp, waveform, None, usrpMode) # Create instance of Tx with given params
-		# if(node):
-		# 	created_nodes.append(node)
-		# else:
-		# 	print("Node NOT created (socket_to_sas.py line 161)")
 
 
 def configRegistrationReq():
@@ -338,21 +358,22 @@ def cmdRegistrationReq():
 	"""
 	Provides Command Line Prompts for a user to create Registration Request(s)
  
-	Note: UHD Lib provides the serial, addr, and type for all usrps. Nodes with an FPGA includes the fpga.
+	Note: UHD Lib provides the serial, addr, and model ('type' for the uhd lib) for all usrps. Nodes with an FPGA includes the fpga.
 		  Some 'type' matches with their 'product'. If there is a 'product', it is the same as the 'type' (e.g. x300).
 		  When 'product' doesn't exist, it seems to be of type 'usrp2' 
 
-		 TODO Change from "How many ..." to "Do you wanna do another?")
+		 TODO Change from "How many ..." to "Do you wanna do another?") && Is type USRP model?
 	"""
 	arr = []
-	global tempNodeRegList
-	tempNodeRegList = []
-	num = int(input("How many Registration Requests would you like to create at this moment?: "))
+	global tempNodeList
+	tempNodeList = []
+
+	num = promptNumOfRequests("How many Registration Requests would you like to create at this moment?: ")
 	for x in range(num):
 		userId = input("Enter User ID: ")
 		fccId = input("Enter FCC ID: ")
 		cbsdSerialNumber = promptCbsdSerial(created_nodes)
-		tempNodeRegList.append(cbsdSerialNumber)
+		tempNodeList.append(cbsdSerialNumber)
 		callSign = input("Enter Call Sign (Optional - Press Enter to Skip): ")
 		cbsdCategory = promptCbsdCategory()
 		cbsdInfo = promptCbsdInfo(cbsdSerialNumber, created_nodes)
@@ -365,7 +386,7 @@ def cmdRegistrationReq():
 		groupingParam = None
 		groupingParamSelector = getSelectorBoolean(input("Would you like to enter Grouping Parameter Info? (Y)es or (N)o: "))
 		if(groupingParamSelector):
-			quantity = int(input("How many groups do you want to create for this node?: "))
+			quantity = int(input("How many groups do you want to create for this node?: ")) # TODO: Ensure non-negative (can this be 0?)
 			for num in range(quantity):
 				print("Node " + (num+1) + ":")
 				print("Allowed Group Types: INTERFERENCE_COORDINATION. Select a combination below:")
@@ -379,14 +400,20 @@ def cmdRegistrationReq():
 		measCapability, groupingParam, cpiSignatureData=None).asdict())
 	return arr
 
-def registrationRequest(clientio):
+def registrationRequest(clientio, items):
 	"""
 	Function that should always be called for a Registration Request
 
+	Parameters
+	----------
+	clientio : socket Object
+		Socket connection to the SAS
+	items : array of Requests data
+		Only used if the sim file is calling this funciton
 	"""
 
 	if(__sim_mode):
-		pass
+		simRegistrationReq(items)
 	else:
 		while(True):
 			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
@@ -407,20 +434,30 @@ def registrationRequest(clientio):
 
 def handleRegistrationResponse(clientio, payload):
 	"""
+	Receives data from SAS after a Registration Request is made
+
+	TODO: If SAS doesnt give all required info, then ignore the fact that we sent a request
+
+	Parameters
+	----------
+	payload : JSON string
+		Registration response data
+	clientio : socketio Object
+		Socket connection
 	"""
 	json_data = json.loads(payload)
 	responseCode = "error"
 	cbsdId = "error" 
 	responseMessage = ""
-	global tempNodeRegList # Array of serial numbers
+	global tempNodeList  # Array of IP Addresses
 	global created_nodes # Array of nodes (usrp objects)
 	iter = 0
 	for regResponse in json_data["registrationResponse"]:
 		print(regResponse)
 		if(regResponse["cbsdId"]):
 			cbsdId = regResponse["cbsdId"]
-			for node in created_nodes:
-				if(node.get_SDR_Address() == tempNodeRegList[iter]):
+			for node in created_nodes: # Find the node object this request went with
+				if(node.get_SDR_Address() == tempNodeList[iter]):
 					node.set_CbsdId(cbsdId)
 					print(node.get_SDR_Address() + " goes with " + node.get_CbsdId())
 		if(regResponse["measReportConfig"]):
@@ -959,10 +996,10 @@ def init(clientio, args):
 					viewNodes()
 				elif(userInput == '3'):
 					__blocked = True
-					registrationRequest()
+					registrationRequest(clientio, None)
 				elif(userInput == '4'):
 					__blocked = True
-					spectrumInquiryRequest()
+					spectrumInquiryRequest(clientio)
 				elif(userInput == '5'):
 					__blocked = True
 					grantRequest()

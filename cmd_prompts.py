@@ -28,7 +28,7 @@ def getValidFloat(prompt):
 	"""
 	while(True):
 		value = input(prompt)
-		if(value != ""):
+		if(value != ""): # If data is not 'enter'
 			try:
 				value = float(value)
 				return value
@@ -40,6 +40,8 @@ def getValidFloat(prompt):
 def getValidInt(prompt):
 	"""
 	Prompts user to either enter an integer or 'enter' and returns the value
+
+	TODO: Should I really allow this to pass ' "" ' if user presses enter?
 	"""
 	while(True):
 		value = input(prompt)
@@ -51,6 +53,17 @@ def getValidInt(prompt):
 				print("Please enter a vaild integer...")
 		else:
 			return value
+
+def promptNumOfRequests(prompt):
+	"""
+	Prompts user to enter a non-negative integer for the # of requests they'd like to make
+	"""
+	while(True):
+		num = getValidInt(prompt)
+		if(num < 0):
+			print("Please enter a value >= 0...")
+		else:
+			return num
 
 # Create Node
 def promptUsrpMode():
@@ -82,11 +95,28 @@ def promptUsrpIpAddr():
 		if(keepIP):
 			return ip
 
-def promptCenterFreq():
+def promptUsrpGain():
+		"""
+		Prompt user to enter Usrp Gain
+		"""
+		while(True):
+			gain = getValidFloat("Enter USRP gain (in dB): ")
+			# TODO: Check to ensure gain is in valid range
+			return gain
+
+def promptUsrpSampleRate():
+	"""
+	Prompts user to enter a valid sample rate
+
+	TODO: ensure sampRate is in range
+	"""
+	while(True):
+		sampRate = getValidFloat("Enter Sample Rate of the node (in Hz): ")
+		return sampRate
+
+def promptUsrpCenterFreq():
 	"""
 	Prompt user to enter center frequency of Tx/Rx 
-
-	**Would be nice to figure out the device limits and enforce those
 	"""
 	while(True):
 		cfreq = input("Enter the center frequency of the node (in Hz): ")
@@ -95,7 +125,7 @@ def promptCenterFreq():
 		else:
 			return int(cfreq)
 
-def promptSignalAmp():
+def promptUsrpSignalAmp():
 	"""
 	Prompts user to enter a vaild signal amplitude [0,1]
 	"""
@@ -106,15 +136,17 @@ def promptSignalAmp():
 		else:
 			return sigamp
 
-def promptWaveform():
+def promptUsrpWaveform():
 	"""
+	Prompts user to enter a valid waveform
 	"""
-	waveforms = ["CONSTANT", "SINE", "COSINE", "SQUARE", "TRIANGLE", "SAWTOOTH"]
-	wf = input('Enter waveform type (Examples: "CONSTANT", "SINE", "COSINE", "SQUARE", "TRIANGLE", "SAWTOOTH"): ')
-	if(wf.upper() not in waveforms):
-		print(wf + " is not a vaild waveform option...")
-	else:
-		return wf.upper()
+	while(True):
+		waveforms = ["CONSTANT", "SINE", "COSINE", "SQUARE", "TRIANGLE", "SAWTOOTH"]
+		wf = input('Enter waveform type (Valid Inputs: CONSTANT, SINE, COSINE, SQUARE, TRIANGLE, SAWTOOTH): ')
+		if(wf.upper() not in waveforms):
+			print(wf + " is not a vaild waveform option...")
+		else:
+			return wf.upper()
 
 
 # Registration Request
