@@ -2,7 +2,7 @@
 
 # Author: Cam Makin
 # For Research Efforts: Wireless@VT
-# Description: User Library for Command Line Prompts. Used for by socket_tx.py 
+# Description: User Library for Command Line Prompts. Used for by socket_to_sas.py 
 # Last Updated: 01/05/2021
 
 from WinnForum import CbsdInfo, InstallationParam, FrequencyRange, OperationParam, VTGrantParams

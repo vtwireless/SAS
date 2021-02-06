@@ -27,7 +27,6 @@ from WinnForum import *		# File containing object definitions used
 from cmd_prompts import * 	# User defined library for cmd prompts
 
 
-
 # Globals
 # blocked: used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface 
 __blocked = False
@@ -162,7 +161,7 @@ def updateRadio(node, params):
 
 def simCreateNode(items):
 	"""
-	Creates nodes based on simulation file and adds them to created_nodes array
+	Creates node(s) based on simulation file and adds them to created_nodes array
 
 	Parameters
 	----------
@@ -247,7 +246,7 @@ def cmdCreateNode():
 		print("Node NOT created (socket_to_sas.py line 161)")
 
 
-def simRegistrationReq(items):
+def simRegistrationReq(clientio, items):
 	"""
 	Simulation file provides data to create a Registration Request
 
@@ -262,13 +261,20 @@ def simRegistrationReq(items):
 	global tempNodeRegList
 	tempNodeRegList = []
 	for data in items:
-		nodeIp = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
+		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = None
 		try:
 			if(data["nodeIp"] != ""):
 				nodeIp = data["nodeIp"]
+				for node in created_nodes:
+					if(nodeIp == node.get_SDR_Address()):
+						cbsdSerialNumber = node['serial'] # Use Node IP to pull Serial# from UHD Lib
 		except KeyError:
 			print("No nodeIp found for simRegistrationReq (socket_to_usrp.py line 144)")
+		if(not cbsdSerialNumber):
+			print("Not cbsdSerialNumber found for the node with IP Address: " + nodeIp + ".")
+			print("Exiting Registration Request...")
+			return
 		try:
 			if(data["userId"] != ""):
 				userId = data["userId"]
@@ -319,13 +325,12 @@ def simRegistrationReq(items):
 				cpiSignatureData = data["cpiSignatureData"]
 		except KeyError:
 			print("No cpiSignatureData found for simRegistrationReq (socket_to_usrp.py line 194)")
-
-
-		# node = tx_usrp(address, centerFreq, gain, sampleRate, signalAmp, waveform, None, usrpMode) # Create instance of Tx with given params
-		# if(node):
-		# 	created_nodes.append(node)
-		# else:
-		# 	print("Node NOT created (socket_to_sas.py line 161)")
+		arr.append(RegistrationRequest(userId, fccId, 
+			cbsdSerialNumber, callSign, cbsdCategory,
+			cbsdInfo, airInterface, installationParam, 
+			measCapability, groupingParam, cpiSignatureData).asdict())
+	payload = {"registrationRequest": arr}
+	clientio.emit("registrationRequest", json.dumps(payload))
 
 
 def configRegistrationReq():
@@ -381,25 +386,19 @@ def cmdRegistrationReq():
 
 def registrationRequest(clientio):
 	"""
-	Function that should always be called for a Registration Request
-
 	"""
-
-	if(__sim_mode):
-		pass
-	else:
-		while(True):
-			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
-			if(data_source == 'E' or data_source == 'e'):
-				arrOfRequest = cmdRegistrationReq() # Prompt User
-				break
-			elif(data_source == 'L' or data_source == 'l'):
-				arrOfRequest = configRegistrationReq() # load config file
-				break
-			elif(data_source == 'exit'):
-				return
-			else:
-				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+	while(True):
+		data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
+		if(data_source == 'E' or data_source == 'e'):
+			arrOfRequest = cmdRegistrationReq() # Prompt User
+			break
+		elif(data_source == 'L' or data_source == 'l'):
+			arrOfRequest = configRegistrationReq() # load config file
+			break
+		elif(data_source == 'exit'):
+			return
+		else:
+			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	# Need to save list of nodes being registered...
 	
 	payload = {"registrationRequest": arrOfRequest}
@@ -898,19 +897,16 @@ def init(clientio, args):
 		'''
 		global __sim_mode
 		__sim_mode = True
-		#load sim file
-		# Check all actions to complete at a given time. If there are duplicates, 
-		# make sure they get sent in the same array/payload
 		path = args['sim']
 		with open(path) as config:
 			data = json.load(config)
-		for time in data:
-			for action in data[time]:
-				for func in action:
+		for time in data: 				# Sim file may have multiple instances of time to trigger events
+			for action in data[time]: 	# Each time may have multiple actions (requests)
+				for func in action:		# Each requests may have multiple payloads
 					print("Going to execute: " + func)
 					payload = action[func]
 					if(func == "createNode"):
-						pass
+						simCreateNode(payload)
 					elif(func == "registrationRequest"):
 						pass
 					elif(func == "spectrumInquiryRequest"):
