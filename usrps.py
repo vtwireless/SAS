@@ -12,7 +12,17 @@ from gnuradio import uhd
 # TODO: 'type' may be a reserved word
 # TODO: make this 'usrp.py' and include both TX and RX flowgraphs in here
 
-class _Grant:
+def _ipToSerial(ip):
+    """
+    Takes USRP IP Address and returns its serial number
+    """
+    for node in list(uhd.find_devices()):
+        if(ip == node['addr']):
+            return node['serial']
+    return "" # TODO: What happends when a serial isnt provided or found?
+
+
+class Grant:
     """
     One node may have one grant object
 
@@ -24,6 +34,8 @@ class _Grant:
         grantId assigned by the SAS upon sucessful Grant request
     grantStatus : string
         One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
+    grantExpireTime : string
+        Time at which the grant is no longer valid
 
     Methods
     -------
@@ -36,7 +48,7 @@ class _Grant:
     setGrantStatus(status)
         assigns instance variable grantStatus to passed parameter status
     """
-    def __init__(self, grantId, grantStatus):
+    def __init__(self, grantId, grantExpireTime):
         """
         Constructor for a Grant Object
 
@@ -48,9 +60,10 @@ class _Grant:
             One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
         """
         self.grantId = grantId
-        self.grantStatus = grantStatus
+        self.grantStatus = "GRANTED"
+        self.grantExpireTime = grantExpireTime
     
-    def _getGrantId(self):
+    def getGrantId(self):
         """
         Returns grantId for the Grant the node is assigned to
 
@@ -61,23 +74,37 @@ class _Grant:
         """ 
         return self.grantId
 
-    def _setGrantId(self, id):
+    def setGrantId(self, id):
         """
         Assigns instance variable grantId to passed parameter id
         """
         self.grantId = id
     
-    def _getGrantStatus(self):
+    def getGrantStatus(self):
         """
         Returns grantStatus for the Grant the node is assigned to
         """
         return self.grantStatus
 
-    def _setGrantStatus(self, status):
+    def setGrantStatus(self, status):
         """
         Assigns instance variable grantStatus to passed parameter status
         """
         self.grantStatus = status
+
+    def getGrantExpireTime(self):
+        """
+        Returns grantExpireTime for the Grant the node is assigned to
+        """
+        return self.grantExpireTime
+
+    def setGrantExpireTime(self, expireTime):
+        """
+        Assigns instance variable grantExpireTime to passed parameter status
+        """
+        self.grantExpireTime = expireTime
+
+
 
 
 class tx_usrp(gr.top_block):
@@ -138,10 +165,11 @@ class tx_usrp(gr.top_block):
         self.sample_rate = sampRate     # Required
         self.signal_amp  = signalAmp    # Required
         self.waveform    = self._convert_waveform(waveform)# Required
-        self.cbsdId      = cbsdId
+        self.serialNum   = _ipToSerial(deviceAddr)
+        # self.model       = None # Should be able to use UHD for this also
         self.mode        = mode   # Either build a TX or RX for this parameter
         self.data_type   = "type" # TODO @Joseph is this data type? Video vs Text?
-        self.grant       = _Grant(None, "IDLE")
+        #TODO: Pull it's own serial# and model# from UHD once the IP is passed in 
 
         if(mode == "TX"):
             # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
@@ -179,31 +207,19 @@ class tx_usrp(gr.top_block):
         else:
             print("'" + mode + "' is an invalid mode.. (usrps.py line 107)")
             #exit?
- 
 
-    def get_grantId(self):
-        return self.grant._getGrantId()
+    
+    def get_serialNumber(self):
+        return self.serialNum
+    
+    def set_serialNumber(self, val):
+        self.serialNum = val
 
-    def set_grantId(self, id):
-        self.grant._setGrantId(id)
-
-    def get_grantStatus(self):
-        return self.grant._getGrantStatus()
-
-    def set_grantStatus(self, status):
-        self.grant._setGrantStatus(status)
-        
     def set_mode(self, mode):
         self.mode = mode
 
     def get_mode(self):
         return self.mode
-
-    def set_CbsdId(self, cbsdId):
-        self.cbsdId = cbsdId
-
-    def get_CbsdId(self):
-        return self.cbsdId
 
     def get_SDR_Address(self):
         return self.SDR_Address
@@ -273,3 +289,31 @@ class tx_usrp(gr.top_block):
             return analog.GR_SAW_WAVE
         else:
             return analog.GR_SIN_WAVE
+
+class Node:
+    """
+    Highest level Node class. This containts a USRP, Grant, and other node/cbsd data
+    """
+
+    def __init__(self):
+        """
+        Constructor for a Node object
+        """
+        self.usrp = None
+        self.grant = None
+        self.cbsdId = None
+    
+    def getUsrp(self):
+        return self.usrp
+    def setUsrp(self, usrp):
+        self.usrp = usrp
+    
+    def getGrant(self):
+        return self.grant
+    def setGrant(self, grant):
+        self.grant = grant
+
+    def getCbsdId(self):
+        return self.cbsdId 
+    def setCbsdId(self, id):
+        self.cbsdId = id

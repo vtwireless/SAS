@@ -602,7 +602,7 @@ class RegistrationResponse:
 
 class Response:
 	"""
-	Response - 
+	Response Object used by all responses from the SAS
 
 	Attributes
 	----------
@@ -1099,7 +1099,7 @@ class HeartbeatRequest:
 
 class HeartbeatResponse:
 	"""
-	HeartbeatResponseObject - Array of HeartbeatResponseobjects. Each HeartbeatResponse object represents a heartbeat response of a CBSD.
+	HeartbeatResponse Object - Array of HeartbeatResponse objects. Each HeartbeatResponse object represents a heartbeat response of a CBSD.
 	
 	Attributes
 	----------
@@ -1109,11 +1109,11 @@ class HeartbeatResponse:
 
 	grantId : string (conditional)
 		This parameter is included if and only if the grantId parameter in the HeartbeatRequest object contains a valid Grant identity.
-		If included, the SAS shall set this parameterto the value of the grantIdparameter in the corresponding HeartbeatRequestobject.
+		If included, the SAS shall set this parameter to the value of the grantId parameter in the corresponding HeartbeatRequest object.
 
 	transmitExpireTime : string (required)
-		The CBSD shall cease transmission using the SAS authorized radio resource within 60 seconds after the value of the transmitExpireTimeparameter expires, in accordance with part 96.39(c)(2) (ref. [n.8]). 
-		The transmitExpireTimeis UTC time expressed in the format, YYYY-MM-DDThh:mm:ssZ as defined by [n.7].The transmitExpireTimevalue shall be no later thanthe grantExpireTime
+		The CBSD shall cease transmission using the SAS authorized radio resource within 60 seconds after the value of the transmitExpireTime parameter expires, in accordance with part 96.39(c)(2) (ref. [n.8]). 
+		The transmitExpireTimeis UTC time expressed in the format, YYYY-MM-DDThh:mm:ssZ as defined by [n.7].The transmitExpireTime value shall be no later thanthe grantExpireTime
 
 	grantExpireTime : string (conditional)
 		Required if the responseCode parameter indicates SUCCESS or SUSPENDED_GRANT and the grantRenew parameter was included and set to True in the corresponding HeartbeatRequestobject. 

@@ -25,6 +25,7 @@ import json
 from usrps import tx_usrp # TX Usrp object 
 from WinnForum import *		# File containing object definitions used
 from cmd_prompts import * 	# User defined library for cmd prompts
+import threading
 
 
 # Globals
@@ -241,10 +242,8 @@ def simCreateNode(items):
 
 def cmdCreateNode():
 	"""
-	Walks a user through the command line to configure a USRP node
-
-	Depedancies: cmd_prompts.py, tx_usrp.py
-
+	Walks a user through the command line to configure a USRP node.
+	Appends a node to the global created_nodes list
 	"""
 	global created_nodes
 	node = None
@@ -271,40 +270,31 @@ def cmdCreateNode():
 
 def simRegistrationReq(clientio, items):
 	"""
-	Simulation file provides data to create a Registration Request
+	Simulation file provides data to create a Registration Request.
 
-	Since there may be multiple registartion requests at once, there is a for loop. 
+	Since there may be multiple registration requests at once, there is a for loop. 
 	The value of 'request' should be a single registration request. 
 
 	Parameters
 	----------
-	items : array of Registration Request data (dict format)
+	items : array of dictionaries
+		Registration Request data
 	"""
 	arr = []
-<<<<<<< HEAD
 	global tempNodeRegList
 	tempNodeRegList = []
-	for data in items:
-		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
-		installationParam = measCapability = groupingParam = cpiSignatureData = None
-		try:
-			if(data["nodeIp"] != ""):
-				nodeIp = data["nodeIp"]
-				for node in created_nodes:
-					if(nodeIp == node.get_SDR_Address()):
-						cbsdSerialNumber = node['serial'] # Use Node IP to pull Serial# from UHD Lib
-=======
-	global tempNodeList
-	tempNodeList = []
 	for request in items:
-		nodeIp = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
+		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = None
 		try:
 			if(request["nodeIp"] != ""):
 				nodeIp = request["nodeIp"]
->>>>>>> 1e9f5a550173af1e5ea436f4cc8f70b9adfa947a
+				for node in created_nodes:
+					if(nodeIp == node.get_SDR_Address()):
+						cbsdSerialNumber = node.get_serialNumber()
 		except KeyError:
 			print("No nodeIp found for simRegistrationReq (socket_to_usrp.py line 144)")
+			# TODO: Abort Reg Request
 		if(not cbsdSerialNumber):
 			print("Not cbsdSerialNumber found for the node with IP Address: " + nodeIp + ".")
 			print("Exiting Registration Request...")
@@ -359,19 +349,12 @@ def simRegistrationReq(clientio, items):
 				cpiSignatureData = request["cpiSignatureData"]
 		except KeyError:
 			print("No cpiSignatureData found for simRegistrationReq (socket_to_usrp.py line 194)")
-<<<<<<< HEAD
 		arr.append(RegistrationRequest(userId, fccId, 
 			cbsdSerialNumber, callSign, cbsdCategory,
 			cbsdInfo, airInterface, installationParam, 
 			measCapability, groupingParam, cpiSignatureData).asdict())
 	payload = {"registrationRequest": arr}
 	clientio.emit("registrationRequest", json.dumps(payload))
-=======
-		
-		# If all data is good, at Node IP to the list for the reponse handler to pull out
-		tempNodeList.append(nodeIp)
-
->>>>>>> 1e9f5a550173af1e5ea436f4cc8f70b9adfa947a
 
 
 def configRegistrationReq():
@@ -428,21 +411,6 @@ def cmdRegistrationReq():
 
 def registrationRequest(clientio, items):
 	"""
-<<<<<<< HEAD
-	"""
-	while(True):
-		data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
-		if(data_source == 'E' or data_source == 'e'):
-			arrOfRequest = cmdRegistrationReq() # Prompt User
-			break
-		elif(data_source == 'L' or data_source == 'l'):
-			arrOfRequest = configRegistrationReq() # load config file
-			break
-		elif(data_source == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
-=======
 	Function that should always be called for a Registration Request
 
 	Parameters
@@ -468,7 +436,6 @@ def registrationRequest(clientio, items):
 				return
 			else:
 				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
->>>>>>> 1e9f5a550173af1e5ea436f4cc8f70b9adfa947a
 	# Need to save list of nodes being registered...
 	
 	payload = {"registrationRequest": arrOfRequest}
@@ -618,7 +585,7 @@ def cmdGrantReq(clientio):
 	arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
 	return arr
 
-def grantRequest(clientio, txUsrp):
+def grantRequest(clientio, payload):
 	"""
 	Creates a Grant Request and sends it to the SAS
 	"""
@@ -646,6 +613,13 @@ def handleGrantResponse(clientio, data):
 	jsonData = json.loads(data)
 	for grantResponse in jsonData["grantResponse"]:
 		print(grantResponse)
+		if(grantResponse["response"]):
+			response = grantResponse["response"]
+			if(response == '0'):
+					pass # good to go
+				# Create Grant obj in node
+			else:
+				pass #
 		if(grantResponse["cbsdId"]):
 			cbsdId = grantResponse["cbsdId"]
 		if(grantResponse["grantId"]):
@@ -662,7 +636,7 @@ def handleGrantResponse(clientio, data):
 			channelType = grantResponse["channelType"]
 		if(grantResponse["response"]):
 			response = grantResponse["response"]
-
+	
 
 def configHeartbeatReq():
 	"""
@@ -737,6 +711,15 @@ def handleHeartbeatResponse(clientio, data):
 			measReportConfig = hbResponse["measReportConfig"]
 		if(hbResponse["response"]):
 			response = hbResponse["response"]
+		#if grantStatus == GRANTED, make it AUTH
+		# Spawn 1 thread to wait for heartbeatInterval * 0.9 time
+		# default time: 1 sec
+
+		delayTilNextHeartbeat = float(heartbeatInterval) * 0.9
+		if(delayTilNextHeartbeat < 1):
+			delayTilNextHeartbeat = 1
+		scheduleNextHeartbeat = threading.Timer(delayTilNextHeartbeat, heartbeatRequest)
+		scheduleNextHeartbeat.start()
 
 
 def configRelinquishmentReq():
@@ -988,11 +971,11 @@ def init(clientio, args):
 					if(func == "createNode"):
 						simCreateNode(payload)
 					elif(func == "registrationRequest"):
-						pass
+						registrationRequest(clientio, payload)
 					elif(func == "spectrumInquiryRequest"):
-						pass
+						spectrumInquiryRequest(clientio, payload)
 					elif(func == "grantRequest"):
-						pass
+						grantRequest(clientio, payload)
 					elif(func == "heartbeatRequest"):
 						pass
 					elif(func == "relinquishmentRequest"):
@@ -1017,8 +1000,8 @@ def init(clientio, args):
 				if(user_input == 'h'):
 					print("""Commands Include:
 						0 - Exit Interface
-						1 - Create USRP
-						2 - View Nodes
+						1 - Create USRP Node
+						2 - View Created Nodes
 						3 - Create Registration Request
 						4 - Create Spectrum Inquiry Request
 						5 - Create Grant Request
@@ -1030,7 +1013,7 @@ def init(clientio, args):
 					print("Exiting System...")
 					sys.exit()
 				elif(userInput == '1'):
-					created_nodes.append(cmdCreateNode())
+					cmdCreateNode()
 				elif(userInput == '2'):
 					viewNodes()
 				elif(userInput == '3'):
@@ -1038,10 +1021,10 @@ def init(clientio, args):
 					registrationRequest(clientio, None)
 				elif(userInput == '4'):
 					__blocked = True
-					spectrumInquiryRequest(clientio)
+					spectrumInquiryRequest(clientio, None)
 				elif(userInput == '5'):
 					__blocked = True
-					grantRequest()
+					grantRequest(clientio, None)
 				elif(userInput == '6'):
 					__blocked = True
 					heartbeatRequest()
