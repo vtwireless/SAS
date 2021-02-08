@@ -20,11 +20,15 @@ def _ensureIsList(param):
 	"""
 	Ensures the passed parameter is an array, even if it is one element 
 
-		Parameters: 
-			param (any data type): parameter to check if is an array
+	Parameters
+	----------
+	param : any data type 
+		parameter to check if is an array
 
-		Returns:
-			param: list/array ensuredv version of "param" originally passed in
+	Returns
+	-------
+		param: list
+		 Ensured version of "param" originally passed in
 	"""
 	if(not isinstance(param, list)):
 		return [param]
