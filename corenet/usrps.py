@@ -12,20 +12,11 @@ from gnuradio import uhd
 # TODO: 'type' may be a reserved word
 # TODO: make this 'usrp.py' and include both TX and RX flowgraphs in here
 
-def _ipToSerial(ip):
-    """
-    Takes USRP IP Address and returns its serial number
-    """
-    for node in list(uhd.find_devices()):
-        if(ip == node['addr']):
-            return node['serial']
-    return "" # TODO: What happends when a serial isnt provided or found?
 
 
 class Grant:
     """
-    One node may have one grant object
-
+    One node may have one Grant object.
     Source: Page 7 of https://winnf.memberclicks.net/assets/CBRS/WINNF-TS-0016.pdf
 
     Attributes
@@ -48,20 +39,14 @@ class Grant:
     setGrantStatus(status)
         assigns instance variable grantStatus to passed parameter status
     """
-    def __init__(self, grantId, grantExpireTime):
+    def __init__(self):
         """
-        Constructor for a Grant Object
-
-        Parameters
-        ----------
-        grantId : string
-            grantId assigned by the SAS upon sucessful Grant request
-        grantStatus : string
-            One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
+        Constructor for a Grant Object. Grants are created once a node registers on the SAS.
+        Nodes are automatically sent to IDLE since they have yet to send a sucessfull Grant request.
         """
-        self.grantId = grantId
-        self.grantStatus = "GRANTED"
-        self.grantExpireTime = grantExpireTime
+        self.grantId         = ""
+        self.grantStatus     = "IDLE"
+        self.grantExpireTime = ""
     
     def getGrantId(self):
         """
@@ -105,9 +90,7 @@ class Grant:
         self.grantExpireTime = expireTime
 
 
-
-
-class tx_usrp(gr.top_block):
+class TX_Usrp(gr.top_block):
     """
     Class representing a USRP Transmitter Flowgraph
 
@@ -127,7 +110,7 @@ class tx_usrp(gr.top_block):
     TODO: Lots to add here
     """
 
-    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform, cbsdId=None, mode=None, data_type=None):
+    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform):
         """
         Constructs Tx USRP object
 
@@ -145,13 +128,8 @@ class tx_usrp(gr.top_block):
             Amplitude of signal from 0 to 1
         waveform : string
             Type of waveform (SINE, SAWTOOTH, etc)
-        cbsdId : string
-            ID given to node (SAS Functionality)
         mode : string
-            TX or RX (SAS Functionality)
-        type : string
-            Not entirly sure yet...
-            
+            TX or RX Flowgraph          
         """
 
         gr.top_block.__init__(self, "SAS USRP Transmitter")
@@ -164,49 +142,38 @@ class tx_usrp(gr.top_block):
         self.gain        = gain         # Required 
         self.sample_rate = sampRate     # Required
         self.signal_amp  = signalAmp    # Required
-        self.waveform    = self._convert_waveform(waveform)# Required
-        self.serialNum   = _ipToSerial(deviceAddr)
-        # self.model       = None # Should be able to use UHD for this also
-        self.mode        = mode   # Either build a TX or RX for this parameter
-        self.data_type   = "type" # TODO @Joseph is this data type? Video vs Text?
-        #TODO: Pull it's own serial# and model# from UHD once the IP is passed in 
-
-        if(mode == "TX"):
-            # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
-            # ...then that code can be pasted in here to simply update to this system
-            ##################################################
-            # Blocks
-            ##################################################
-            self.interest_signal = analog.sig_source_c(self.sample_rate, self.waveform, 0, self.signal_amp, 0, 0)
-            self.SDR_A = uhd.usrp_sink(
-                ",".join(("addr="+self.SDR_Address, '')),
-                uhd.stream_args(
-                    cpu_format="fc32",
-                    args='',
-                    channels=list(range(0,1)),
-                ),
-                '',
-            )
-            self.SDR_A.set_center_freq(self.freq, 0)
-            self.SDR_A.set_gain(self.gain, 0)
-            self.SDR_A.set_antenna('TX/RX', 0) # May need to add controls to this param
-            self.SDR_A.set_samp_rate(self.sample_rate)
-
-            # This is used to coordinate changes across mulitple devices it seems like
-            # It looks as though an external LO is used to get this nanosecond timing correct
-            # Can look into this feature at a later time when mulitple devices are working for the SAS
-            self.SDR_A.set_time_unknown_pps(uhd.time_spec()) # Need to learn more about this ^
+        self.waveform    = self._convert_waveform(waveform) # Required
 
 
-            ##################################################
-            # Connections
-            ##################################################
-            self.connect((self.interest_signal, 0), (self.SDR_A, 0))
-        elif(mode == "RX"):
-            pass
-        else:
-            print("'" + mode + "' is an invalid mode.. (usrps.py line 107)")
-            #exit?
+        # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
+        # ...then that code can be pasted in here to simply update to this system
+        ##################################################
+        # Blocks
+        ##################################################
+        self.interest_signal = analog.sig_source_c(self.sample_rate, self.waveform, 0, self.signal_amp, 0, 0)
+        self.SDR_A = uhd.usrp_sink(
+            ",".join(("addr="+self.SDR_Address, '')),
+            uhd.stream_args(
+                cpu_format="fc32",
+                args='',
+                channels=list(range(0,1)),
+            ),
+            '',
+        )
+        self.SDR_A.set_center_freq(self.freq, 0)
+        self.SDR_A.set_gain(self.gain, 0)
+        self.SDR_A.set_antenna('TX/RX', 0) # May need to add controls to this param
+        self.SDR_A.set_samp_rate(self.sample_rate)
+
+        # This is used to coordinate changes across mulitple devices it seems like
+        # It looks as though an external LO is used to get this nanosecond timing correct
+        # Can look into this feature at a later time when mulitple devices are working for the SAS
+        self.SDR_A.set_time_unknown_pps(uhd.time_spec()) # TODO: Learn more about this ^
+
+        ##################################################
+        # Connections
+        ##################################################
+        self.connect((self.interest_signal, 0), (self.SDR_A, 0))
 
     
     def get_serialNumber(self):
@@ -263,7 +230,6 @@ class tx_usrp(gr.top_block):
     def set_waveform(self, waveform):
         self.waveform = self._convert_waveform(waveform)
         
-
     def __convert_waveform(self, waveform):
         """
         Converts User Input Wavefore into GNU Radio Waveform
@@ -292,28 +258,124 @@ class tx_usrp(gr.top_block):
 
 class Node:
     """
-    Highest level Node class. This containts a USRP, Grant, and other node/cbsd data
+    Highest level Node class. This containts 2 flowgrahs for 1 USRP, Grant, and other node/cbsd data.
+
+    Attributes
+    ----------
+    operationMode : string
+        This will either be 'TX' or 'RX'. 
+    tx_usrp : TX_Usrp Object
+        Object associated with the TX Flowgraph
+    rx_usrp : RX_Usrp Object
+        Object associated with the RX Flowgraph
+    grant : Grant object
+        All nodes will have 1 Grant that includes all grant related data
+    cbsdId : string
+        ID of the node as given by the SAS upon registration
+
+    Methods
+    -------
     """
 
-    def __init__(self):
+    def __init__(self, ipAddress):
         """
         Constructor for a Node object
         """
-        self.usrp = None
-        self.grant = None
-        self.cbsdId = None
+
+        __available_radios = list(uhd.find_devices()) # Pull list of nodes available once, for use when creating usrp obj
+
+        self.ipAddress      = ipAddress
+        self.serialNum      = self._ipToSerial(ipAddress, __available_radios)
+        self.model          = self._getProductOrType(ipAddress, __available_radios)
+        self.operationMode  = ""
+        self.tx_usrp        = ""
+        self.rx_usrp        = "" 
+        self.grant          = ""
+        self.cbsdId         = ""
     
-    def getUsrp(self):
-        return self.usrp
-    def setUsrp(self, usrp):
-        self.usrp = usrp
+    def getIpAddress(self):
+        return self.ipAddress
+
+    def setIpAddress(self, ip):
+        self.ipAddress = ip
+
+    def getSerialNumber(self):
+        return self.serialNum
+
+    def setSerialNumber(self, num): 
+        self.serialNum = num
+    
+    def getModel(self):
+        return self.model
+    
+    def setModel(self, model):
+        self.model = model
+
+    def getOperationMode(self):
+        return self.operationMode
+
+    def setOperationMode(self, mode):
+        self.operationMode = mode 
+
+    def getTxUsrp(self):
+        return self.tx_usrp
+
+    def setTxUsrp(self, centerFreq, gain, sampRate, signalAmp, waveform):
+        self.tx_usrp = TX_Usrp(self.ipAddress, centerFreq, gain, sampRate, signalAmp, waveform)
+
+    def getRxUsrp(self):
+        return self.rx_usrp
+
+    def setRxUsrp(self, usrp):# TODO: Determine parameters for this
+        self.rx_usrp = usrp
     
     def getGrant(self):
         return self.grant
+
     def setGrant(self, grant):
         self.grant = grant
 
     def getCbsdId(self):
         return self.cbsdId 
+
     def setCbsdId(self, id):
         self.cbsdId = id
+
+    
+    def _ipToSerial(self, ip, __available_radios):
+        """
+        Takes USRP IP Address and returns its serial number.
+        If no USRP is found with the given serial number, then return 'N/A'.
+
+        Parameter
+        ---------
+        ip : string
+            IP address of USRP to find serial number
+        """
+        for node in __available_radios:
+            if(ip == node['addr']):
+                return node['serial']
+        return "N/A" # If no serial matches the IP Address provided
+
+    def _getProductOrType(self, ip, __available_radios):
+        """
+        Using USRP IP Address, find the USRP product/type (e.g. X310 or usrp2).
+
+        Returns
+        -------
+        usrpType : string
+            USRP product or type. If no match, returns 'N/A'
+        """
+        for node in __available_radios:
+            try:
+                if(ip == node['addr']):
+                    try:
+                        return node['product']
+                    except RuntimeError:
+                        try:
+                            return node['type']
+                        except RuntimeError:
+                            pass
+            except:
+                pass
+        return "N/A"

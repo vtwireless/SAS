@@ -696,7 +696,6 @@ class FrequencyRange:
 			return_dict["highFrequency"] = self.highFrequency
 		return return_dict
 
-# https://winnf.memberclicks.net/assets/CBRS/WINNF-SSC-0002.pdf
 class MeasReport:
 	"""
 	MeasReport - 
