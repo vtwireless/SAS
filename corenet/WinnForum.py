@@ -56,11 +56,14 @@ def responseDecode(code):
 	"""
 	Helper function to decode the values of responceCode into their Name
 
-		Parameters:
-			code (integer): code provided to translate into error name
-
-		Returns:
-			name (string): name belonging to provided code
+	Parameters
+	----------
+		code : integer 
+			code provided to translate into error name
+	Returns
+	-------
+		name : string
+			name belonging to provided code
 	"""
 	if(code == 0):
 		return "SUCCESS"

@@ -36,6 +36,9 @@ __blocked = False
 # sim_mode: used to ensure functions do not attempt blocking user-input features 
 __sim_mode = False
 
+#
+__heartbeatTimer = None
+
 # tempNodeList: used to hold the order of which nodes are sending requests...
 #	...so that when the response comes in, data can be assigned properly
 tempNodeList = []
@@ -178,6 +181,7 @@ def findNodeFromTempListByIndex(index):
 		else:
 			iter = iter + 1
 	return None
+
 # End Helper Functions--------------------------------------------------------------------------
 
 
@@ -422,7 +426,7 @@ def registrationRequest(clientio, items):
 	"""
 
 	if(__sim_mode):
-		simRegistrationReq(items)
+		simRegistrationReq(clientio, items)
 	else:
 		while(True):
 			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
@@ -673,25 +677,38 @@ def heartbeatRequest(clientio):
 	"""
 	Creates a heartbeat request to send to the SAS
 	"""
-	while(True):
-		dataSource = input("Would you like to manually enter the Heartbeat Request info or load from a file? (E)nter or (L)oad: ")
-		if(dataSource == 'E' or dataSource == 'e'):
-			arrOfRequest = cmdHeartbeatReq()
-			break
-		elif(dataSource == 'L' or dataSource == 'l'):
-			arrOfRequest = configHeartbeatReq()
-			break
-		elif(dataSource == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+	if(__sim_mode):
+		pass
+	else:
+		while(True):
+			dataSource = input("Would you like to manually enter the Heartbeat Request info or load from a file? (E)nter or (L)oad: ")
+			if(dataSource == 'E' or dataSource == 'e'):
+				arrOfRequest = cmdHeartbeatReq()
+				break
+			elif(dataSource == 'L' or dataSource == 'l'):
+				arrOfRequest = configHeartbeatReq()
+				break
+			elif(dataSource == 'exit'):
+				return
+			else:
+				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	payload = {"heartbeatRequest": arrOfRequest}
 	clientio.emit("heartbeatRequest", json.dumps(payload))
+	# start timer to track how long it takes for the response to come in 
+	# 240sec
+	timeTilHearbeatExpires = 240 # seconds
+	# or grant expire time, transmitExpirem, whichever is soonest
+	global __heartbeatTimer
+	__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, node_stop).start()
+
 
 def handleHeartbeatResponse(clientio, data):
 	"""
 	Handles Heartbeat Response message from SAS to CBSD
 	"""
+	global __heartbeatTimer
+	__heartbeatTimer.cancel()
+	
 	jsonData = json.loads(data)
 	for hbResponse in jsonData["heartbeatResponse"]:
 		print(hbResponse)
