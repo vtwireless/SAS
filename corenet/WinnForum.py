@@ -586,7 +586,7 @@ class RegistrationResponse:
 		SAS uses this parameter to configure CBSD measurement reporting. 
 		The measurement report requested by SAS shall be consistent with the CBSD measurement capabilities reported during the registration request. 
 		The CBSD shall report the measurement listed in this array. 
-		The permitted enumerations arespecified in [n.21].
+		The permitted enumerations are specified in [n.21].
 
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason. See Table 14: ResponseObject Definition.
