@@ -549,7 +549,7 @@ class VTParams:
 		self.maxFrequency = maxFrequency
 		self.minSampleRate = minSampleRate
 		self.maxSampleRate = maxSampleRate
-		self.nodeType = nodeType = "VT-CRTS-Node"
+		self.nodeType = nodeType or "VT-CRTS-Node"
 		self.isMobile = isMobile
 
 	def asdict(self):

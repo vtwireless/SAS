@@ -344,80 +344,62 @@ def simRegistrationReq(requests):
 	arr = []
 	global tempNodeList
 	tempNodeList = []
+	iter = 0
 	for request in requests:
 		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
-		installationParam = measCapability = groupingParam = cpiSignatureData = None
-
+		installationParam = measCapability = groupingParam = cpiSignatureData = vtParams = None
+		print("Creating Registration Request [" + str(iter+1) + "]:")
 		address = _grabPossibleEntry(request, "nodeIp")
 		if(not address):
 			print("No nodeIp address found. Registration Request invalid.")
 			continue
 		node = findNodeByIp(address)
-		if(node):
-			cbsdSerialNumber = node.getSerialNumber()
-			if(not cbsdSerialNumber):
-				print("Not cbsdSerialNumber found for the node with IP Address: '" + request["nodeIp"] + "'. Registration Request invalid.")
-				continue
+		if(not node):
+			print("No Created Node was found with the IP Address: '" + address + "'. Registration Request invalid.")
+			continue
+		cbsdSerialNumber = node.getSerialNumber()
+		if(not cbsdSerialNumber):
+			print("Not cbsdSerialNumber found for the node with IP Address: '" + address + "'. Registration Request invalid.")
+			continue
 		userId = _grabPossibleEntry(request, "userId")
 		if(not userId):
-			print("No userId found for simRegistrationReq.")
+			print("No userId found for simRegistrationReq. Registration Request invalid.")
+			continue
+		fccId = _grabPossibleEntry(request, "fccId")
+		if(not fccId):
+			print("No fccId found for simRegistrationReq. Registration Request invalid.")
+			continue
+		callSign = _grabPossibleEntry(request, "callSign")
+		cbsdCategory = _grabPossibleEntry(request, "cbsdCategory")
+		# TODO: Determine the proper cbsdCategories
+		# if(not cbsdCategory):
+		# 	print("No cbsdCategory provided. Registration Request invalid.")
+		# 	continue
+		cbsdInfo = _grabPossibleEntry(request, "cbsdInfo")
+		airInterface = _grabPossibleEntry(request, "airInterface")
+		# TODO: Determine the proper airInterfaces for the USRPs
+		# if(not airInterface):
+		# 	print("No airInterface provided. Registration Request invalid.")
+		# 	continue
+		installationParam = _grabPossibleEntry(request, installationParam)
+		# TODO: installationParam is condiitonal. Determine when it is needed.
+		# if(not installationParam):
+		# 	print("No installationParam provided. Registration Request invalid.")
+		# 	continue
+		measCapability = _grabPossibleEntry(request, "measCapability")
+		# TODO: measCapability is conditional. Determine when it is required.
+		# if(not measCapability):
+		# 	print("No measCapability provided. Registration Request invalid.")
+		# 	continue
+		groupingParam = _grabPossibleEntry(request, "groupingParam")
+		cpiSignatureData = _grabPossibleEntry(request, "cpiSignatureData")
+		vtParams = _grabPossibleEntry(request, "vtParams")
 
-
-		try:
-			if(request["userId"] != ""):
-				userId = request["userId"]
-		except KeyError:
-			print("No userId found for simRegistrationReq (socket_to_usrp.py line 149)")
-		try:
-			if(request["fccId"] != ""):
-				fccId = request["fccId"]
-		except KeyError:
-			print("No fccId found for simRegistrationReq (socket_to_usrp.py line 154)")
-		try:
-			if(request["callSign"] != ""):
-				callSign = request["callSign"]
-		except KeyError:
-			print("No callSign found for simRegistrationReq (socket_to_usrp.py line 159)")
-		try:
-			if(request["cbsdCategory"] != ""):
-				cbsdCategory = request["cbsdCategory"]
-		except KeyError:
-			print("No cbsdCategory found for simRegistrationReq (socket_to_usrp.py line 164)")
-		try:
-			if(request["cbsdInfo"] != ""):
-				cbsdInfo = request["cbsdInfo"]
-		except KeyError:
-			print("No cbsdInfo found for simRegistrationReq (socket_to_usrp.py line 169)")
-		try:
-			if(request["airInterface"] != ""):
-				airInterface = request["airInterface"]
-		except KeyError:
-			print("No airInterface found for simRegistrationReq (socket_to_usrp.py line 174)")
-		try:
-			if(request["installationParam"] != ""):
-				installationParam = request["installationParam"]
-		except KeyError:
-			print("No installationParam found for simRegistrationReq (socket_to_usrp.py line 179)")
-		try:
-			if(request["measCapability"] != ""):
-				measCapability = request["measCapability"]
-		except KeyError:
-			print("No measCapability found for simRegistrationReq (socket_to_usrp.py line 184)")
-		try:
-			if(request["groupingParam"] != ""):
-				groupingParam = request["groupingParam"]
-		except KeyError:
-			print("No groupingParam found for simRegistrationReq (socket_to_usrp.py line 189)")
-		try:
-			if(request["cpiSignatureData"] != ""):
-				cpiSignatureData = request["cpiSignatureData"]
-		except KeyError:
-			print("No cpiSignatureData found for simRegistrationReq (socket_to_usrp.py line 194)")
 		tempNodeList.append(node)
 		arr.append(RegistrationRequest(userId, fccId, 
 			cbsdSerialNumber, callSign, cbsdCategory,
 			cbsdInfo, airInterface, installationParam, 
-			measCapability, groupingParam, cpiSignatureData).asdict())
+			measCapability, groupingParam, cpiSignatureData, vtParams).asdict())
 	return arr		
 	
 def configRegistrationReq():
@@ -528,7 +510,7 @@ def handleRegistrationResponse(clientio, payload):
 	else:
 		print("Registration Response Received:")
 	for regResponse in regResponses:
-		print("Registration Response [" + iter + "]:")
+		print("Registration Response [" + str(iter+1) + "]:")
 		response = _grabPossibleEntry(regResponse, "response")
 		if(response):
 			responseCode = _grabPossibleEntry(response, "responseCode")
