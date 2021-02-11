@@ -642,7 +642,7 @@ class Response:
 
 class SpectrumInquiryRequest:
 	"""
-	SpectrumInquiryRequest - Array of SpectrumInquiryRequest objects. Each SpectrumInquiryRequest object represents a spectrum inquiry request of a CBSD.
+	SpectrumInquiryRequest - Each object represents a spectrum inquiry request of a CBSD.
 
 	Attributes
 	----------
@@ -656,16 +656,15 @@ class SpectrumInquiryRequest:
 		The CBSD uses this parameter to report measurements to the SAS. The format of the MeasReport object is provided in [n.21].
 		Refer to section 8 and the measurement capabilities in [n.21] for inclusion rules.
 	"""
-	def __init__(self, cbsdId, inquiredSpectrum, measReport=None, 
-		lowFrequency=-1, highFrequency=-1):
-		self.cbsdId = cbsdInfo #R
+	def __init__(self, cbsdId, inquiredSpectrum, measReport=None):
+		self.cbsdId = cbsdId #R
 		self.inquiredSpectrum = _ensureIsList(inquiredSpectrum) #R
 		self.measReport = measReport #C
 
 	def asdict(self):
 		return_dict = {}
 		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdInfo
+			return_dict["cbsdId"] = self.cbsdId
 		if(self.inquiredSpectrum):
 			return_dict["inquiredSpectrum"] = _toJsonDictArray(self.inquiredSpectrum)
 		if(self.measReport):
@@ -1014,7 +1013,7 @@ class GrantResponse:
 	measReportConfig : array of string (optional)
 		The SAS uses this parameter to configure CBSD measurement reporting. 
 		The measurement report requested by the SAS shall be consistent with the CBSD measurement capabilities reported during the registration request. The CBSD shall report the measurementslisted in this array. 
-		The permitted enumerations arespecified in [n.21]
+		The permitted enumerations are specified in [n.21]
 
 	operationParam : object OperationParam (optional)
 		If the Grant request is disapproved, using this object the SAS can optionally provide a new set of operation parameters to the CBSD for use in a new Grant request.

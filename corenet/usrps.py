@@ -12,8 +12,6 @@ from gnuradio import uhd
 # TODO: 'type' may be a reserved word
 # TODO: make this 'usrp.py' and include both TX and RX flowgraphs in here
 
-
-
 class Grant:
     """
     One node may have one Grant object.
@@ -89,7 +87,6 @@ class Grant:
         """
         self.grantExpireTime = expireTime
 
-
 class TX_Usrp(gr.top_block):
     """
     Class representing a USRP Transmitter Flowgraph
@@ -127,9 +124,7 @@ class TX_Usrp(gr.top_block):
         signalAmp : float
             Amplitude of signal from 0 to 1
         waveform : string
-            Type of waveform (SINE, SAWTOOTH, etc)
-        mode : string
-            TX or RX Flowgraph          
+            Type of waveform (SINE, SAWTOOTH, etc)         
         """
 
         gr.top_block.__init__(self, "SAS USRP Transmitter")
@@ -142,7 +137,7 @@ class TX_Usrp(gr.top_block):
         self.gain        = gain         # Required 
         self.sample_rate = sampRate     # Required
         self.signal_amp  = signalAmp    # Required
-        self.waveform    = self._convert_waveform(waveform) # Required
+        self.waveform    = waveform     # Required
 
 
         # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
@@ -176,17 +171,6 @@ class TX_Usrp(gr.top_block):
         self.connect((self.interest_signal, 0), (self.SDR_A, 0))
 
     
-    def get_serialNumber(self):
-        return self.serialNum
-    
-    def set_serialNumber(self, val):
-        self.serialNum = val
-
-    def set_mode(self, mode):
-        self.mode = mode
-
-    def get_mode(self):
-        return self.mode
 
     def get_SDR_Address(self):
         return self.SDR_Address
@@ -230,32 +214,6 @@ class TX_Usrp(gr.top_block):
     def set_waveform(self, waveform):
         self.waveform = self._convert_waveform(waveform)
         
-    def __convert_waveform(self, waveform):
-        """
-        Converts User Input Wavefore into GNU Radio Waveform
-        
-        Parameters
-        ----------
-        waveform : string
-            User friendly string representing waveform type
-
-        Return
-        ------
-            GNU Radio waveform library value. Defaults to Sine Wave. 
-        """
-        if waveform == "CONSTANT":
-            return analog.GR_CONST_WAVE
-        elif waveform == "COSINE":
-            return analog.GR_COS_WAVE
-        elif waveform == "SQUARE":
-            return analog.GR_SQR_WAVE
-        elif waveform == "TRIANGLE":
-            return analog.GR_TRI_WAVE
-        elif waveform == "SAWTOOTH":
-            return analog.GR_SAW_WAVE
-        else:
-            return analog.GR_SIN_WAVE
-
 class Node:
     """
     Highest level Node class. This containts 2 flowgrahs for 1 USRP, Grant, and other node/cbsd data.
@@ -282,16 +240,18 @@ class Node:
         Constructor for a Node object
         """
 
+        #TODO do not duplicate with create_nodes that are inactive
         __available_radios = list(uhd.find_devices()) # Pull list of nodes available once, for use when creating usrp obj
 
-        self.ipAddress      = ipAddress
-        self.serialNum      = self._ipToSerial(ipAddress, __available_radios)
-        self.model          = self._getProductOrType(ipAddress, __available_radios)
-        self.operationMode  = ""
-        self.tx_usrp        = ""
-        self.rx_usrp        = "" 
-        self.grant          = ""
-        self.cbsdId         = ""
+        self.ipAddress        = ipAddress
+        self.serialNum        = self._ipToSerial(ipAddress, __available_radios)
+        self.model            = self._getProductOrType(ipAddress, __available_radios)
+        self.operationMode    = ""
+        self.tx_usrp          = ""
+        self.rx_usrp          = "" 
+        self.grant            = ""
+        self.cbsdId           = ""
+        self.measReportConfig = []
     
     def getIpAddress(self):
         return self.ipAddress
@@ -321,8 +281,24 @@ class Node:
         return self.tx_usrp
 
     def setTxUsrp(self, centerFreq, gain, sampRate, signalAmp, waveform):
-        self.tx_usrp = TX_Usrp(self.ipAddress, centerFreq, gain, sampRate, signalAmp, waveform)
+        """
+        Creates a TX USRP Flowgraph (but does not start it)
+        All passed in parameters are checked for validity.
+        A USRP will not be created if any parameters are not compatible with the USRP.
 
+        TODO with Xavier
+
+        Returns
+        -------
+        validParams : boolean
+            True if USRP can handle the demanded parameters, False otherwise
+        """
+        if((centerFreq > 0) and (gain >= 0) and (sampRate > 0) and (signalAmp >= 0) and (self._convert_waveform(waveform))):
+            self.tx_usrp = TX_Usrp(self.ipAddress, centerFreq, gain, sampRate, signalAmp, self._convert_waveform(waveform))
+            return True
+        else:
+            return False
+        
     def getRxUsrp(self):
         return self.rx_usrp
 
@@ -340,8 +316,14 @@ class Node:
 
     def setCbsdId(self, id):
         self.cbsdId = id
-
     
+    def getMeasReportConfig(self):
+        return self.measReportConfig
+    
+    def setMeasReportConfig(self, config):
+        self.measReportConfig = config
+
+# Helper Functions------------------------------
     def _ipToSerial(self, ip, __available_radios):
         """
         Takes USRP IP Address and returns its serial number.
@@ -379,3 +361,32 @@ class Node:
             except:
                 pass
         return "N/A"
+    
+    def _convert_waveform(self, waveform):
+        """
+        Converts User Input Wavefore into GNU Radio Waveform
+        
+        Parameters
+        ----------
+        waveform : string
+            User friendly string representing waveform type
+
+        Return
+        ------
+            GNU Radio waveform library value. Defaults to Sine Wave. 
+        """
+        if(waveform == "CONSTANT"):
+            return analog.GR_CONST_WAVE
+        elif(waveform == "COSINE"):
+            return analog.GR_COS_WAVE
+        elif(waveform == "SQUARE"):
+            return analog.GR_SQR_WAVE
+        elif(waveform == "TRIANGLE"):
+            return analog.GR_TRI_WAVE
+        elif(waveform == "SAWTOOTH"):
+            return analog.GR_SAW_WAVE
+        elif(waveform == "SINE"):
+            return analog.GR_SIN_WAVE
+        else:
+            return None
+# End Helper Functions--------------------------

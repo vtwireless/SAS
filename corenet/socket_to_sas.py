@@ -67,7 +67,7 @@ parser.add_argument('-s','--sim',\
 		default=None)
 #------------------------------------------------------------------------------------------
 
-# Helper Functions--------------------------------------------------------------------------
+# Helper Functions-------------------------------------------------------------------------
 def isVaildInt(value):
 	"""
 	Returns True if a value can be casted to an int
@@ -89,24 +89,26 @@ def isVaildInt(value):
 		print("'" + value + "' is not a vaild int")
 	return False
 
-def printUsrpsAvailable():
-	"""
-	Prints out a list of avaiable USRPs on the network. Exact same as 'uhd_find_devices' macro.
-	"""
-	print(list(uhd.find_devices()))
-
 def _grabPossibleEntry(entry, key):
 	"""
-	Takes a dictionary entry and checks to see if it exists
-	TODO
+	Takes a dictionary entry and checks to see if it exists (e.g. check for entry[key]).
+
+	Parameters
+	----------
+	entry : dictionary
+		Dictonary to check for 'key'
+	key : string
+		String key for the dictonary
+
+	Returns
+	-------
+	value : various types
+		If entry exists, returns entry, otherwise return None
 	"""
 	try:
-		if(entry[key]):
-			print("entry not empty")
-		else:
-			print("entry empty")
+		return entry[key]
 	except KeyError:
-		print("Entry does not have a '" + key + "'' as a key")
+		return None
 
 def send_params(clientio, node):
 	"""
@@ -182,92 +184,117 @@ def findNodeFromTempListByIndex(index):
 	node : Node Object
 		The Node object with the given identifier 
 	"""
-	iter = 0
 	for node in created_nodes:
-		if(node.get_SDR_Address() == tempNodeList[iter]):
+		if(node.get_SDR_Address() == tempNodeList[index]):
 			return node
-		else:
-			iter = iter + 1
 	return None
 
-# End Helper Functions--------------------------------------------------------------------------
-
-
-
-def simCreateNode(items):
+def findNodeByIp(address):
 	"""
-	Creates node(s) based on simulation file and adds them to created_nodes array
+	Returns a Node with the provided IP Address
 
 	Parameters
 	----------
-	items : array of dictionaries with Node data
+	address : string
+		IP Address of a created_node
+
+	Returns
+	-------
+	node : Node object
+		Node with the desired IP Address
+	"""
+	for node in created_nodes:
+		if(address == node.getIpAddress()):
+			return node
+	return None
+# End Helper Functions---------------------------------------------------------------------
+
+# Create Node------------------------------------------------------------------------------
+def simCreateNode(requests):
+	"""
+	Creates node(s) based on simulation file
 
 	TODO: Make sure the data can create a vaild USRP
 	TODO: What params would RX need instead?
 	TODO: Decide what KeyErrors should hault node creation
+
+	Parameters
+	----------
+	requests : array of dictionaries 
+		Node data for creation
+
+	Returns
+	-------
+	arr : array of Node object(s)
 	"""
-	global created_nodes
-	for data in items:
+	arr = []
+	for request in requests:
 		usrpMode = address = centerFreq = gain = sampleRate = signalAmp = waveform = None
-		try:
-			if(data["mode"] != ""):
-				usrpMode = data["mode"]
-		except KeyError:
-			print("No mode found for simCreateNode")
-			# Error / Return
-		try:
-			if(data["address"] != ""):
-				address = data["address"]
-		except KeyError:
-			print("No address found for simCreateNode")
-			# Error / Return
-		try:
-			if(data["centerFreq"] != ""):
-				centerFreq = data["centerFreq"]
-		except KeyError:
-			print("No centerFreq found for simCreateNode")
-			# Error / Return IF TX
-		try:
-			if(data["gain"] != ""):
-				gain = data["gain"]
-		except KeyError:
-			print("No gain found for simCreateNode")
-		try:
-			if(data["sampleRate"] != ""):
-				sampleRate = data["sampleRate"]
-		except KeyError:
-			print("No sampleRate found for simCreateNode")
-		try:
-			if(data["signalAmp"] != ""):
-				signalAmp = data["signalAmp"]
-		except KeyError:
-			print("No signalAmp found for simCreateNode")
-		try:
-			if(data["waveform"] != ""):
-				waveform = data["waveform"]
-		except KeyError:
-			print("No waveform found for simCreateNode")
-			# Error / Return if TX 
+
+		usrpMode = _grabPossibleEntry(request, "mode")
+		if(not usrpMode):
+			print("No usrpMode found for simCreateNode. Node not created.")
+			continue # Move onto next 'request'
+
+		address = _grabPossibleEntry(request, "address")
+		if(not address):
+			print("No address found for simCreateNode. Node not created.")
+			continue
+		else:
+			# Ensure IP address is not in an already created_node that may be inactive
+			ipInUse = False
+			for node in created_nodes:
+				if(node.getIpAddress() == address):
+					ipInUse = True
+					break
+			if(ipInUse):
+				print("IP Address already belongs to a created Node. Node not created.")
+				continue
+			
+		centerFreq = _grabPossibleEntry(request, "centerFreq")
+		if(not centerFreq):
+			print("No centerFreq found for simCreateNode. Node not created.")
+			continue
+		gain = _grabPossibleEntry(request, "gain")
+		if(not gain):
+			print("No gain found for simCreateNode.")
+			#TODO Is this required?
+		sampleRate = _grabPossibleEntry(request, "sampleRate")
+		if(not sampleRate):
+			print("No sampleRate found for simCreateNode.")
+			#TODO Is this required?
+		signalAmp = _grabPossibleEntry(request, "signalAmp")
+		if(not signalAmp):
+			print("No signalAmp found for simCreateNode.")
+			#TODO
+		waveform = _grabPossibleEntry(request, "waveform")
+		if((not waveform) and (usrpMode == "TX")):
+			print("No waveform found for simCreateNode.")
+			#TODO
 		
 		node = Node(address)
 		node.setOperationMode(usrpMode)
+
 		if(usrpMode == "TX"):
 			node.setTxUsrp(centerFreq, gain, sampleRate, signalAmp, waveform)
-		else:
+		elif(usrpMode == "RX"):
 			node.setRxUsrp("")# TODO
-		created_nodes.append(node)
-
+		else:
+			#Invalid usrpMode provided
+			continue
+		arr.append(node)
+	return arr
 
 def cmdCreateNode():
 	"""
 	Walks a user through the command line to configure a USRP node.
 	Appends a node to the global created_nodes list
+
+	TODO: "How many nodes do you wanna create?"
 	"""
-	global created_nodes
-	node = None
-	usrpMode = promptUsrpMode()
 	sdrAddr = promptUsrpIpAddr()
-	# TODO: Now that IP is entered, maybe just pull more info from UHD and save it?
+	node = Node(sdrAddr)
+	usrpMode = promptUsrpMode()
 	cFreq = promptUsrpCenterFreq()
 	if(usrpMode == 'TX'):
 		# TODO: find min/max for all of these
@@ -275,18 +302,34 @@ def cmdCreateNode():
 		sampleRate = promptUsrpSampleRate()
 		signalAmp = promptUsrpSignalAmp()
 		waveform = promptUsrpWaveform()
-		node = tx_usrp(sdrAddr, cFreq, usrpGain, sampleRate, signalAmp, waveform, "", usrpMode) # Create instance of Tx with given params
+		node.setTxUsrp(cFreq, usrpGain, sampleRate, signalAmp, waveform) # Create instance of Tx with given params
 	elif(usrpMode == 'RX'):
 		pass # Big TODO
 	else:
 		print("Error")
-	if(node):
-		created_nodes.append(node)
+	return [node]
+
+def createNode(requests):
+	"""
+	Function always called when creating new Nodes. Appends create_nodes array with new Nodes.
+
+	Parameters
+	----------
+	requests : array of Requests (optional*)
+		If simulation file is calling this function, requests is an array of >=1 node data.
+		If this is being called by the cmd-line interface, requests should be 'None'
+	"""
+	global created_nodes
+	if(__sim_mode):
+		nodes = simCreateNode(requests)
 	else:
-		print("Node NOT created (socket_to_sas.py line 161)")
+		nodes = cmdCreateNode()
+	for node in nodes:
+		created_nodes.append(node)
+# End Create Node--------------------------------------------------------------------------
 
-
-def simRegistrationReq(clientio, items):
+# Registation Request----------------------------------------------------------------------
+def simRegistrationReq(requests):
 	"""
 	Simulation file provides data to create a Registration Request.
 
@@ -295,30 +338,31 @@ def simRegistrationReq(clientio, items):
 
 	Parameters
 	----------
-	items : array of dictionaries
+	requests : array of dictionaries
 		Registration Request data
 	"""
 	arr = []
 	global tempNodeList
 	tempNodeList = []
-	for request in items:
+	for request in requests:
 		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = None
-		try:
-			if(request["nodeIp"] != ""):
-				for node in created_nodes:
-					if(request["nodeIp"] == node.getIpAddress()):
-						cbsdSerialNumber = node.getSerialNumber()
-						tempNodeList.append(node)
-		except KeyError:
-			print("No nodeIp found for simRegistrationReq")
-			print("Exiting Registration Request...")
-			return
-			# TODO: Abort Reg Request
-		if(not cbsdSerialNumber):
-			print("Not cbsdSerialNumber found for the node with IP Address: '" + request["nodeIp"] + "'.")
-			print("Exiting Registration Request...")
-			return
+
+		address = _grabPossibleEntry(request, "nodeIp")
+		if(not address):
+			print("No nodeIp address found. Registration Request invalid.")
+			continue
+		node = findNodeByIp(address)
+		if(node):
+			cbsdSerialNumber = node.getSerialNumber()
+			if(not cbsdSerialNumber):
+				print("Not cbsdSerialNumber found for the node with IP Address: '" + request["nodeIp"] + "'. Registration Request invalid.")
+				continue
+		userId = _grabPossibleEntry(request, "userId")
+		if(not userId):
+			print("No userId found for simRegistrationReq.")
+
+
 		try:
 			if(request["userId"] != ""):
 				userId = request["userId"]
@@ -369,15 +413,13 @@ def simRegistrationReq(clientio, items):
 				cpiSignatureData = request["cpiSignatureData"]
 		except KeyError:
 			print("No cpiSignatureData found for simRegistrationReq (socket_to_usrp.py line 194)")
+		tempNodeList.append(node)
 		arr.append(RegistrationRequest(userId, fccId, 
 			cbsdSerialNumber, callSign, cbsdCategory,
 			cbsdInfo, airInterface, installationParam, 
 			measCapability, groupingParam, cpiSignatureData).asdict())
-			
-	payload = {"registrationRequest": arr}
-	clientio.emit("registrationRequest", json.dumps(payload))
-
-
+	return arr		
+	
 def configRegistrationReq():
 	"""
 	Pulls Registration Request Info from a file the user selects
@@ -399,7 +441,6 @@ def cmdRegistrationReq():
 	arr = []
 	global tempNodeList
 	tempNodeList = []
-
 	num = promptNumOfRequests("How many Registration Requests would you like to create at this moment?: ")
 	for x in range(num):
 		userId = input("Enter User ID: ")
@@ -432,7 +473,7 @@ def cmdRegistrationReq():
 		measCapability, groupingParam, cpiSignatureData=None).asdict())
 	return arr
 
-def registrationRequest(clientio, sim_items):
+def registrationRequest(clientio, requests):
 	"""
 	Function that should always be called for a Registration Request
 
@@ -440,12 +481,12 @@ def registrationRequest(clientio, sim_items):
 	----------
 	clientio : socket Object
 		Socket connection to the SAS
-	sim_items : array of Request(s) data
+	requests : array of Request(s) data
 		Only used if the sim file is calling this funciton
 	"""
 
 	if(__sim_mode):
-		simRegistrationReq(clientio, sim_items)
+		arrOfRequest = simRegistrationReq(requests)
 	else:
 		while(True):
 			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
@@ -478,39 +519,75 @@ def handleRegistrationResponse(clientio, payload):
 		Socket connection
 	"""
 	json_data = json.loads(payload)
-	responseCode = "error"
-	cbsdId = "error" 
-	responseMessage = ""
-	global tempNodeList  # Array of Nodes pending responses
 	iter = 0
-	for regResponse in json_data["registrationResponse"]:
-		print(regResponse)
-		if(regResponse["cbsdId"]):
-			cbsdId = regResponse["cbsdId"]
-			for node in created_nodes: # Find the node object this request went with
-				if(node.get_SDR_Address() == tempNodeList[iter]):
-					node.set_CbsdId(cbsdId)
-					print(node.get_SDR_Address() + " goes with " + node.get_CbsdId())
-		if(regResponse["measReportConfig"]):
-			measReportConfig = regResponse["measReportConfig"]
-		if(regResponse["response"]):
-			response = regResponse["response"]
-			if(response["responseCode"]):
-				responseCode = response["responseCode"]
-				if(isVaildInt(responseCode)):
-					print("Response Code: " + responseDecode(int(responseCode)))
-			if(response["responseMessage"]):
-				responseMessage = response["responseMessage"]
-			if(response["responseData"]):
-				responseData = response["responseData"]
-			if(responseCode == "0"):
-				print("Registration Successful!")
-				if(cbsdId):
-					print("Assigned CBSD ID: " + cbsdId)
-					node.set_Cbsd(cbsdId)
+
+	regResponses = _grabPossibleEntry(json_data, "registrationResponse")
+	if(not regResponses):
+		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
+		return
+	else:
+		print("Registration Response Received:")
+	for regResponse in regResponses:
+		print("Registration Response [" + iter + "]:")
+		response = _grabPossibleEntry(regResponse, "response")
+		if(response):
+			responseCode = _grabPossibleEntry(response, "responseCode")
+			if(not responseCode):
+				print("SAS Error: No response code provided. Registration invalid.")
+				continue
+			else:
+				print("Response Code: " + responseCode)
+			responseMessage =  _grabPossibleEntry(response, "responseMessage")
+			if(responseMessage):
 				print("Response Message: " + responseMessage)
+			responseData = _grabPossibleEntry(response, "responseData")
+			if(responseData):
+				print("Response Data: " + responseData)
+			if(responseCode != "0"):
+				print("SAS Error: Registration Unsuccessful (non-zero response code). Registration invalid.")
+				continue
+		else:
+			print("SAS Error: No reponse object found. Registration invalid.")
+			continue
+		
+		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
+		if(cbsdId):
+			node = tempNodeList[iter]
+			node.setCbsdId(cbsdId)
+			print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
+		else:
+			print("SAS Error: No cbsdId provided. Registration invalid.")
+		
+		measReportConfig =  _grabPossibleEntry(response, "measReportConfig")
+		if(measReportConfig):
+			if(not isinstance(measReportConfig, list)):
+				measReportConfig = [measReportConfig]
+			print("Measurment Report Configuration(s) Assigned: " + measReportConfig)
+			node.setMeasReportConfig(measReportConfig)
+		# TODO Update RX USRP with these params
+		# TODO Do we go right in and start RX?
+# End Registation Request------------------------------------------------------------------
 
+# Spectrum Inquiry Request----------------------------------------------------------------
+def simSpectrumInquiryReq(requests):
+	"""
+	Simulation file provides info on what spectum info to request from SAS
 
+	Parameters
+	----------
+	requests : array of dictionaries
+		Spectrum Inquiry Request data
+	"""
+	arr = []
+	global tempNodeList
+	tempNodeList = []
+
+	for request in requests:
+		#ip to cbsdId
+		address = _grabPossibleEntry(request["nodeIp"])
+		if(not address):
+			print("No nodeIp found")
+		id = addressToIp(address)
 
 def configSpectrumInquiryReq():
 	"""
@@ -577,7 +654,25 @@ def handleSpectrumInquiryResponse(clientio, data):
 				responseMessage = response["responseMessage"]
 			if(response["responseData"]):
 				responseData = response["responseData"]
+# End Spectrum Inquiry Request------------------------------------------------------------
 
+# Grant Request---------------------------------------------------------------------------
+def simGrantReq(requests):
+	"""
+	Function for simulation file to create a Grant request
+
+	Parameters
+	----------
+	requests : array of dictionaries
+		Grant Request data
+	"""
+	arr = []
+	for request in requests:
+		cbsdId = operationParam = measReport = vtGrantParams = None
+		cbsdId
+
+		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
+	return arr
 
 def configGrantReq():
 	"""
@@ -658,8 +753,9 @@ def handleGrantResponse(clientio, data):
 			channelType = grantResponse["channelType"]
 		if(grantResponse["response"]):
 			response = grantResponse["response"]
-	
+# End Grant Request------------------------------------------------------------------------
 
+# Heartbeat Request------------------------------------------------------------------------
 def configHeartbeatReq():
 	"""
 	Loads a heartbeat request form from a JSON file
@@ -719,7 +815,6 @@ def heartbeatRequest(clientio):
 	global __heartbeatTimer
 	__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, node_stop).start()
 
-
 def handleHeartbeatResponse(clientio, data):
 	"""
 	Handles Heartbeat Response message from SAS to CBSD
@@ -755,8 +850,9 @@ def handleHeartbeatResponse(clientio, data):
 			delayTilNextHeartbeat = 1
 		scheduleNextHeartbeat = threading.Timer(delayTilNextHeartbeat, heartbeatRequest)
 		scheduleNextHeartbeat.start()
+# End Heartbeat Request--------------------------------------------------------------------
 
-
+# Relinquishment Request-------------------------------------------------------------------
 def configRelinquishmentReq():
 	"""
 	"""
@@ -812,8 +908,9 @@ def handleRelinquishmentResponse(clientio, data):
 			grantId = relinquishment["grantId"]
 		if(relinquishment["response"]):
 			response = relinquishment["response"]
+# End Relinquishment Request---------------------------------------------------------------
 
-
+# Deregistration Request-------------------------------------------------------------------
 def configDeregistrationReq():
 	"""
 	"""
@@ -862,6 +959,7 @@ def handleDeregistrationResponse(clientio, data):
 			cbsdId = dereg["cbsdId"]
 		if(dereg["response"]):
 			response = dereg["response"]
+# End Deregistration Request---------------------------------------------------------------
 
 
 
@@ -888,7 +986,12 @@ def startNode(cbsdId):
 
 def defineSocketEvents(clientio):
 	"""
-	List of events the SAS may echo, and how to handle them
+	List of events the SAS may echo, and functions to call to handle them
+
+	Parameters
+	----------
+	clientio : socketio Client object
+		socket to SAS
 	"""
 	@clientio.event
 	def connect():
@@ -996,8 +1099,11 @@ def init(clientio, args):
 		global __sim_mode
 		__sim_mode = True
 		path = args['sim']
-		with open(path) as config:
-			data = json.load(config)
+		try:
+			with open(path) as config:
+				data = json.load(config)
+		except FileNotFoundError:
+			sys.exit("Fatal Error: No valid simulation file found at " + path + "\nExiting program...")
 		for time in data: 				# Sim file may have multiple instances of time to trigger events
 			for action in data[time]: 	# Each time may have multiple actions (requests)
 				for func in action:		# Each requests may have multiple payloads
@@ -1072,7 +1178,6 @@ def init(clientio, args):
 		
 	print("Exiting System...")
 	sys.exit()
-
 
 if __name__ == '__main__':
 	args = vars(parser.parse_args())	# Get command line arguments
