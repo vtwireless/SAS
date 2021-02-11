@@ -1013,7 +1013,7 @@ class GrantResponse:
 
 	measReportConfig : array of string (optional)
 		The SAS uses this parameter to configure CBSD measurement reporting. 
-		The measurement report requested by the SAS shall be consistent with the CBSD measurement capabilities reportedduring the registration request. The CBSD shall report the measurementslisted in this array. 
+		The measurement report requested by the SAS shall be consistent with the CBSD measurement capabilities reported during the registration request. The CBSD shall report the measurementslisted in this array. 
 		The permitted enumerations arespecified in [n.21]
 
 	operationParam : object OperationParam (optional)
