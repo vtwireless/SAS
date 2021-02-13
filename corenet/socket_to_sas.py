@@ -7,7 +7,7 @@
 # Description: Implementiation of an SDR Tx for SAS control. This flowgraph is the base of the TX Python script that will be further modified to include sockets and other SAS API requirements.
 # GNU Radio version: 3.8.1.0
 # Generated October 7, 2020
-# Last Updated: 01/05/2021
+# Last Updated: 02/13/2021
 
 # TODO: Dynamic Socket Addressing (Want to be able to switch address/port of socket on the fly)
 # TODO: Decide how SAS assigned info (i.e. cbsdId) is stored
@@ -68,6 +68,13 @@ parser.add_argument('-s','--sim',\
 #------------------------------------------------------------------------------------------
 
 # Helper Functions-------------------------------------------------------------------------
+def printCreatedNodes():
+	"""
+	Prints out create_nodes to terminal
+	"""
+	for node in created_nodes:
+		node.printInfo()
+
 def isVaildInt(value):
 	"""
 	Returns True if a value can be casted to an int
@@ -170,26 +177,27 @@ def updateRadio(node, params):
 	# Ack to server with new params
 	# send_params(clientio, node)
 
-def findNodeFromTempListByIndex(index):
+def findTempNodeByCbsdId(cbsdId):
 	"""
-	Helper Function to find Nodes in created_nodes with a given identifier 
+	SAS Responses utilize cbsdId to ID which nodes go with which responses.
+	This function accepts a cbsdId and returns the Node object is goes with.
 
 	Parameters
 	----------
-	index : int
-		index of tempList
+	cbsdId : string
+		CBSD ID of a desired Node awaiting a SAS response (i.e a node in tempNodeList)
 
 	Returns
 	-------
-	node : Node Object
-		The Node object with the given identifier 
+	node : Object
+		The Node with the same cbsdId. Will return 'None' if no Node has the cbsdId.
 	"""
-	for node in created_nodes:
-		if(node.get_SDR_Address() == tempNodeList[index]):
+	for node in tempNodeList:
+		if(node.getCbsdId() == cbsdId):
 			return node
 	return None
 
-def findNodeByIp(address):
+def findCreatedNodeByIp(address):
 	"""
 	Returns a Node with the provided IP Address
 
@@ -207,6 +215,76 @@ def findNodeByIp(address):
 		if(address == node.getIpAddress()):
 			return node
 	return None
+
+def reqAddressToNode(request, mustBeRegistered=True):
+	"""
+	This finds an IP address from a Sim request, and returns the Node object with the same IP.
+
+	Since the simulation file cannot identify Nodes by their cbsdIds that are dynamically assigned,
+	the sim file uses the Node IP addresses to idenetify them. 
+	This funciton helps by using the Node IP and returning the Node object, so that more info is available.
+	This is desirable in all the Requests functions (hence this function beginning with 'req').
+
+	Parameters
+	----------
+	request : dictionary
+		A single request from a simulation file
+	muBeRegistered : boolean
+		If True, only return back a Node obj if it has a cbsdId (i.e. if it is already registered)
+
+	Returns
+	-------
+	node : Node object
+		If a node match is found, return the Node, else return None
+	"""
+	address = _grabPossibleEntry(request, "nodeIp")
+	if(not address):
+		print("No nodeIp address found.")
+		return None
+	node = findCreatedNodeByIp(address)
+	if(not node):
+		print("No Created Node was found with the IP Address: '" + address + "'.")
+		return None
+	if(mustBeRegistered and not node.getCbsdId()):
+		print("Node found but not yet registered.")
+		return None
+	return node
+
+def _isValidResponse(response):
+	"""
+	This checks to see is the Response object provided by the SAS indicates a sucessfull request.
+	Response data will also be printed out in here, regardless of responseCode ("0").
+
+	Parameters
+	----------
+	response : dictonary 
+		A single Response object data
+
+	Returns
+	-------
+	isValid : boolean
+		Will return True if the response code is "0", otherwise False
+	"""
+	if(response):
+		responseCode = _grabPossibleEntry(response, "responseCode")
+		if(not responseCode):
+			print("SAS Error: No response code provided.")
+			return False
+		else:
+			print("Response Code: " + responseCode)
+		responseMessage =  _grabPossibleEntry(response, "responseMessage")
+		if(responseMessage):
+			print("Response Message: " + responseMessage)
+		responseData = _grabPossibleEntry(response, "responseData")
+		if(responseData):
+			print("Response Data: " + responseData)
+		if(responseCode != "0"):
+			print("SAS Error: Registration Unsuccessful (non-zero response code).")
+			return False
+	else:
+		print("SAS Error: No reponse object found.")
+		return False
+	return True
 # End Helper Functions---------------------------------------------------------------------
 
 # Create Node------------------------------------------------------------------------------
@@ -344,22 +422,19 @@ def simRegistrationReq(requests):
 	arr = []
 	global tempNodeList
 	tempNodeList = []
-	iter = 0
+	iter = -1
 	for request in requests:
+		iter = iter + 1
 		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = vtParams = None
 		print("Creating Registration Request [" + str(iter+1) + "]:")
-		address = _grabPossibleEntry(request, "nodeIp")
-		if(not address):
-			print("No nodeIp address found. Registration Request invalid.")
-			continue
-		node = findNodeByIp(address)
+		node = reqAddressToNode(request, False)
 		if(not node):
-			print("No Created Node was found with the IP Address: '" + address + "'. Registration Request invalid.")
+			print("Registration Request invalid.")
 			continue
 		cbsdSerialNumber = node.getSerialNumber()
 		if(not cbsdSerialNumber):
-			print("Not cbsdSerialNumber found for the node with IP Address: '" + address + "'. Registration Request invalid.")
+			print("No cbsdSerialNumber found for the node with IP Address: '" + address + "'. Registration Request invalid.")
 			continue
 		userId = _grabPossibleEntry(request, "userId")
 		if(not userId):
@@ -388,6 +463,10 @@ def simRegistrationReq(requests):
 		# 	continue
 		measCapability = _grabPossibleEntry(request, "measCapability")
 		# TODO: measCapability is conditional. Determine when it is required.
+		# This may be "RECEIVED_POWER_WITH_GRANT" if a Node can RX while TX-ing
+		# This may be "RECEIVED_POWER_WITHOUT_GRANT" if a Node will RX when not TX-ing
+		# This may be empty ("") if the Node has no RX ability
+		# This is an array, and a Node may be assigned both values (e.g. always RX)
 		# if(not measCapability):
 		# 	print("No measCapability provided. Registration Request invalid.")
 		# 	continue
@@ -455,7 +534,7 @@ def cmdRegistrationReq():
 		measCapability, groupingParam, cpiSignatureData=None).asdict())
 	return arr
 
-def registrationRequest(clientio, requests):
+def registrationRequest(clientio, payload=None):
 	"""
 	Function that should always be called for a Registration Request
 
@@ -463,12 +542,12 @@ def registrationRequest(clientio, requests):
 	----------
 	clientio : socket Object
 		Socket connection to the SAS
-	requests : array of Request(s) data
+	payload : array of Request(s) data
 		Only used if the sim file is calling this funciton
 	"""
 
 	if(__sim_mode):
-		arrOfRequest = simRegistrationReq(requests)
+		arrOfRequest = simRegistrationReq(payload)
 	else:
 		while(True):
 			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
@@ -487,7 +566,7 @@ def registrationRequest(clientio, requests):
 	payload = {"registrationRequest": arrOfRequest}
 	clientio.emit("registrationRequest", json.dumps(payload))
 
-def handleRegistrationResponse(clientio, payload):
+def handleRegistrationResponse(clientio, data):
 	"""
 	Receives data from SAS after a Registration Request is made
 
@@ -495,41 +574,27 @@ def handleRegistrationResponse(clientio, payload):
 
 	Parameters
 	----------
-	payload : JSON string
-		Registration response data
 	clientio : socketio Object
 		Socket connection
+	data : JSON string
+		Registration response data
 	"""
-	json_data = json.loads(payload)
-	iter = 0
+	json_data = json.loads(data)
+	iter = -1 # Increment happens at beginning of loop, so start with -1 to have 0 for the 1st loop
 
 	regResponses = _grabPossibleEntry(json_data, "registrationResponse")
 	if(not regResponses):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
 	else:
-		print("Registration Response Received:")
+		print("Registration Response Received")
 	for regResponse in regResponses:
+		iter = iter + 1 # Must increment at beginning because we may `continue` at any point
 		print("Registration Response [" + str(iter+1) + "]:")
+
 		response = _grabPossibleEntry(regResponse, "response")
-		if(response):
-			responseCode = _grabPossibleEntry(response, "responseCode")
-			if(not responseCode):
-				print("SAS Error: No response code provided. Registration invalid.")
-				continue
-			else:
-				print("Response Code: " + responseCode)
-			responseMessage =  _grabPossibleEntry(response, "responseMessage")
-			if(responseMessage):
-				print("Response Message: " + responseMessage)
-			responseData = _grabPossibleEntry(response, "responseData")
-			if(responseData):
-				print("Response Data: " + responseData)
-			if(responseCode != "0"):
-				print("SAS Error: Registration Unsuccessful (non-zero response code). Registration invalid.")
-				continue
-		else:
-			print("SAS Error: No reponse object found. Registration invalid.")
+		if(not _isValidResponse(response)):
+			print("Registration invalid.")
 			continue
 		
 		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
@@ -539,6 +604,7 @@ def handleRegistrationResponse(clientio, payload):
 			print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 		else:
 			print("SAS Error: No cbsdId provided. Registration invalid.")
+			continue
 		
 		measReportConfig =  _grabPossibleEntry(response, "measReportConfig")
 		if(measReportConfig):
@@ -563,18 +629,32 @@ def simSpectrumInquiryReq(requests):
 	arr = []
 	global tempNodeList
 	tempNodeList = []
-
+	iter = -1
 	for request in requests:
-		#ip to cbsdId
-		address = _grabPossibleEntry(request["nodeIp"])
-		if(not address):
-			print("No nodeIp found")
-		id = addressToIp(address)
+		iter = iter + 1
+		print("Spectrum Inquiry Request [" + str(iter+1) + "':")
+		node = reqAddressToNode(request, False)
+		if(not node):
+			print("Spectrum Inquiry Request invalid.")
+			continue
+		cbsdId = node.getCbsdId()
+		if(not cbsdId):
+			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Spectrum Inquiry Request invalid.")
+			continue
+		inquiredSpectrum = _grabPossibleEntry(request, "inquiredSpectrum")
+		measReport = _grabPossibleEntry(request, "measReport")
+		# TODO: measReport must be fake if it is getting passed in from the sim.json, or else
+		# there must be a function call to pull real RX data at this point
+		# TODO: measReport is required before a Node makes its first Grant request
+		# Possibly ensure that if this is the first Spectrum Inquiry, that it includes measReport
+		tempNodeList.append(node)
+		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport))
+	return arr
 
 def configSpectrumInquiryReq():
 	"""
 	"""
-	pass
+	return None
 
 def cmdSpectrumInquiryReq():
 	"""
@@ -595,11 +675,13 @@ def cmdSpectrumInquiryReq():
 	arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport).asdict())
 	return arr
 
-def spectrumInquiryRequest(clientio):
+def spectrumInquiryRequest(clientio, payload=None):
 	"""
 	Sends Spectrum Inquiry Request to the SAS
 	"""
 	arrOfRequest = None
+	if(__sim_mode):
+		arrOfRequest = simSpectrumInquiryReq(payload)
 	while(True):
 		dataSource = input("Would you like to manually enter the Spectrum Inquiry Request info or load from a file? (E)nter or (L)oad: ")
 		if(dataSource == 'E' or dataSource == 'e'):
@@ -649,10 +731,32 @@ def simGrantReq(requests):
 		Grant Request data
 	"""
 	arr = []
+	global tempNodeList
+	tempNodeList = []
+	iter = -1
 	for request in requests:
+		iter = iter + 1
 		cbsdId = operationParam = measReport = vtGrantParams = None
-		cbsdId
+		print("Grant Request [" + str(iter+1) + "':")
+		node = reqAddressToNode(request, False)
+		if(not node):
+			print("Grant Request invalid.")
+			continue
+		cbsdId = node.getCbsdId()
+		if(not cbsdId):
+			print("No cbsdId found for the node with IP Address: '" + address + "'. Grant Request invalid.")
+			continue
 
+		measReport = _grabPossibleEntry(request, "measReport")
+
+		operationParam = _grabPossibleEntry(request, "operationParam")
+		if(not operationParam):
+			print("No opeartionParam found. Grant Request invalid.")
+			continue
+
+		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
+
+		tempNodeList.append(node)
 		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
 	return arr
 
@@ -670,25 +774,27 @@ def cmdGrantReq(clientio):
 	print("Registered CBSD IDs:")
 	for node in registered_nodes:
 		print("\t"+node.get_CbsdId())
-	cbsdId = input("Enter CBSD of node you want to use for the grant request: ")
-	operationParam = promptOperationParam()
-	measReport = None
-	provideRcvdPowerMeas = getSelectorBoolean(input("Do you want to provide Received Power Measurments to the SAS? (Y)es or (N)o: "))
-	if(provideRcvdPowerMeas):
-		rcvdReport = promptRcvdPowerMeasReport()
-		measReport = MeasReport([rcvdReport])
-	vtGrantParams = None
-	provideVtGrantParams = getSelectorBoolean(input("Do you want to provide VT Grant Params? (Y)es or (N)o: "))
-	if(provideVtGrantParams):
-		vtGrantParams = promptVtGrantParams()
-	arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
+		cbsdId = input("Enter CBSD of node you want to use for the grant request: ")
+		operationParam = promptOperationParam()
+		measReport = None
+		provideRcvdPowerMeas = getSelectorBoolean(input("Do you want to provide Received Power Measurments to the SAS? (Y)es or (N)o: "))
+		if(provideRcvdPowerMeas):
+			rcvdReport = promptRcvdPowerMeasReport()
+			measReport = MeasReport([rcvdReport])
+		vtGrantParams = None
+		provideVtGrantParams = getSelectorBoolean(input("Do you want to provide VT Grant Params? (Y)es or (N)o: "))
+		if(provideVtGrantParams):
+			vtGrantParams = promptVtGrantParams()
+		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
 	return arr
 
-def grantRequest(clientio, payload):
+def grantRequest(clientio, payload=None):
 	"""
 	Creates a Grant Request and sends it to the SAS
 	"""
 	arrOfRequest = None
+	if(__sim_mode):
+		arrOfRequest = simGrantReq(payload)
 	while(True):
 		dataSource = input("Would you like to manually enter the Grant Request info or load from a file? (E)nter or (L)oad: ")
 		if(dataSource == 'E' or dataSource == 'e'):
@@ -707,37 +813,85 @@ def grantRequest(clientio, payload):
 def handleGrantResponse(clientio, data):
 	"""
 	Handles Grant Response message from SAS to CBSD
-	TODO: Ensure if this is sucessful, CBSD holds value of the active grant it is assigned to
 	"""
 	jsonData = json.loads(data)
-	for grantResponse in jsonData["grantResponse"]:
-		print(grantResponse)
-		if(grantResponse["response"]):
-			response = grantResponse["response"]
-			if(response == '0'):
-					pass # good to go
-				# Create Grant obj in node
-			else:
-				pass #
-		if(grantResponse["cbsdId"]):
-			cbsdId = grantResponse["cbsdId"]
-		if(grantResponse["grantId"]):
-			grantId = grantResponse["grantId"]
-		if(grantResponse["grantExpireTime"]):
-			grantExpireTime = grantResponse["grantExpireTime"]
-		if(grantResponse["heartbeatInterval"]):
-			heartbeatInterval = grantResponse["heartbeatInterval"]
-		if(grantResponse["measReportConfig"]):
-			measReportConfig = grantResponse["grantResponse"]
-		if(grantResponse["operationParam"]):
-			operationParam = grantResponse["operationParam"]
-		if(grantResponse["channelType"]):
-			channelType = grantResponse["channelType"]
-		if(grantResponse["response"]):
-			response = grantResponse["response"]
+	iter = -1
+	grantResponses = _grabPossibleEntry(jsonData, "grantResponse")
+	if(not grantResponses):
+		print("Unreadable data. Expecting JSON formatted payload. Grant(s) invalid.")
+		return
+	else:
+		print("Grant Response Received")
+	for grantResponse in grantResponses:
+		iter = iter + 1
+		print("Grant Response [" + str(iter+1) +"]:")
+		response = _grabPossibleEntry(grantResponse, "response")
+		if(not _isValidResponse(response)):
+			operationParam = _grabPossibleEntry(grantResponse, "operationParam")
+			if(operationParam):
+				# If Grant is disapproved, this is the suggested operationParam for the Node
+				print("Suggested Operation Parameters:")
+				eirp = _grabPossibleEntry(operationParam, "maxEirp")
+				freqRange = _grabPossibleEntry(operationParam, "operationFrequencyRange")
+				if(freqRange):
+					low = _grabPossibleEntry(freqRange, "lowFrequency")
+					high = _grabPossibleEntry(freqRange, "highFrequency")
+				if(low and high and eirp):
+					print("Max EIRP: " + eirp)
+					print("Operation Frequency Range: " + low + " - " +  high + " Hz")
+			print("Grant invalid.")
+			continue
+
+		channelType = _grabPossibleEntry(grantResponse, "channelType")
+		if(not channelType):
+			print("No channelType provided. Grant invalid.")
+			continue
+
+		grantId = _grabPossibleEntry(grantResponse, "grantId")
+		if(not grantId):
+			print("No grantId provided. Grant invalid")
+			continue
+		
+		grantExpireTime = _grabPossibleEntry(grantResponse, "grantExpireTime")
+		if(not grantExpireTime):
+			print("No grantExpireTime provided. Grant invalid.")
+			continue
+
+		heartbeatInterval = _grabPossibleEntry(grantResponse, "heartbeatInterval")
+		if(not heartbeatInterval):
+			print("No heartbeatInterval provided. Grant invalid.")
+			continue
+
+		cbsdId = _grabPossibleEntry(grantResponse, "cbsdId")
+		if(cbsdId):
+			node = findTempNodeByCbsdId(cbsdId)
+			if(not node):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Grant invalid.")
+				continue
+		else:
+			print("SAS Error: No cbsdId provided. Grant invalid.")
+			continue
+
+		measReportConfig = _grabPossibleEntry(grantResponse, "measReportConfig")
+		if(measReportConfig):
+			if(not isinstance(measReportConfig, list)):
+				measReportConfig = [measReportConfig]
+			node.setMeasReportConfig(measReportConfig)
+
+		nodeGrant = node.getGrant()
+		nodeGrant.setGrantId(grantId)
+		nodeGrant.setGrantStatus("GRANTED")
+		nodeGrant.setGrantExpireTime(grantExpireTime)
+		nodeGrant.setHeartbeatInterval(heartbeatInterval)
+		nodeGrant.setChanneltype(channelType)
 # End Grant Request------------------------------------------------------------------------
 
 # Heartbeat Request------------------------------------------------------------------------
+def simHeartbeatReq(requests):
+	"""
+	"""
+	pass
+
 def configHeartbeatReq():
 	"""
 	Loads a heartbeat request form from a JSON file
@@ -769,7 +923,7 @@ def cmdHeartbeatReq():
 	arr.append(HeartbeatRequest(cbsdId, grantId, grantRenew, operationState, measReport).asdict())
 	return arr
 
-def heartbeatRequest(clientio):
+def heartbeatRequest(clientio, payload=None):
 	"""
 	Creates a heartbeat request to send to the SAS
 	"""
@@ -805,28 +959,74 @@ def handleHeartbeatResponse(clientio, data):
 	__heartbeatTimer.cancel()
 	
 	jsonData = json.loads(data)
-	for hbResponse in jsonData["heartbeatResponse"]:
-		print(hbResponse)
-		if(hbResponse["cbsdId"]):
-			cbsdId = hbResponse["cbsdId"]
-		if(hbResponse["grantId"]):
-			grantId = hbResponse["grantId"]
-		if(hbResponse["transmitExpireTime"]):
-			transmitExpireTime = hbResponse["transmitExpireTime"]
-		if(hbResponse["grantExpireTime"]):
-			grantExpireTime = hbResponse["grantExpireTime"]
-		if(hbResponse["heartbeatInterval"]):
-			heartbeatInterval = hbResponse["heartbeatInterval"]
-		if(hbResponse["operationParam"]):
-			operationParam = hbResponse["operationParam"]
-		if(hbResponse["measReportConfig"]):
-			measReportConfig = hbResponse["measReportConfig"]
-		if(hbResponse["response"]):
-			response = hbResponse["response"]
+	iter = -1
+	hbResponses = _grabPossibleEntry(jsonData, "heartbeatResponse")
+	if(not hbResponses):
+		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
+		return
+	else:
+		print("Heartbeat Response Received")
+	for hbResponse in hbResponses:
+		iter = iter + 1
+		print("Heartbeat Response [" + str(iter+1) +"]:")
+		response = _grabPossibleEntry(hbResponse, "response")
+		if(not _isValidResponse(response)):
+			operationParam = _grabPossibleEntry(hbResponse, "operationParam")
+			if(operationParam):
+				# If Heartbeat is disapproved, this is the suggested operationParam for the Node
+				print("Suggested Operation Parameters:")
+				eirp = _grabPossibleEntry(operationParam, "maxEirp")
+				freqRange = _grabPossibleEntry(operationParam, "operationFrequencyRange")
+				if(freqRange):
+					low = _grabPossibleEntry(freqRange, "lowFrequency")
+					high = _grabPossibleEntry(freqRange, "highFrequency")
+				if(low and high and eirp):
+					print("Max EIRP: " + eirp)
+					print("Operation Frequency Range: " + low + " - " +  high + " Hz")
+			print("Heartbeat invalid.")
+			continue
+
+		cbsdId = _grabPossibleEntry(hbResponse, "cbsdId")
+		if(cbsdId):
+			node = findTempNodeByCbsdId(cbsdId)
+			if(not node):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Heartbeat invalid.")
+				continue
+		else:
+			print("No cbsdId provided. Heartbeat invalid.")
+			continue
+
+		grantId = _grabPossibleEntry(hbResponse, "grantId")
+		if(not grantId):
+			print("No grantId provided. Heartbeat invalid")
+			continue
+
+		transmitExpireTime = _grabPossibleEntry(hbResponse, "transmitExpireTime")
+		if(not transmitExpireTime):
+			print("No transmitExpireTime provided. Heartbeat invalid.")
+			continue
+
+		grantExpireTime = _grabPossibleEntry(hbResponse, "grantExpireTime")
+		if(not grantExpireTime):
+			print("No grantExpireTime provided. Heartbeat invalid.")
+			continue
+
+		heartbeatInterval = _grabPossibleEntry(hbResponse, "heartbeatInterval")
+		if(not heartbeatInterval):
+			print("No heartbeatInterval provided. Heartbeat invalid.")
+			continue
+	
+		measReportConfig = _grabPossibleEntry(hbResponse, "measReportConfig")
+		if(measReportConfig):
+			if(not isinstance(measReportConfig, list)):
+				measReportConfig = [measReportConfig]
+			node.setMeasReportConfig(measReportConfig)
+
 		#if grantStatus == GRANTED, make it AUTH
 		# Spawn 1 thread to wait for heartbeatInterval * 0.9 time
 		# default time: 1 sec
 
+		# Schedule the next HeartbeatRequest
 		delayTilNextHeartbeat = float(heartbeatInterval) * 0.9
 		if(delayTilNextHeartbeat < 1):
 			delayTilNextHeartbeat = 1
@@ -835,10 +1035,33 @@ def handleHeartbeatResponse(clientio, data):
 # End Heartbeat Request--------------------------------------------------------------------
 
 # Relinquishment Request-------------------------------------------------------------------
-def configRelinquishmentReq():
+def simRelinquishmentReq(requests):
+	"""
+	Read sim file for Relinquishment Request(s)
+	"""
+	arr = []
+	global tempNodeList
+	tempNodeList = []
+	iter = 0
+	for request in requests:
+		print("Creating Relinquishment Request [" + str(iter+1) + "]:")
+		node = reqAddressToNode(request, False)
+		if(not node):
+			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Registration Request invalid.")
+			continue
+		cbsdId = node.getCbsdId()
+		if(not cbsdId):
+			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Spectrum Inquiry Request invalid.")
+			continue
+		grantId = node.getGrant().getGrantId()
+		tempNodeList.append(node)
+		arr.append(RelinquishmentRequest(cbsdId, grantId))
+	return arr
+
+def configRelinquishmentRequest():
 	"""
 	"""
-	pass
+	pass		
 
 def cmdRelinquishmentReq():
 	"""
@@ -858,7 +1081,7 @@ def cmdRelinquishmentReq():
 	arr.append(RelinquishmentRequest(cbsdId, grantId).asdict())
 	return arr
 
-def relinquishmentRequest(clientio):
+def relinquishmentRequest(clientio, payload=None):
 	"""
 	Creates Relinishment Request to send to the SAS
 	"""
@@ -879,20 +1102,53 @@ def relinquishmentRequest(clientio):
 
 def handleRelinquishmentResponse(clientio, data):
 	"""
-	Handles data returned from SAS regarding previously sent Relinquishment Request
+	Handles data returned from SAS regarding previously sent Relinquishment Request.
+
+	Relinquishment Requests resets the Grant object for a Node
 	"""
 	jsonData = json.loads(data)
-	for relinquishment in jsonData["relinquishmentResponse"]:
-		print(relinquishment)
-		if(relinquishment["cbsdId"]):
-			cbsdId = relinquishment["cbsdId"]
-		if(relinquishment["grantId"]):
-			grantId = relinquishment["grantId"]
-		if(relinquishment["response"]):
-			response = relinquishment["response"]
+	iter = -1
+	relinquishResponses = _grabPossibleEntry(jsonData, "relinquishmentResponse")
+	if(not relinquishResponses):
+		print("Unreadable data. Expecting JSON formatted payload. Relinquishment(s) invalid.")
+		return
+	else:
+		print("Relinquishment Response Received")
+	for relinquishment in relinquishResponses:
+		iter = iter + 1
+		print("Relinquishment Response [" + str(iter+1) +"]:")
+		response = _grabPossibleEntry(relinquishment, "response")
+		if(not _isValidResponse(response)):
+			print("Relinquishment invalid.")
+			continue
+
+		cbsdId = _grabPossibleEntry(relinquishment, "cbsdId")
+		if(cbsdId):
+			node = findTempNodeByCbsdId(cbsdId)
+			if(not node):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Relinquishment invalid.")
+				continue
+		else:
+			print("No cbsdId provided. Heartbeat invalid.")
+			continue
+
+		grantId = _grabPossibleEntry(relinquishment, "grantId")
+		if(not grantId):
+			print("No grantId provided. Relinquishment invalid")
+			continue
+		
+		grant = node.getGrantRequest()
+		grant.__init__() # TODO: Make sure this resets the Grant
+		# TODO: If a heartbeat is scheduled, make sure to address it
 # End Relinquishment Request---------------------------------------------------------------
 
 # Deregistration Request-------------------------------------------------------------------
+def simDeregistrationReq():
+	"""
+	Sim file handler for a Deregistration Request 
+	"""
+	pass
+
 def configDeregistrationReq():
 	"""
 	"""
@@ -912,22 +1168,25 @@ def cmdDeregistrationReq():
 	arr.append(DeregistrationRequest(cbsdId).asdict())
 	return arr
 
-def deregistrationReq(clientio):
+def deregistrationReq(clientio, payload=None):
 	"""
 	Creates a Deregistration request and sends it to the SAS
 	"""
-	while(True):
-		dataSource = input("Would you like to manually enter the Deregistration Request info or load from a file? (E)nter or (L)oad: ")
-		if(dataSource == 'E' or dataSource == 'e'):
-			arrOfRequest = cmdDeregistrationReq()
-			break
-		elif(dataSource == 'L' or dataSource == 'l'):
-			arrOfRequest = configDeregistrationReq()
-			break
-		elif(dataSource == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+	if(__sim_mode):
+		arrOfrequest = simDeregistrationReq(payload)
+	else:
+		while(True):
+			dataSource = input("Would you like to manually enter the Deregistration Request info or load from a file? (E)nter or (L)oad: ")
+			if(dataSource == 'E' or dataSource == 'e'):
+				arrOfRequest = cmdDeregistrationReq()
+				break
+			elif(dataSource == 'L' or dataSource == 'l'):
+				arrOfRequest = configDeregistrationReq()
+				break
+			elif(dataSource == 'exit'):
+				return
+			else:
+				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	payload = {"deregistrationRequest": arrOfRequest}
 	clientio.emit("deregistrationRequest", json.dumps(payload))
 
@@ -942,7 +1201,6 @@ def handleDeregistrationResponse(clientio, data):
 		if(dereg["response"]):
 			response = dereg["response"]
 # End Deregistration Request---------------------------------------------------------------
-
 
 
 def stopNode(cbsdId):
@@ -1051,7 +1309,7 @@ def defineSocketEvents(clientio):
 	def disconnect():
 		print('Server terminated connection')
 
-def init(clientio, args):
+def init(args):
 	"""
 	Create radio object and connects to server
 
@@ -1061,12 +1319,10 @@ def init(clientio, args):
 		List of parameters extracted from command line flags
 	"""
 
-	# Create handlers for events the SAS may emit
-	defineSocketEvents(clientio)
-
-	# Connect to SAS
+	clientio = socketio.Client()  # Create Client Socket
+	defineSocketEvents(clientio)  # Create handlers for events the SAS may emit
 	socket_addr = 'http://' + args['address'] +':' + args['port']
-	clientio.connect(socket_addr)
+	clientio.connect(socket_addr) # Connect to SAS
 
 	# Create global array of USRPs for use across functions
 	# TODO: I should not have to reiterate what created_node is in here since I READ_ONLY in here
@@ -1119,8 +1375,8 @@ def init(clientio, args):
 		print("Enter 'h' for help/list of commands")
 		while True:
 			while not __blocked:
-				user_input = input("User Input: ")
-				if(user_input == 'h'):
+				userInput = input("User Input: ")
+				if(userInput == 'h'):
 					print("""Commands Include:
 						0 - Exit Interface
 						1 - Create USRP Node
@@ -1138,32 +1394,30 @@ def init(clientio, args):
 				elif(userInput == '1'):
 					cmdCreateNode()
 				elif(userInput == '2'):
-					viewNodes()
+					printCreatedNodes()
 				elif(userInput == '3'):
 					__blocked = True
-					registrationRequest(clientio, None)
+					registrationRequest(clientio)
 				elif(userInput == '4'):
 					__blocked = True
-					spectrumInquiryRequest(clientio, None)
+					spectrumInquiryRequest(clientio)
 				elif(userInput == '5'):
 					__blocked = True
-					grantRequest(clientio, None)
+					grantRequest(clientio)
 				elif(userInput == '6'):
 					__blocked = True
-					heartbeatRequest()
+					heartbeatRequest(clientio)
 				elif(userInput == '7'):
 					__blocked = True
-					relinquishmentRequest()
+					relinquishmentRequest(clientio)
 				elif(userInput == '8'):
 					__blocked = True
-					deregistrationRequest()
+					deregistrationRequest(clientio)
 		
 	print("Exiting System...")
 	sys.exit()
 
 if __name__ == '__main__':
 	args = vars(parser.parse_args())	# Get command line arguments
-	clientio = socketio.Client()		# Create Client Socket
-	init(clientio, args)				# Init Tx USRP and Socket
-	clientio.wait()					 	# Wait for Socket Events TODO: Doesn't reach here?
+	init(args)							# Init Tx USRP and Socket
 	

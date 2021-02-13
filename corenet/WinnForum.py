@@ -879,7 +879,7 @@ class GrantRequest:
 		The format of the MeasReport object is provided in [n.21].
 		Referto section 8 and [n.21] for inclusion rules
 
-	vtGrantParams : object VTGrantParams
+	vtGrantParams : object VTGrantParams (optional)
 		Object used for research data collection.
 		This is not a WinnForum specified data type.
 	
@@ -1019,7 +1019,7 @@ class GrantResponse:
 		If the Grant request is disapproved, using this object the SAS can optionally provide a new set of operation parameters to the CBSD for use in a new Grant request.
 
 	channelType : string (conditional)
-		This parameter is included if and only if the responseCodeparameter indicates SUCCESS, i.e., the Grant request was successful."PAL": the frequency range is a PAL channel."GAA": the frequency range is for GAA use.
+		This parameter is included if and only if the responseCode parameter indicates SUCCESS, i.e., the Grant request was successful. "PAL": the frequency range is a PAL channel. "GAA": the frequency range is for GAA use.
 
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14.
@@ -1129,7 +1129,7 @@ class HeartbeatResponse:
 		This parameter isincluded when the SAS wants tochange the heartbeat interval.
 
 	operationParam : object OperationParam (optional)
-		If heartbeat request is disapproved or the SAS intends to change the CBSD operation parameters, the SAS can provide a new set of operation parameters to the CBSD using this objectas arecommendation to request a new Grant
+		If heartbeat request is disapproved or the SAS intends to change the CBSD operation parameters, the SAS can provide a new set of operation parameters to the CBSD using this object as a recommendation to request a new Grant
 
 	measReportConfig : array of string (optional)
 		The SAS uses this parameter to configure CBSD measurement reporting. 

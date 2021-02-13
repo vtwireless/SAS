@@ -25,26 +25,36 @@ class Grant:
         One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
     grantExpireTime : string
         Time at which the grant is no longer valid
-
+    heartbeatInterval : string (integer)
+        Maximum number of seconds allowed between Heartbeats
+    channelType : string
+        "PAL" or "GAA" channel descriptor
+        
     Methods
     -------
     getGrantId()
         returns grantId for the Grant the node is assigned to
     setGrantId(id)
-        assigns instance variable grantId to passed parameter id
+        assigns grantId to passed parameter id
     getGrantStatus()
         returns grantStatus for the Grant the node is assigned to
     setGrantStatus(status)
-        assigns instance variable grantStatus to passed parameter status
+        assigns grantStatus to passed parameter status
+    getGrantExpireTime
+        returns grantExpireTime for the Grant the node is assigned to
+    setGrantExpireTime(expireTime)
+        assigns grantExpireTime to passed parameter expireTime
     """
     def __init__(self):
         """
         Constructor for a Grant Object. Grants are created once a node registers on the SAS.
         Nodes are automatically sent to IDLE since they have yet to send a sucessfull Grant request.
         """
-        self.grantId         = ""
-        self.grantStatus     = "IDLE"
-        self.grantExpireTime = ""
+        self.grantId           = ""
+        self.grantStatus       = "IDLE"
+        self.grantExpireTime   = ""
+        self.heartbeatInterval = "" 
+        self.channelType       = ""
     
     def getGrantId(self):
         """
@@ -59,7 +69,7 @@ class Grant:
 
     def setGrantId(self, id):
         """
-        Assigns instance variable grantId to passed parameter id
+        Assigns grantId to passed parameter id
         """
         self.grantId = id
     
@@ -71,7 +81,7 @@ class Grant:
 
     def setGrantStatus(self, status):
         """
-        Assigns instance variable grantStatus to passed parameter status
+        Assigns grantStatus to passed parameter status
         """
         self.grantStatus = status
 
@@ -83,9 +93,21 @@ class Grant:
 
     def setGrantExpireTime(self, expireTime):
         """
-        Assigns instance variable grantExpireTime to passed parameter status
+        Assigns grantExpireTime to passed parameter status
         """
         self.grantExpireTime = expireTime
+    
+    def getHeartbeatInterval(self):
+        """
+        Returns heartbeatInterval for the Grant the node is assigned to
+        """
+        return self.heartbeatInterval
+    
+    def setHeartbeatInterval(self, hbInt):
+        """
+        Assigns heartbeatInterval to passed parameter status
+        """
+        self.heartbeatInterval = hbInt
 
 class TX_Usrp(gr.top_block):
     """
@@ -234,7 +256,6 @@ class Node:
     Methods
     -------
     """
-
     def __init__(self, ipAddress):
         """
         Constructor for a Node object
@@ -246,11 +267,11 @@ class Node:
         self.ipAddress        = ipAddress
         self.serialNum        = self._ipToSerial(ipAddress, __available_radios)
         self.model            = self._getProductOrType(ipAddress, __available_radios)
-        self.operationMode    = ""
-        self.tx_usrp          = ""
-        self.rx_usrp          = "" 
-        self.grant            = ""
-        self.cbsdId           = ""
+        self.operationMode    = None
+        self.tx_usrp          = None
+        self.rx_usrp          = None 
+        self.grant            = Grant()
+        self.cbsdId           = None
         self.measReportConfig = []
     
     def getIpAddress(self):
@@ -322,6 +343,12 @@ class Node:
     
     def setMeasReportConfig(self, config):
         self.measReportConfig = config
+
+    def printInfo(self):
+        """
+        This function will neatly print all Node information to the terminal
+        """
+        print("node data")
 
 # Helper Functions------------------------------
     def _ipToSerial(self, ip, __available_radios):
