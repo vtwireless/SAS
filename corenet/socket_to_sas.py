@@ -46,7 +46,7 @@ tempNodeList = []
 # created_nodes: used to hold all created CRTS USRP Nodes objects
 created_nodes = []
 
-# registered_nodes: nodes that have requested to be registered with the SAS
+# registered_nodes: nodes that have requested to be registered with the SAS.
 registered_nodes = []
 
 # Parser extracts command line flags/parameters  
@@ -318,16 +318,10 @@ def simCreateNode(requests):
 		if(not address):
 			print("No address found for simCreateNode. Node not created.")
 			continue
-		else:
-			# Ensure IP address is not in an already created_node that may be inactive
-			ipInUse = False
-			for node in created_nodes:
-				if(node.getIpAddress() == address):
-					ipInUse = True
-					break
-			if(ipInUse):
-				print("IP Address already belongs to a created Node. Node not created.")
-				continue
+		# Ensure IP address is not in an already created_node that may be inactive
+		if(findCreatedNodeByIp(address)):
+			print("IP Address already belongs to a created Node. Node not created.")
+			continue
 			
 		centerFreq = _grabPossibleEntry(request, "centerFreq")
 		if(not centerFreq):
@@ -387,13 +381,13 @@ def cmdCreateNode():
 		print("Error")
 	return [node]
 
-def createNode(requests):
+def createNode(requests=None):
 	"""
 	Function always called when creating new Nodes. Appends create_nodes array with new Nodes.
 
 	Parameters
 	----------
-	requests : array of Requests (optional*)
+	requests : array of Requests (optional)
 		If simulation file is calling this function, requests is an array of >=1 node data.
 		If this is being called by the cmd-line interface, requests should be 'None'
 	"""
@@ -434,7 +428,7 @@ def simRegistrationReq(requests):
 			continue
 		cbsdSerialNumber = node.getSerialNumber()
 		if(not cbsdSerialNumber):
-			print("No cbsdSerialNumber found for the node with IP Address: '" + address + "'. Registration Request invalid.")
+			print("No cbsdSerialNumber found for the node with IP Address: '" + node.getIpaAddress + "'. Registration Request invalid.")
 			continue
 		userId = _grabPossibleEntry(request, "userId")
 		if(not userId):
@@ -516,7 +510,7 @@ def cmdRegistrationReq():
 		installationInfoSelector = getSelectorBoolean(input("Do you want to enter Device Installation Information (Y)es or (N)o: "))
 		if(installationInfoSelector):
 			installationParam = promptInstallationParam()
-		measCapability = getMeasCapabilityFromUser()
+		measCapability = getMeasCapabilityFromUser() #TODO: Need to ask Xavier about these capabilities
 		groupingParam = None
 		groupingParamSelector = getSelectorBoolean(input("Would you like to enter Grouping Parameter Info? (Y)es or (N)o: "))
 		if(groupingParamSelector):
@@ -633,7 +627,7 @@ def simSpectrumInquiryReq(requests):
 	for request in requests:
 		iter = iter + 1
 		print("Spectrum Inquiry Request [" + str(iter+1) + "':")
-		node = reqAddressToNode(request, False)
+		node = reqAddressToNode(request)
 		if(not node):
 			print("Spectrum Inquiry Request invalid.")
 			continue
@@ -653,8 +647,9 @@ def simSpectrumInquiryReq(requests):
 
 def configSpectrumInquiryReq():
 	"""
+	TODO
 	"""
-	return None
+	return [None]
 
 def cmdSpectrumInquiryReq():
 	"""
@@ -738,13 +733,13 @@ def simGrantReq(requests):
 		iter = iter + 1
 		cbsdId = operationParam = measReport = vtGrantParams = None
 		print("Grant Request [" + str(iter+1) + "':")
-		node = reqAddressToNode(request, False)
+		node = reqAddressToNode(request)
 		if(not node):
 			print("Grant Request invalid.")
 			continue
 		cbsdId = node.getCbsdId()
 		if(not cbsdId):
-			print("No cbsdId found for the node with IP Address: '" + address + "'. Grant Request invalid.")
+			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Grant Request invalid.")
 			continue
 
 		measReport = _grabPossibleEntry(request, "measReport")
@@ -762,10 +757,11 @@ def simGrantReq(requests):
 
 def configGrantReq():
 	"""
+	TODO
 	"""
-	pass
+	return [None]
 
-def cmdGrantReq(clientio):
+def cmdGrantReq():
 	"""
 	Creates a Grant Request from command line information and request send to SAS
 	"""
@@ -798,7 +794,7 @@ def grantRequest(clientio, payload=None):
 	while(True):
 		dataSource = input("Would you like to manually enter the Grant Request info or load from a file? (E)nter or (L)oad: ")
 		if(dataSource == 'E' or dataSource == 'e'):
-			arrOfRequest = cmdGranReq()
+			arrOfRequest = cmdGrantReq()
 			break
 		elif(dataSource == 'L' or dataSource == 'l'):
 			arrOfRequest = configGrantReq()
@@ -894,9 +890,9 @@ def simHeartbeatReq(requests):
 
 def configHeartbeatReq():
 	"""
-	Loads a heartbeat request form from a JSON file
+	TODO
 	"""
-	pass
+	return [None]
 
 def cmdHeartbeatReq():
 	"""
@@ -928,7 +924,7 @@ def heartbeatRequest(clientio, payload=None):
 	Creates a heartbeat request to send to the SAS
 	"""
 	if(__sim_mode):
-		pass
+		arrOfRequest = heartbeatRequest(payload)
 	else:
 		while(True):
 			dataSource = input("Would you like to manually enter the Heartbeat Request info or load from a file? (E)nter or (L)oad: ")
@@ -944,11 +940,13 @@ def heartbeatRequest(clientio, payload=None):
 				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	payload = {"heartbeatRequest": arrOfRequest}
 	clientio.emit("heartbeatRequest", json.dumps(payload))
+
 	# start timer to track how long it takes for the response to come in 
 	# 240sec
 	timeTilHearbeatExpires = 240 # seconds
 	# or grant expire time, transmitExpirem, whichever is soonest
 	global __heartbeatTimer
+	#node_stop is the function to turn off the TX
 	__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, node_stop).start()
 
 def handleHeartbeatResponse(clientio, data):
@@ -1045,13 +1043,13 @@ def simRelinquishmentReq(requests):
 	iter = 0
 	for request in requests:
 		print("Creating Relinquishment Request [" + str(iter+1) + "]:")
-		node = reqAddressToNode(request, False)
+		node = reqAddressToNode(request)
 		if(not node):
-			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Registration Request invalid.")
+			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
 			continue
 		cbsdId = node.getCbsdId()
 		if(not cbsdId):
-			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Spectrum Inquiry Request invalid.")
+			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
 			continue
 		grantId = node.getGrant().getGrantId()
 		tempNodeList.append(node)
@@ -1060,8 +1058,9 @@ def simRelinquishmentReq(requests):
 
 def configRelinquishmentRequest():
 	"""
+	TODO
 	"""
-	pass		
+	return [None]		
 
 def cmdRelinquishmentReq():
 	"""
@@ -1143,16 +1142,33 @@ def handleRelinquishmentResponse(clientio, data):
 # End Relinquishment Request---------------------------------------------------------------
 
 # Deregistration Request-------------------------------------------------------------------
-def simDeregistrationReq():
+def simDeregistrationReq(requests):
 	"""
-	Sim file handler for a Deregistration Request 
+	Read sim file for Deregistration Request(s)
 	"""
-	pass
+	arr = []
+	global tempNodeList
+	tempNodeList = []
+	iter = 0
+	for request in requests:
+		print("Creating Deregistration Request [" + str(iter+1) + "]:")
+		node = reqAddressToNode(request)
+		if(not node):
+			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
+			continue
+		cbsdId = node.getCbsdId()
+		if(not cbsdId):
+			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
+			continue
+		tempNodeList.append(node)
+		arr.append(DeregistrationRequest(cbsdId))
+	return arr
 
 def configDeregistrationReq():
 	"""
+	TODO
 	"""
-	pass
+	return [None]
 
 def cmdDeregistrationReq():
 	"""
@@ -1168,12 +1184,12 @@ def cmdDeregistrationReq():
 	arr.append(DeregistrationRequest(cbsdId).asdict())
 	return arr
 
-def deregistrationReq(clientio, payload=None):
+def deregistrationReqest(clientio, payload=None):
 	"""
 	Creates a Deregistration request and sends it to the SAS
 	"""
 	if(__sim_mode):
-		arrOfrequest = simDeregistrationReq(payload)
+		arrOfRequest = simDeregistrationReq(payload)
 	else:
 		while(True):
 			dataSource = input("Would you like to manually enter the Deregistration Request info or load from a file? (E)nter or (L)oad: ")

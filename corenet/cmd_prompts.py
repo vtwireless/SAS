@@ -5,7 +5,7 @@
 # Description: User Library for Command Line Prompts. Used for by socket_to_sas.py 
 # Last Updated: 01/05/2021
 
-from WinnForum import CbsdInfo, InstallationParam, FrequencyRange, OperationParam, VTGrantParams
+from WinnForum import CbsdInfo, InstallationParam, FrequencyRange, OperationParam, VTGrantParams, RcvdPowerMeasReport
 from gnuradio import uhd
 
 # Helpers
@@ -154,7 +154,13 @@ def promptCbsdSerial(usrps):
 	"""
 	Prompts user for a vaild CBSD Serial Number and cross references with uhd_find_devices
 
-	Returns: cbsdSerialNumber (string)
+	Parameters
+	----------
+		
+
+	Returns
+	-------
+	cbsdSerialNumber : string
 	"""
 	for node in usrps:
 		print(node.get_SDR_Address())
@@ -168,6 +174,11 @@ def promptCbsdSerial(usrps):
 def promptCbsdCategory():
 	"""
 	Prompts user for valid CBSD Category information
+
+	Returns
+	-------
+	cbsdCategory : char
+		CBAS Category 'A' or 'B' (or None if user presses 'Enter')
 	"""
 	while True:
 		cbsdCategory = input("Enter CBSD Category ('A' or 'B'): ")
@@ -184,8 +195,15 @@ def promptCbsdInfo(cbsdSerialNumber, usrps):
 	"""
 	Prompts User for info to build CBSD Info object. Can only pull model info with the given info from UHD.
 
-	Parameters:
-		cbsdSerialNumber: The serial of the desired USRP to pull info from.
+	Parameters
+	----------
+	cbsdSerialNumber : string 
+		The serial of the desired USRP to pull info from.
+	usrps : array of
+
+	Returns
+	-------
+
 	"""
 	cbsdInfoSelector = getSelectorBoolean(input("Do you want to enter CBSD Device Information (Y)es or (N)o: "))
 	cbsdInfo = None
@@ -213,6 +231,11 @@ def promptCbsdInfo(cbsdSerialNumber, usrps):
 def promptAirInterface():
 	"""
 	Prompt user for Air Interface
+
+	Returns
+	-------
+	userInput : string
+		User input that is a valid Air Interface
 	"""
 	ais = ["E_UTRA", "CAMBIUM_NETWORKS", "4G_BBW_SAA_1", "NR", "DOODLE_CBRS", "CW", "REDLINE", "TARANA_WIRELESS"]
 	print("Valid Air Interfaces: " + str(ais))
@@ -228,6 +251,10 @@ def promptAirInterface():
 def promptInstallationParam():
 	"""
 	Prompts user through Installation Parameter object definition
+
+	Returns
+	-------
+	param : InstallationParam object
 	"""
 	latitude = getValidFloat("Enter latitude: ")
 	longitude = getValidFloat("Enter longitude: ")
@@ -283,6 +310,10 @@ def promptInstallationParam():
 def promptFrequencyRange():
 	"""
 	Prompts user to enter min and max frequency in Hz
+
+	Returns
+	-------
+	range : FrequencyRange object
 	"""
 	while(True):
 		minFreq = getValidInt("Enter low frequency (in Hz): ")
@@ -292,10 +323,13 @@ def promptFrequencyRange():
 		else:
 			return FrequencyRange(minFreq, maxFreq)
 
-
 def promptRcvdPowerMeasReport():
 	"""
-	Prompts user to enter 
+	Prompts user to enter MeasReport data
+
+	Returns
+	-------
+	rcvdPowerMeasReport : RcvdPowerMeasReport object
 	"""
 	measFreq = getValidInt("Enter Low Frequency of the  spectrum (in Hz): ")
 	measBand = getValidInt("Enter measurement bandwidth where Low Frequency + bandwidth = High Frequency (in Hz): ")
@@ -307,13 +341,22 @@ def promptRcvdPowerMeasReport():
 def promptOperationParam():
 	"""
 	Prompts user to enter information related to building a OperationParam object
+
+	Returns
+	-------
+	param : OperationParam object
 	"""
 	maxEirp = input("Enter Max EIRP (dBm/MHz) (-137 to +37): ")
 	freqRange = promptFrequencyRange()
-	return OperationParam(maxEir, freqRange)
+	return OperationParam(maxEirp, freqRange)
 	 
 def promptVtGrantParams():
 	"""
+	Ask user to enter VT Grant Parameters.
+
+	Returns
+	-------
+	params : VTGrantParams object
 	"""
 	minFrequency = input("Enter minimum acceptable operating frequency: ")
 	maxFrequency = input("Enter maximum acceptable operating frequency: ")
@@ -329,9 +372,10 @@ def promptVtGrantParams():
 	powerLevel = input("Enter desired transmitter power output (in dBm): ")
 	location = input("Enter location of grant transmission: ") # TODO: what location? Tx, desired Rx?
 	mobility = getSelectorBoolean(input("Will this grant need to be mobile? (Y)es or (N)o: "))
-	maxVelocity = None
 	if(mobility):
 		maxVelocity = input("Enter approximate byte size of data: ")
+	else:
+		maxVelocity = None
 	return VTGrantParams(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, minBandwidth,
 		maxBandwidth, preferredBandwidth, startTime, endTime, approximateByteSize, dataType, powerLevel, location, 
 		mobility, maxVelocity)
