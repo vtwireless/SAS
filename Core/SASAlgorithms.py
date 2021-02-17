@@ -7,7 +7,7 @@ class SASAlgorithms:
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT' #DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
         self.defaultHeartbeatInterval = 5
-        self.threshold = 40 #POWER THRESHOLD
+        self.threshold = -30.0 #POWER THRESHOLD
         self.longitude = -80.4 #Blacksburg location
         self.latitude = 37.2
         self.radius = 1000#Kilometers
@@ -39,7 +39,11 @@ class SASAlgorithms:
 
     def runGrantAlgorithm(self, grants, REM, request):
         grantResponse = WinnForum.GrantResponse()
-        if self.grantAlgorithm == 'DEFAULT':
+        if not self.acceptableRange(self.getLowFreqFromOP(request.operationParam), self.getHighFreqFromOP(request.operationParam)):
+            grantResponse.response = self.generateResponse(103)
+            grantResponse.response.responseData = "Frequency range outside of license"
+            return grantResponse
+        elif self.grantAlgorithm == 'DEFAULT':
             grantResponse = self.defaultGrantAlg(grants, REM, request)
         elif self.grantAlgorithm =='TIER':
             grantResponse = self.tierGrantAlg(grants, REM, request)
@@ -58,7 +62,7 @@ class SASAlgorithms:
         response.heartbeatInterval = self.getHeartbeatIntervalForGrantId(grant.id) | self.getHeartbeatInterval()
         lowFreq = self.getLowFreqFromOP(grant.operationParam)
         highFreq = self.getHighFreqFromOP(grant.operationParam)
-        fr = WinnForum.FrequencyRange(highFreq, lowFreq)
+        fr = WinnForum.FrequencyRange(lowFreq, highFreq)
         response.operationParam = WinnForum.OperationParam(30, fr)
         longitude = None
         latitude = None
@@ -70,6 +74,7 @@ class SASAlgorithms:
             radius = 1000
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
         if present and not self.ignoringREM:
+            response.transmitExpireTime = datetime.now().strftime("%Y%m%dT%H:%M:%S%Z")
             response.response = self.generateResponse(401)#Grant conflict
         else:
             response.response = self.generateResponse(0)
@@ -118,44 +123,16 @@ class SASAlgorithms:
             latit = latitude
         if radius != None:
             rad = radius
-
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)#GET ALL  REM DATA
         if not remData:
             print("Currently no spectrum data")
             return True
-        if self.getGrantAlgorithm() == 'DEFAULT':
-            total = 0
-            #Equal weight with threshold parameter, no location, all parameters
-            for object in remData:
-                total = total + object.powerLevel
-            
-            if (total*1.0/len(remData)) > self.threshold:
-                return True
-            else:
-                return False
-        elif self.getGrantAlgorithm() == 'TRUSTSCORE':
-            #Trust scores with threshold parameter, no location, all parameters
-            total = 0
-            trustScoreThreshold = 5
-            for object in remData:
-                if object.powerLevel > self.threshold:#if the individual power level sensed is geater than threshold
-                    total = total + object.cbsd.trustScore
-            if (total*1.0/len(remData)) > trustScoreThreshold:
-                return True
-            else:
-                return False
-        elif self.getGrantAlgorithm() == 'TRUSTED':
-            #Trust scores with threshold parameter, no location, all parameters
-            count = 0
-            trustCutoff = 7 #don't count if less than score
-            for object in remData:
-                if object.cbsd.trustScore > trustCutoff:
-                    total = total + object.powerLevel
-                    count = count + 1
-            if (total*1.0/count) > self.threshold:
-                return True
-            else:
-                return False
+        if self.getREMAlgorithm() == 'DEFAULT':
+            return self.defaultREMAlgorith(remData)
+        elif self.getREMAlgorithm() == 'TRUSTSCORE':
+            return self.trustScoreREMAlgorithm(remData)
+        elif self.getREMAlgorithm() == 'TRUSTED':
+            return self.trustedREMAlgorithm(remData)
         else:
             return False
 
@@ -173,7 +150,7 @@ class SASAlgorithms:
         return params.operationFrequencyRange.highFrequency
     
     def getLowFreqFromOP(self, params):
-        return params.operationFrequencyRange.highFrequency
+        return params.operationFrequencyRange.lowFrequency
 
     def frequencyOverlap(self, freqa, freqb, rangea, rangeb):
         if (freqa <= rangea and freqb <= rangeb):
@@ -183,6 +160,51 @@ class SASAlgorithms:
         elif (freqa <= rangeb and freqb >= rangeb):
             return True
         elif (freqa <= rangea and freqb >= rangeb):
+            return True
+        else:
+            return False
+
+
+    def defaultREMAlgorith(self, remData):
+        total = 0.0
+        #Equal weight with threshold parameter, no location, all parameters
+        for object in remData:
+            total = total + float(object.powerLevel)
+            
+        if (total*1.0/len(remData)) > self.threshold:
+            return True
+        else:
+            return False
+
+    def trustScoreREMAlgorithm(self, remData):
+        #Trust scores with threshold parameter, no location, all parameters
+        total = 0.0
+        trustScoreThreshold = 5.0
+        for object in remData:
+            if float(object.powerLevel) > self.threshold:#if the individual power level sensed is geater than threshold
+                total = total + object.cbsd.trustScore
+        if (total*1.0/len(remData)) > trustScoreThreshold:
+            return True
+        else:
+            return False
+
+    def trustedREMAlgorithm(self, remData):
+       #Trust scores with threshold parameter, no location, all parameters
+        count = 0
+        total = 0.0
+        trustCutoff = 7.0 #don't count if less than score
+        for object in remData:
+            if object.cbsd.trustScore > trustCutoff:
+                total = total + float(object.powerLevel)
+                count = count + 1
+        if (total*1.0/count) > self.threshold:
+            return True
+        else:
+            return False
+
+
+    def acceptableRange(self, lowFreq, highFreq):
+        if lowFreq < highFreq and lowFreq >= 3550000000 and highFreq <= 3700000000:
             return True
         else:
             return False

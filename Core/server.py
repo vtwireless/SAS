@@ -34,12 +34,6 @@ def sendGetRequest(parameters):
     x = requests.post(GETURL, parameters)
     return x.json()
 
-def generateOperationParam(grantId):
-    #move if needed
-    operationParam = {}
-    operationParam["operationFrequencyRange"]["highFrequency"] = 50000
-    operationParam["operationFrequencyRange"]["lowFrequency"] = 49000
-    return operationParam
 
 def generateResponse(responseCode):
     response = {}
@@ -55,16 +49,18 @@ def sendPostRequest(parameters):
 
 def getSettings() :
     getAl = { "action": "getSettings"}
-    SASAlgorithms.setGrantAlgorithm(sendGetRequest(getAl)["algorithm"])
-    SASAlgorithms.setHeartbeatInterval = sendGetRequest(getAl)["heartbeatInterval"]
-    print(SASAlgorithms.getGrantAlgorithm() + ' ' + str(SASAlgorithms.getHeartbeatInterval()))
+    result = sendGetRequest(getAl)
+    SASAlgorithms.setGrantAlgorithm(result["algorithm"])
+    SASAlgorithms.setHeartbeatInterval(result["heartbeatInterval"])
+    SASAlgorithms.setREMAlgorithm(result["REMAlgorithm"])
+    print('GRANT: ' + SASAlgorithms.getGrantAlgorithm() + ' HB: ' + str(SASAlgorithms.getHeartbeatInterval()) + ' REM: ' + SASAlgorithms.getREMAlgorithm())
 
 def sendBroadcast(broadcastName, data):
     socket.broadcast.emit(broadcastName, data)
 
-def addObjectToREM(spectrumData):
-    obj = SASREM.SASREMObject(5, 50, "obj", 5, 3500000, 3550000, time.time() )
-    REM.addREMObject(obj)
+#def addObjectToREM(spectrumData):
+#     obj = SASREM.SASREMObject(5, 50, "obj", 5, 3500000, 3550000, time.time() )
+#    REM.addREMObject(obj)
 
 def getGrantWithID(grantId):
     for grant in grants:
@@ -133,10 +129,8 @@ def loadCBSDFromJSON(json):
     allClients.append(cbsd)
     return cbsd
 
-def measReportFromJSON(json):
-    measReport = WinnForum.RcvdPowerMeasReport(["measFrequency"], ["measBandwidth"], ["measRcvdPower"])
-    mr = WinnForum.MeasReport([measReport])
-    return mr
+def measReportObjectFromJSON(json):
+    return WinnForum.RcvdPowerMeasReport(json["measFrequency"], json["measBandwidth"], json["measRcvdPower"] or 0)
 
 def removeGrant(grant, cbsdId):
     for g in grants:
@@ -204,6 +198,7 @@ def register(sid, data):
             radio = CBSD.CBSD(generateId(), 5, item["fccId"])
             id = radio.id
             allClients.append(radio)
+            cbsds.append(radio)
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
         responseArr.append(response.asdict())
     socket.emit('registrationResponse', responseArr)
@@ -283,11 +278,13 @@ def heartbeat(sid, data):
     jsonData = json.loads(data)
     hbrArray = []
     for hb in jsonData["heartbeatRequest"]:
+        cbsd = getCBSDWithId(hb["cbsdId"])
         grant = getGrantWithID(hb["grantId"])
         try:
             if hb["measReport"]:
-                mr = measReportFromJSON(hb["measReport"][0])#this should be an array
-                REM.measReportToSASREMObject(mr, getCBSDWithId(hb["cbsdId"]))
+                for rpmr in hb["measReport"]["rcvdPowerMeasReports"]:
+                    mr = measReportObjectFromJSON(rpmr)#this should be an array
+                    REM.measReportToSASREMObject(mr, cbsd)
         except KeyError:
             print("no measure report")
         response = SASAlgorithms.runHeartbeatAlgorithm(grants, REM, hb, grant)
@@ -318,6 +315,29 @@ def relinquishment(sid, data):
         relinquishArr.append(response)
     socket.emit('relinquishmentResponse', relinquishArr)
 
+@socket.on('spectrumInquiryRequest')
+def spectrumInquiryRequest(sid, data):
+    jsonData = json.loads(data)
+    print(jsonData)
+    inquiryArr = []
+    for request in jsonData["spectrumInquiryRequest"]:
+        response = WinnForum.SpectrumInquiryResponse(request["cbsdId"], [], SASAlgorithms.generateResponse(0))
+        for fr in request["inquiredSpectrum"]:
+            lowFreq = fr["lowFrequency"]
+            highFreq = fr["highFrequency"]
+            channelType = "PAL"
+            ruleApplied = "FCC_PART_96"
+            maxEirp = 30.0
+            if SASAlgorithms.acceptableRange(lowFreq, highFreq):
+                if highFreq < 3700000000 and highFreq > 3650000000:
+                    channelType = "GAA"
+                if not SASAlgorithms.isPUPresentREM(REM, highFreq, lowFreq, None, None, None):
+                    fr = WinnForum.FrequencyRange(lowFreq, highFreq)
+                    availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
+                    response.availableChannel.append(availChan)
+        inquiryArr.append(response.asdict())
+    socket.emit('spectrumInquiryResponse', inquiryArr)
+
 @socket.on('changeSettings')
 def changeAlgorithm(sid, data):
     getSettings()
@@ -325,9 +345,18 @@ def changeAlgorithm(sid, data):
 @socket.on('spectrumData')
 def spectrumData(sid, data):
     jsonData = json.loads(data)
-    print(jsonData)
-    REM.measReportToSASREMObject(jsonData["measReport"][0], jsonData["cbsdId"])
-
+    cbsd = None
+    try:
+        cbsd = getCBSDWithId(jsonData["cbsdId"])
+    except KeyError:
+        pass
+    try:
+        if jsonData["spectrumData"]:
+            for rpmr in jsonData["spectrumData"]["rcvdPowerMeasReports"]:
+                mr = measReportObjectFromJSON(rpmr)
+                REM.measReportToSASREMObject(mr, cbsd)
+    except KeyError:
+        print("rcvd power meas error")
 
 
 if __name__ == '__main__':

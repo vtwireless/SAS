@@ -836,12 +836,11 @@ class AvailableChannel:
 	grantRequest : array of object GrantRequest (required)
 		Array of GrantRequest objects. Each	GrantRequest object represents a Grant request of a CBSD.
 	"""
-	def __init__(self, frequencyRange, channelType, ruleApplied, maxEirp=None, grantRequest=[]):
+	def __init__(self, frequencyRange, channelType, ruleApplied, maxEirp=None):
 		self.frequencyRange = frequencyRange #R
 		self.channelType = channelType #R
 		self.ruleApplied = ruleApplied #R
 		self.maxEirp = maxEirp #O
-		self.grantRequest = _ensureIsList(grantRequest) #R
 
 	def asdict(self):
 		return_dict = {}
@@ -853,8 +852,6 @@ class AvailableChannel:
 			return_dict["ruleApplied"] = self.ruleApplied
 		if(self.maxEirp):
 			return_dict["maxEirp"] = self.maxEirp
-		if(self.grantRequest):
-			return_dict["grantRequest"] = _toJsonDictArray(self.grantRequest)
 		return return_dict
 
 
