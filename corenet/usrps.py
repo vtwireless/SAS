@@ -235,7 +235,12 @@ class TX_Usrp(gr.top_block):
 
     def set_waveform(self, waveform):
         self.waveform = self._convert_waveform(waveform)
-        
+
+class TXRX_Usrp():
+    """
+    """
+
+
 class Node:
     """
     Highest level Node class. This containts 2 flowgrahs for 1 USRP, Grant, and other node/cbsd data.
