@@ -180,7 +180,7 @@ def updateRadio(node, params):
 def findTempNodeByCbsdId(cbsdId):
 	"""
 	SAS Responses utilize cbsdId to ID which nodes go with which responses.
-	This function accepts a cbsdId and returns the Node object is goes with.
+	This function accepts a cbsdId and returns the Node object it goes with.
 
 	Parameters
 	----------
@@ -193,6 +193,25 @@ def findTempNodeByCbsdId(cbsdId):
 		The Node with the same cbsdId. Will return 'None' if no Node has the cbsdId.
 	"""
 	for node in tempNodeList:
+		if(node.getCbsdId() == cbsdId):
+			return node
+	return None
+
+def findRegisteredNodeByCbsdId(cbsdId):
+	"""
+	This function accepts a cbsdId and returns the Registered Node object it goes with.
+
+	Parameters
+	----------
+	cbsdId : string
+		CBSD ID of a desired SAS-Registered Node (i.e a node in registered_nodes)
+
+	Returns
+	-------
+	node : Object
+		The Node with the same cbsdId. Will return 'None' if no Node has the cbsdId.
+	"""
+	for node in registered_nodes:
 		if(node.getCbsdId() == cbsdId):
 			return node
 	return None
@@ -285,6 +304,34 @@ def _isValidResponse(response):
 		print("SAS Error: No reponse object found.")
 		return False
 	return True
+
+def _getSpectrumDataByCbsdId(cbsdId):
+	"""
+	Calls the getSpectrumData function of a Node with given cbsdId.
+	Takes the Average value from a spectrum reading and sends back a report.
+
+	Parameters
+	---------
+	cbsdId : string
+		CBSD ID of a Node with RX capabilities
+
+	Returns
+	-------
+	report : RcvdPowerMeasReport Object
+	"""
+	node = findRegisteredNodeByCbsdId(cbsdId)
+	if(not node):
+		print("No node found with given CBSD ID. Spectrum Data not being reported.")
+		return None
+	fc = node.getUsrp.get_rx_fc()
+	bw = node.getUsrp.get_rx_bw()
+	lowFreq = fc - (bw/2)
+
+	data = node.getSpectrumData()
+	spectrumAvg = sum(data)/len(data)
+	return RcvdPowerMeasReport(lowFreq, bw, spectrumAvg)
+
+
 # End Helper Functions---------------------------------------------------------------------
 
 # Create Node------------------------------------------------------------------------------
@@ -307,12 +354,6 @@ def simCreateNode(requests):
 	"""
 	arr = []
 	for request in requests:
-		usrpMode = address = centerFreq = gain = sampleRate = signalAmp = waveform = None
-
-		usrpMode = _grabPossibleEntry(request, "mode")
-		if(not usrpMode):
-			print("No usrpMode found for simCreateNode. Node not created.")
-			continue # Move onto next 'request'
 
 		address = _grabPossibleEntry(request, "address")
 		if(not address):
@@ -322,38 +363,85 @@ def simCreateNode(requests):
 		if(findCreatedNodeByIp(address)):
 			print("IP Address already belongs to a created Node. Node not created.")
 			continue
-			
-		centerFreq = _grabPossibleEntry(request, "centerFreq")
-		if(not centerFreq):
-			print("No centerFreq found for simCreateNode. Node not created.")
-			continue
-		gain = _grabPossibleEntry(request, "gain")
-		if(not gain):
-			print("No gain found for simCreateNode.")
-			#TODO Is this required?
-		sampleRate = _grabPossibleEntry(request, "sampleRate")
-		if(not sampleRate):
-			print("No sampleRate found for simCreateNode.")
-			#TODO Is this required?
-		signalAmp = _grabPossibleEntry(request, "signalAmp")
-		if(not signalAmp):
-			print("No signalAmp found for simCreateNode.")
-			#TODO
-		waveform = _grabPossibleEntry(request, "waveform")
-		if((not waveform) and (usrpMode == "TX")):
-			print("No waveform found for simCreateNode.")
-			#TODO
-		
 		node = Node(address)
+
+		usrpMode = _grabPossibleEntry(request, "mode")
+		if(not usrpMode):
+			print("No usrpMode found for simCreateNode. Node not created.")
+			continue # Move onto next 'request'
+		elif(not (usrpMode == "TX" or usrpMode == "RX" or usrpMode == "TXRX")):
+			print("Invalid mode for simCreateNode. Node not created.")
+			continue
 		node.setOperationMode(usrpMode)
 
 		if(usrpMode == "TX"):
-			node.setTxUsrp(centerFreq, gain, sampleRate, signalAmp, waveform)
+			centerFreq = _grabPossibleEntry(request, "centerFreq")
+			if(not centerFreq):
+				print("No centerFreq found for simCreateNode. Node not created.")
+				continue
+			gain = _grabPossibleEntry(request, "gain")
+			if(not gain):
+				print("No gain found for simCreateNode. Defaulting to maximum: 31.5.")
+				gain = 31.5
+			bandwidth = _grabPossibleEntry(request, "bandwidth")
+			if(not bandwidth):
+				print("No bandwidth found for simCreateNode. Node not created.")
+				continue
+			waveform = _grabPossibleEntry(request, "waveform")
+			if(not waveform):
+				print("No waveform found for simCreateNode. Node not created.")
+				continue
+			signalAmp = _grabPossibleEntry(request, "signalAmp")
+			if(not signalAmp):
+				print("No signalAmp found for simCreateNode.")
+
+			node.createTxUsrp(centerFreq, gain, bandwidth, signalAmp, waveform)
 		elif(usrpMode == "RX"):
-			node.setRxUsrp("")# TODO
+			centerFreq = _grabPossibleEntry(request, "centerFreq")
+			if(not centerFreq):
+				print("No centerFreq found for simCreateNode. Node not created.")
+				continue
+			gain = _grabPossibleEntry(request, "gain")
+			if(not gain):
+				print("No gain found for simCreateNode. Defaulting to 0.")
+				gain = 0
+			bandwidth = _grabPossibleEntry(request, "bandwidth")
+			if(not bandwidth):
+				print("No bandwidth found for simCreateNode. Node not created.")
+				continue
+
+			node.createRxUsrp(centerFreq, gain, bandwidth)
 		else:
-			#Invalid usrpMode provided
-			continue
+			tx_fc = _grabPossibleEntry(request, "tx_fc")
+			if(not tx_fc):
+				print("No tx_fc found for simCreateNode. Node not created.")
+				continue
+			tx_gain = _grabPossibleEntry(request, "tx_gain")
+			if(not tx_gain):
+				print("No tx_gain found for simCreateNode. Defaulting to 0.")
+				tx_gain = 0
+			tx_bw = _grabPossibleEntry(request, "tx_bw")
+			if(not tx_bw):
+				print("No tx_bw found for simCreateNode. Node not created.")
+				continue
+			tx_src_amp = _grabPossibleEntry(request, "tx_src_amp")
+			if(not tx_src_amp):
+				print("No tx_src_amp found for simCreateNode. Node not created.")
+				continue
+			rx_fc = _grabPossibleEntry(request, "rx_fc")
+			if(not rx_fc):
+				print("No rx_fc found for simCreateNode. Node not created.")
+				continue
+			rx_gain = _grabPossibleEntry(request, "rx_gain")
+			if(not rx_gain):
+				print("No rx_gain found for simCreateNode. Defaulting to 0.")
+				rx_gain = 0
+			rx_bw = _grabPossibleEntry(request, "rx_bw")
+			if(not rx_bw):
+				print("No rx_bw found for simCreateNode. Node not created.")
+				continue
+			node.createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain)
+
 		arr.append(node)
 	return arr
 
@@ -396,6 +484,7 @@ def createNode(requests=None):
 		nodes = simCreateNode(requests)
 	else:
 		nodes = cmdCreateNode()
+
 	for node in nodes:
 		created_nodes.append(node)
 # End Create Node--------------------------------------------------------------------------
@@ -544,14 +633,14 @@ def registrationRequest(clientio, payload=None):
 		arrOfRequest = simRegistrationReq(payload)
 	else:
 		while(True):
-			data_source = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad: ")
-			if(data_source == 'E' or data_source == 'e'):
+			user_input = input("Would you like to manually enter the registraion info or load from a file? (E)nter or (L)oad or (exit): ")
+			if(user_input == 'E' or user_input == 'e'):
 				arrOfRequest = cmdRegistrationReq() # Prompt User
 				break
-			elif(data_source == 'L' or data_source == 'l'):
+			elif(user_input == 'L' or user_input == 'l'):
 				arrOfRequest = configRegistrationReq() # load config file
 				break
-			elif(data_source == 'exit'):
+			elif(user_input == 'exit'):
 				return
 			else:
 				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
@@ -1218,6 +1307,35 @@ def handleDeregistrationResponse(clientio, data):
 			response = dereg["response"]
 # End Deregistration Request---------------------------------------------------------------
 
+def spectrumData(cbsdId, clientio):
+	"""
+	Provide SAS with Spectrum Data by emitting "spectrumData"
+
+	Parameters
+	----------
+	cbsdId : string
+		CBSD ID of the Node that is taking the measurments
+	
+	clientio : Socket object
+		SAS Socket connection
+	"""
+	reports = []
+	reports.append(_getSpectrumDataByCbsdId(cbsdId))
+	payload = {"cbsdId":cbsdId, "spectrumData": MeasReport(reports).asdict()}
+	clientio.emit("spectrumData", json.dumps(payload))
+
+def updateRxParams(cbsdId, params):
+	"""
+	Handles SAS Command to change RX Parameters
+	"""
+	# Find node from CBSD ID
+	# Take out lowFreq and highFreq from dict
+	node = findRegisteredNodeByCbsdId(cbsdId)
+	lowFreq = _grabPossibleEntry(params, "lowFreq")
+	highFreq = _grabPossibleEntry(params, "highFreq")
+	bw = (highFreq - lowFreq)
+	fc =  highFreq - (bw / 2)
+	node.updateRxParams(fc, bw)
 
 def stopNode(cbsdId):
 	"""
@@ -1297,29 +1415,23 @@ def defineSocketEvents(clientio):
 		__blocked = False
 	# end official WinnForum functions
 
-	@clientio.event
-	def getTxParams(node):
-		send_params(clientio, node)
-
-	@clientio.event
-	def updateParams(cbsdId, newParams):
-		updateRadio(cbsdId, newParams)
-
-	@clientio.event
-	def stop_radio(cbsdId):
-		stopNode(cbsdId)
-
-	@clientio.event
-	def start_radio(cbsdId):
-		startNode(cbsdId)
-
-	# TODO - cbsdID and measReport
 	# @clientio.event
-	# def sendSpectrumData():
-	# 	pass
+	# def getTxParams(node):
+	# 	send_params(clientio, node)
+
+	@clientio.event
+	def changeRadioParams(cbsdId, params):
+		"""
+		"""
+		updateRxParams(cbsdId, params)
+
 	# @clientio.event
-	# def operationParams(data):
-	# 	pass
+	# def stop_radio(cbsdId):
+	# 	stopNode(cbsdId)
+
+	# @clientio.event
+	# def start_radio(cbsdId):
+	# 	startNode(cbsdId)
 
 	@clientio.event
 	def disconnect():

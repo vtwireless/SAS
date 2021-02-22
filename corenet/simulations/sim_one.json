@@ -6,16 +6,16 @@
 					"address":"192.168.40.101",
 					"centerFreq":"915000000",
 					"gain":"0",
-					"sampleRate":"0",
+					"bandwidth":"0",
 					"signalAmp":"1",
 					"waveform":"SINE"
 				},
 				{
-					"mode":"TX",
+					"mode":"TXRX",
 					"address":"192.168.40.201",
 					"centerFreq":"914000000",
 					"gain":"1",
-					"sampleRate":"0",
+					"bandwidth":"0",
 					"signalAmp":"0",
 					"waveform":"SAWTOOTH"	
 				}]

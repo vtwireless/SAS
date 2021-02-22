@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
-# TX Imports------------------------------------
+
+# Imports------------------------------------
 from gnuradio import analog
+from gnuradio import blocks
+from gnuradio import fft
+from gnuradio.fft import window
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
-# End TX Imports---------------------------------
+# End Imports---------------------------------
 
 
 # TODO: 'type' may be a reserved word
@@ -236,23 +240,187 @@ class TX_Usrp(gr.top_block):
     def set_waveform(self, waveform):
         self.waveform = self._convert_waveform(waveform)
 
-class TXRX_Usrp():
+class TXRX_USRP(gr.top_block):
     """
+    Class Representing a USRP TX & RX Flowgraph.
+
+    This flowgraph works for any USRPs that have multiple channels/radios that support simultaneous TX and RX. 
+    The TX will transmit a constant noise with the given params.
+    
+    Attributes
+    ----------
+    device_addr : string
+        IP Address of USRP. E.g. "192.168.40.110"
+    tx_fc : float
+    tx_bw : float
+    tx_src_amp : float
+    tx_gain : float
+    rx_fc : float
+    rx_bw : float
+    rx_gain : float
+    rx_bins : float
+
     """
 
+    def __init__(self, device_addr, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins):
+        gr.top_block.__init__(self)
+
+        ##################################################
+        # Variables
+        ##################################################
+        self.device_addr = device_addr
+        self.tx_fc = tx_fc
+        self.tx_bw = tx_bw
+        self.tx_gain = tx_gain
+        self.tx_src_amp = tx_src_amp 
+        self.rx_fc = rx_fc
+        self.rx_bw = rx_bw
+        self.rx_gain = rx_gain
+        self.rx_bins = rx_bins
+
+        ##################################################
+        # Blocks
+        ##################################################
+
+        # Create TX Portion
+        self.uhd_usrp_sink_0 = uhd.usrp_sink(
+            ",".join((device_addr, "A:")),
+            uhd.stream_args(
+                cpu_format="fc32",
+                args='',
+                channels=list(range(0,1)),
+            ),
+            '',
+        )
+        self.uhd_usrp_sink_0.set_center_freq(tx_fc, 0)
+        self.uhd_usrp_sink_0.set_gain(tx_gain, 0)
+        self.uhd_usrp_sink_0.set_antenna('TX/RX', 0)
+        self.uhd_usrp_sink_0.set_bandwidth(tx_bw, 0)
+        self.uhd_usrp_sink_0.set_clock_rate(200e6, uhd.ALL_MBOARDS)
+        self.uhd_usrp_sink_0.set_samp_rate(tx_bw)
+        self.uhd_usrp_sink_0.set_time_unknown_pps(uhd.time_spec())
+        self.analog_noise_source_x_0 = analog.noise_source_c(analog.GR_UNIFORM, tx_src_amp, 0)
+
+        # Create RX Portion
+        self.uhd_usrp_source_1 = uhd.usrp_source(
+            ",".join(("addr="+device_addr, "B:")),
+            uhd.stream_args(
+                cpu_format="fc32",
+                args='',
+                channels=list(range(0,1)),
+            ),
+        )
+        self.uhd_usrp_source_1.set_center_freq(rx_fc, 0)
+        self.uhd_usrp_source_1.set_gain(rx_gain, 0)
+        self.uhd_usrp_source_1.set_antenna('RX2', 0)
+        self.uhd_usrp_source_1.set_bandwidth(rx_bw, 0)
+        self.uhd_usrp_source_1.set_samp_rate(rx_bw)
+        self.uhd_usrp_source_1.set_time_unknown_pps(uhd.time_spec())
+        self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(rx_bins)
+        self.fft_vxx_0 = fft.fft_vcc(rx_bins, True, window.blackmanharris(rx_bins), True, 1)
+        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, rx_bins)
+        self.blocks_nlog10_ff_0 = blocks.nlog10_ff(10, rx_bins, 0)
+        self.rx_probe = blocks.probe_signal_vf(rx_bins)
+
+        ##################################################
+        # Connections
+        ##################################################
+        self.connect((self.analog_noise_source_x_0, 0), (self.uhd_usrp_sink_0, 0))
+        self.connect((self.uhd_usrp_source_1, 0), (self.blocks_stream_to_vector_0, 0))
+        self.connect((self.blocks_stream_to_vector_0, 0), (self.fft_vxx_0, 0))
+        self.connect((self.fft_vxx_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
+        self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_nlog10_ff_0, 0))
+        self.connect((self.blocks_nlog10_ff_0, 0), (self.rx_probe, 0))
+
+
+    def get_device_addr(self):
+        return self.device_addr
+
+    def set_device_addr(self, device_addr):
+        self.device_addr = device_addr
+
+    def get_tx_fc(self):
+        return self.tx_fc
+
+    def set_tx_fc(self, fc):
+        self.tx_fc = fc
+        self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
+
+    def get_tx_bw(self):
+        return self.bw
+
+    def set_tx_bw(self, tx_bw):
+        self.tx_bw = tx_bw
+        self.uhd_usrp_sink_0.set_samp_rate(self.tx_bw)
+        self.uhd_usrp_sink_0.set_bandwidth(self.tx_bw, 0)
+
+    def get_tx_gain(self):
+        return self.tx_gain
+
+    def set_tx_gain(self, gain):
+        self.tx_gain = gain
+        self.uhd_usrp_sink_0.set_gain(self.gain, 0)
+
+    def get_tx_src_amp(self):
+        return self.tx_src_amp
+
+    def set_tx_src_amp(self, src_amp):
+        self.src_amp = src_amp
+        self.analog_noise_source_x_0.set_amplitude(self.src_amp)
+
+    def get_rx_fc(self):
+        return self.rx_fc
+
+    def set_rx_fc(self, fc):
+        self.rx_fc = fc
+        self.uhd_usrp_source_1.set_center_freq(self.fc, 0)
+
+    def get_rx_bw(self):
+        return self.rx_bw
+
+    def set_rx_bw(self, rx_bw):
+        self.rx_bw = rx_bw
+        self.uhd_usrp_source_1.set_samp_rate(self.rx_bw)
+        self.uhd_usrp_source_1.set_bandwidth(self.rx_bw, 0)
+
+    def get_rx_gain(self):
+        return self.rx_gain
+
+    def set_rx_gain(self, rx_gain):
+        self.rx_gain = rx_gain
+        self.uhd_usrp_source_1.set_gain(self.rx_gain, 0)
+
+    def get_rx_bins(self):
+        return self.rx_bins
+
+    def set_rx_bins(self, bins):
+        self.rx_bins = bins
+
+    def getRxProbeList(self):
+        """
+        Grabs probe block data from flowgraph.
+
+        Returns
+        -------
+        probe_data : list of floats
+            List of `bins` length with spectrum data. 
+        """
+        return list(self.rx_probe.level())
 
 class Node:
     """
-    Highest level Node class. This containts 2 flowgrahs for 1 USRP, Grant, and other node/cbsd data.
+    Highest level Node class. This containts 3 possible flowgraphs for 1 USRP, Grant, and other node/cbsd data.
 
     Attributes
     ----------
     operationMode : string
-        This will either be 'TX' or 'RX'. 
+        This will be 'TX', 'RX', or 'TXRX'
     tx_usrp : TX_Usrp Object
         Object associated with the TX Flowgraph
     rx_usrp : RX_Usrp Object
         Object associated with the RX Flowgraph
+    txrx_usrp : TXRX_USRP Object
+        Object associated with TX/RX Flowgraph
     grant : Grant object
         All nodes will have 1 Grant that includes all grant related data
     cbsdId : string
@@ -273,8 +441,7 @@ class Node:
         self.serialNum        = self._ipToSerial(ipAddress, __available_radios)
         self.model            = self._getProductOrType(ipAddress, __available_radios)
         self.operationMode    = None
-        self.tx_usrp          = None
-        self.rx_usrp          = None 
+        self.usrp             = None
         self.grant            = Grant()
         self.cbsdId           = None
         self.measReportConfig = []
@@ -303,34 +470,53 @@ class Node:
     def setOperationMode(self, mode):
         self.operationMode = mode 
 
-    def getTxUsrp(self):
-        return self.tx_usrp
-
-    def setTxUsrp(self, centerFreq, gain, sampRate, signalAmp, waveform):
+    def createTxUsrp(self, centerFreq, gain, bandwidth, signalAmp, waveform):
         """
         Creates a TX USRP Flowgraph (but does not start it)
         All passed in parameters are checked for validity.
         A USRP will not be created if any parameters are not compatible with the USRP.
-
-        TODO with Xavier
 
         Returns
         -------
         validParams : boolean
             True if USRP can handle the demanded parameters, False otherwise
         """
-        if((centerFreq > 0) and (gain >= 0) and (sampRate > 0) and (signalAmp >= 0) and (self._convert_waveform(waveform))):
-            self.tx_usrp = TX_Usrp(self.ipAddress, centerFreq, gain, sampRate, signalAmp, self._convert_waveform(waveform))
-            return True
+        if((centerFreq > 0) and (gain >= 0) and (bandwidth > 0) and (signalAmp >= 0) and (self._convert_waveform(waveform))):
+            self.usrp = TX_Usrp(self.ipAddress, centerFreq, gain, bandwidth, signalAmp, self._convert_waveform(waveform))
         else:
-            return False
+            return None
         
-    def getRxUsrp(self):
-        return self.rx_usrp
-
-    def setRxUsrp(self, usrp):# TODO: Determine parameters for this
-        self.rx_usrp = usrp
+    def createRxUsrp(self, centerFreq, gain, bandwidth):# TODO: Determine parameters for this
+        self.usrp = None
     
+    def createTxRxUsrp(self, tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain, rx_bins=1024):
+        """
+        Creates a TX/RX Node with given TX & RX parameters
+        """
+        if(tx_gain > 31.5):
+            print("TX Gain of '" + tx_gain + "' exceeds limit of 31.5. Setting TX Gain to 31.5")
+            tx_gain = 31.5
+        elif(tx_gain < 0):
+            print("TX Gain of '" + tx_gain + "' is below minimum of 0. Setting TX Gain to 0")
+            tx_gain = 0
+        if(tx_src_amp > 1):
+            print("TX Signal Source Amplitude of '" + tx_src_amp + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1")
+            tx_src_amp = 1
+        elif(tx_src_amp < 0):
+            print("TX Signal Source Amplitude of '" + tx_src_amp + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
+            tx_src_amp = 0 # TX OFF
+
+        self.usrp = TXRX_USRP(self.ipAddress, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins)
+
+    def getUsrp(self):
+        """
+        Returns
+        -------
+        usrp : USRP/Flowgraph Object Object
+            USRP/Flowgraph Object the Node represents (May be TX, RX, or TXRX USRP)
+        """
+        return self.usrp
+
     def getGrant(self):
         return self.grant
 
@@ -348,6 +534,40 @@ class Node:
     
     def setMeasReportConfig(self, config):
         self.measReportConfig = config
+
+    def turnOffTx(self):
+        """
+        """
+        if(self.operationMode == 'TX'):
+            self.tx_usrp.set_signal_amp(0)
+
+    def updateRxParams(self, fc=None, bw=None, gain=None):
+        if(self.operationMode == "TXRX"):
+            if(fc):
+                self.txrx_usrp.set_rx_fc(fc)
+            if(bw):
+                self.txrx_usrp.set_rx_bw(bw)
+            if(gain):
+                self.txrx_usrp.set_rx_gain(gain)
+        elif(self.operationMode == "RX"):
+            if(fc):
+                self.rx_usrp.set_rx_fc(fc)
+            if(bw):
+                self.rx_usrp.set_rx_bw(bw)
+            if(gain):
+                self.rx_usrp.set_rx_gain(gain)   
+        else:
+            print("Invalid Node for setRxParams command")       
+
+    def getSpectrumData(self):
+        """
+        Uses the probe block to pull spectrum data
+        """
+        if(self.operationMode == "TXRX" or self.operationMode == "RX"):
+            return self.usrp.getRxProbeList()
+        else:
+            print("Invalid function call to getSpectrumData: unsupported current operationMode '" + str(self.operationMode) + "'.")
+            return None
 
     def printInfo(self):
         """
