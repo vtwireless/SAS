@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-# Imports------------------------------------
 from gnuradio import analog
 from gnuradio import blocks
 from gnuradio import fft
@@ -10,15 +9,10 @@ from gnuradio.filter import firdes
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
-# End Imports---------------------------------
-
-
-# TODO: 'type' may be a reserved word
-# TODO: make this 'usrp.py' and include both TX and RX flowgraphs in here
 
 class Grant:
     """
-    One node may have one Grant object.
+    One node may have one Grant object. ?
     Source: Page 7 of https://winnf.memberclicks.net/assets/CBRS/WINNF-TS-0016.pdf
 
     Attributes
@@ -113,7 +107,7 @@ class Grant:
         """
         self.heartbeatInterval = hbInt
 
-class TX_Usrp(gr.top_block):
+class TX_USRP(gr.top_block):
     """
     Class representing a USRP Transmitter Flowgraph
 
@@ -133,7 +127,7 @@ class TX_Usrp(gr.top_block):
     TODO: Lots to add here
     """
 
-    def __init__(self, deviceAddr, centerFreq, gain, sampRate, signalAmp, waveform):
+    def __init__(self, deviceAddr, centerFreq, gain, bandwidth, signalAmp, waveform):
         """
         Constructs Tx USRP object
 
@@ -145,8 +139,8 @@ class TX_Usrp(gr.top_block):
             center frequency of the band you want to receive
         gain : double
             dB gain of transmitted signal
-        sampRate : int
-            # of FFT bins the received data will be represented
+        bandwidth : float
+            Signal bandwidth
         signalAmp : float
             Amplitude of signal from 0 to 1
         waveform : string
@@ -161,7 +155,7 @@ class TX_Usrp(gr.top_block):
         self.SDR_Address = deviceAddr   # Required
         self.freq        = centerFreq   # Required 
         self.gain        = gain         # Required 
-        self.sample_rate = sampRate     # Required
+        self.bandwidth   = bandwidth    # Required
         self.signal_amp  = signalAmp    # Required
         self.waveform    = waveform     # Required
 
@@ -171,8 +165,8 @@ class TX_Usrp(gr.top_block):
         ##################################################
         # Blocks
         ##################################################
-        self.interest_signal = analog.sig_source_c(self.sample_rate, self.waveform, 0, self.signal_amp, 0, 0)
-        self.SDR_A = uhd.usrp_sink(
+        self.interest_signal = analog.sig_source_c(self.bandwidth, self.waveform, 0, self.signal_amp, 0, 0)
+        self.TX_SDR = uhd.usrp_sink(
             ",".join(("addr="+self.SDR_Address, '')),
             uhd.stream_args(
                 cpu_format="fc32",
@@ -181,28 +175,26 @@ class TX_Usrp(gr.top_block):
             ),
             '',
         )
-        self.SDR_A.set_center_freq(self.freq, 0)
-        self.SDR_A.set_gain(self.gain, 0)
-        self.SDR_A.set_antenna('TX/RX', 0) # May need to add controls to this param
-        self.SDR_A.set_samp_rate(self.sample_rate)
+        self.TX_SDR.set_center_freq(self.freq, 0)
+        self.TX_SDR.set_gain(self.gain, 0)
+        self.TX_SDR.set_antenna('TX/RX', 0) # May need to add controls to this param
+        self.TX_SDR.set_samp_rate(self.bandwidth)
 
         # This is used to coordinate changes across mulitple devices it seems like
         # It looks as though an external LO is used to get this nanosecond timing correct
         # Can look into this feature at a later time when mulitple devices are working for the SAS
-        self.SDR_A.set_time_unknown_pps(uhd.time_spec()) # TODO: Learn more about this ^
+        self.TX_SDR.set_time_unknown_pps(uhd.time_spec()) # TODO: Learn more about this ^
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.interest_signal, 0), (self.SDR_A, 0))
-
-    
+        self.connect((self.interest_signal, 0), (self.TX_SDR, 0))
 
     def get_SDR_Address(self):
         return self.SDR_Address
 
-    # I do not believe that changing SDR_Address will cause any effect at this time
     def set_SDR_Address(self, SDR_Address):
+        """I do not believe that changing SDR_Address will cause any effect at this time"""
         self.SDR_Address = SDR_Address
 
     def get_freq(self):
@@ -210,22 +202,22 @@ class TX_Usrp(gr.top_block):
 
     def set_freq(self, freq):
         self.freq = freq
-        self.SDR_A.set_center_freq(self.freq, 0)
+        self.TX_SDR.set_center_freq(self.freq, 0)
 
     def get_gain(self):
         return self.gain
 
     def set_gain(self, gain):
         self.gain = gain
-        self.SDR_A.set_gain(self.gain, 0)
+        self.TX_SDR.set_gain(self.gain, 0)
 
-    def get_sample_rate(self):
+    def get_bandwidth(self):
         return self.sample_rate
 
-    def set_sample_rate(self, sample_rate):
-        self.sample_rate = sample_rate
-        self.SDR_A.set_samp_rate(self.sample_rate)
-        self.interest_signal.set_sampling_freq(self.sample_rate)
+    def set_bandwidth(self, bandwidth):
+        self.bandwidth = bandwidth
+        self.TX_SDR.set_bandwidth(self.bandwidth)
+        self.interest_signal.set_sampling_freq(self.bandwidth)
 
     def get_signal_amp(self):
         return self.signal_amp
@@ -240,6 +232,14 @@ class TX_Usrp(gr.top_block):
     def set_waveform(self, waveform):
         self.waveform = self._convert_waveform(waveform)
 
+class RX_USRP():
+    """
+    TODO
+
+    Create a GNU Radio Flowgraph for a RX USRP and paste the generated Python code for the class in here.
+    """
+    pass
+
 class TXRX_USRP(gr.top_block):
     """
     Class Representing a USRP TX & RX Flowgraph.
@@ -252,14 +252,21 @@ class TXRX_USRP(gr.top_block):
     device_addr : string
         IP Address of USRP. E.g. "192.168.40.110"
     tx_fc : float
+        TX Center Frequency
     tx_bw : float
+        TX Signal Bandwidth
     tx_src_amp : float
+        TX Signal Source Amplitude
     tx_gain : float
+        TX Gain
     rx_fc : float
+        RX Center Frequency
     rx_bw : float
+        RX Bandwidth
     rx_gain : float
+        RX Gain
     rx_bins : float
-
+        Number of data points that should be probed from the FFT (Should be a power of 2 e.g. 1024, 2048, ...)
     """
 
     def __init__(self, device_addr, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins):
@@ -415,7 +422,7 @@ class Node:
     ----------
     operationMode : string
         This will be 'TX', 'RX', or 'TXRX'
-    tx_usrp : TX_Usrp Object
+    tx_usrp : TX_USRP Object
         Object associated with the TX Flowgraph
     rx_usrp : RX_Usrp Object
         Object associated with the RX Flowgraph
@@ -478,29 +485,57 @@ class Node:
 
         Returns
         -------
-        validParams : boolean
+        node : TX_USRP Object
             True if USRP can handle the demanded parameters, False otherwise
         """
         if((centerFreq > 0) and (gain >= 0) and (bandwidth > 0) and (signalAmp >= 0) and (self._convert_waveform(waveform))):
-            self.usrp = TX_Usrp(self.ipAddress, centerFreq, gain, bandwidth, signalAmp, self._convert_waveform(waveform))
+            self.usrp = TX_USRP(self.ipAddress, centerFreq, gain, bandwidth, signalAmp, self._convert_waveform(waveform))
         else:
             return None
         
-    def createRxUsrp(self, centerFreq, gain, bandwidth):# TODO: Determine parameters for this
+    def createRxUsrp(self, centerFreq, gain, bandwidth):
+        """
+        TODO
+        
+        If a user wants to create an spectrum sensor that is exclusive to the SAS,
+        then this would be a good place to add a RX only Node.
+        """
         self.usrp = None
     
     def createTxRxUsrp(self, tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain, rx_bins=1024):
         """
-        Creates a TX/RX Node with given TX & RX parameters
+        Creates a TX/RX Node with given TX & RX parameters.
+        Parameters should be validated in here, and if they are out of bounds, return some status.
+
+        Parameters
+        ----------
+        tx_fc : float
+            TX Center Frequency
+        tx_bw : float
+            TX Signal Bandwidth
+        tx_src_amp : float
+            TX Signal Source Amplitude
+        tx_gain : float
+            TX Gain
+        rx_fc : float
+            RX Center Frequency
+        rx_bw : float
+            RX Bandwidth
+        rx_gain : float
+            RX Gain
+        rx_bins : float
+            Number of data points that should be probed from the FFT (Should be a power of 2. Default: 1024)
         """
+
+        # TODO: Should not have to validate these at this point
         if(tx_gain > 31.5):
-            print("TX Gain of '" + tx_gain + "' exceeds limit of 31.5. Setting TX Gain to 31.5")
+            print("TX Gain of '" + tx_gain + "' exceeds limit of 31.5. Setting TX Gain to maximum of 31.5")
             tx_gain = 31.5
         elif(tx_gain < 0):
-            print("TX Gain of '" + tx_gain + "' is below minimum of 0. Setting TX Gain to 0")
+            print("TX Gain of '" + tx_gain + "' is below minimum of 0. Setting TX Gain to 0 (off)")
             tx_gain = 0
         if(tx_src_amp > 1):
-            print("TX Signal Source Amplitude of '" + tx_src_amp + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1")
+            print("TX Signal Source Amplitude of '" + tx_src_amp + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1.")
             tx_src_amp = 1
         elif(tx_src_amp < 0):
             print("TX Signal Source Amplitude of '" + tx_src_amp + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
@@ -537,27 +572,25 @@ class Node:
 
     def turnOffTx(self):
         """
+        This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
         """
-        if(self.operationMode == 'TX'):
-            self.tx_usrp.set_signal_amp(0)
+        if(self.operationMode == "TX"):
+            self.usrp.set_signal_amp(0)
+        elif(self.operationMode == "TXRX"):
+            self.usrp.set_tx_src_amp(0)
+        else:
+            print("Invalid Node/operationMode for turnOffTx. No changes made.")
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
-        if(self.operationMode == "TXRX"):
+        if(self.operationMode == "TXRX" or self.operationMode == "RX"):
             if(fc):
-                self.txrx_usrp.set_rx_fc(fc)
+                self.usrp.set_rx_fc(fc)
             if(bw):
-                self.txrx_usrp.set_rx_bw(bw)
+                self.usrp.set_rx_bw(bw)
             if(gain):
-                self.txrx_usrp.set_rx_gain(gain)
-        elif(self.operationMode == "RX"):
-            if(fc):
-                self.rx_usrp.set_rx_fc(fc)
-            if(bw):
-                self.rx_usrp.set_rx_bw(bw)
-            if(gain):
-                self.rx_usrp.set_rx_gain(gain)   
+                self.usrp.set_rx_gain(gain) 
         else:
-            print("Invalid Node for setRxParams command")       
+            print("Invalid Node operationMode for setRxParams command. No Node updated.")       
 
     def getSpectrumData(self):
         """
@@ -625,7 +658,8 @@ class Node:
 
         Return
         ------
-            GNU Radio waveform library value. Defaults to Sine Wave. 
+            wf : GNU Radio waveform library value. 
+                If no match is found, defaults to 'None'
         """
         if(waveform == "CONSTANT"):
             return analog.GR_CONST_WAVE

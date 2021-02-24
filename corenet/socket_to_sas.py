@@ -331,7 +331,6 @@ def _getSpectrumDataByCbsdId(cbsdId):
 	spectrumAvg = sum(data)/len(data)
 	return RcvdPowerMeasReport(lowFreq, bw, spectrumAvg)
 
-
 # End Helper Functions---------------------------------------------------------------------
 
 # Create Node------------------------------------------------------------------------------
@@ -786,22 +785,36 @@ def handleSpectrumInquiryResponse(clientio, data):
 	Handles Spectrum Inquiry response from the SAS
 	"""
 	jsonData = json.loads(data)
-	for SIResponse in jsonData["spectrumInquiryResponse"]:
-		print(SIResponse)
-		if(SIResponse["cbsdId"]):
-			cbsdId = SIResponse["cbsdId"]
-		if(SIResponse["availableChannel"]):
-			availableChannel = SIResponse["availableChannel"]
-		if(SIResponse["response"]):
-			response = SIResponse["response"]
-			if(response["responseCode"]):
-				responseCode = response["responseCode"]
-				if(isVaildInt(responseCode)):
-					print("Response Code " + int(responseCode)+ ": " + responseDecode(int(responseCode)))
-			if(response["responseMessage"]):
-				responseMessage = response["responseMessage"]
-			if(response["responseData"]):
-				responseData = response["responseData"]
+	iter = -1
+	siResponses = _grabPossibleEntry(jsonData, "spectrumInquiryResponse")
+	if(not siResponses):
+		print("Unreadable data. Expecting JSON formatted payload. Spectrum Inquiry(s) invalid.")
+		return
+	else:
+		print("Spectrum Inquiry(s) Received")
+	for SIResponse in siResponses:
+		iter = iter + 1
+		print("Spectrum Inquiry Response [" + str(iter+1) +"]:")
+		response = _grabPossibleEntry(SIResponse, "response")
+		if(not _isValidResponse(response)):
+			print("Spectrum Inquiry invalid.")
+			continue
+		cbsdId = _grabPossibleEntry(SIResponse, "cbsdId")
+		if(cbsdId):
+			node = findTempNodeByCbsdId(cbsdId)
+			if(not node):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Spectrum Inquiry invalid.")
+				continue
+		else:
+			print("No cbsdId provided. Spectrum Inquiry invalid.")
+			continue
+		availableChannel = _grabPossibleEntry(SIResponse, "availableChannel")
+		if(availableChannel):
+			pass
+		else:
+			print("No availableChannel found.")
+
+	
 # End Spectrum Inquiry Request------------------------------------------------------------
 
 # Grant Request---------------------------------------------------------------------------
@@ -1046,7 +1059,7 @@ def handleHeartbeatResponse(clientio, data):
 	__heartbeatTimer.cancel()
 	
 	jsonData = json.loads(data)
-	iter = -1
+	iter = -1 # Starts at -1 in case of need to use indexing
 	hbResponses = _grabPossibleEntry(jsonData, "heartbeatResponse")
 	if(not hbResponses):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
@@ -1114,7 +1127,7 @@ def handleHeartbeatResponse(clientio, data):
 		# default time: 1 sec
 
 		# Schedule the next HeartbeatRequest
-		delayTilNextHeartbeat = float(heartbeatInterval) * 0.9
+		delayTilNextHeartbeat = float(heartbeatInterval) * 0.9 # Send heartbeats a little sooner than the interval
 		if(delayTilNextHeartbeat < 1):
 			delayTilNextHeartbeat = 1
 		scheduleNextHeartbeat = threading.Timer(delayTilNextHeartbeat, heartbeatRequest)
@@ -1195,13 +1208,13 @@ def handleRelinquishmentResponse(clientio, data):
 	Relinquishment Requests resets the Grant object for a Node
 	"""
 	jsonData = json.loads(data)
-	iter = -1
+	iter = -1 # Starts at -1 in case of need to use indexing
 	relinquishResponses = _grabPossibleEntry(jsonData, "relinquishmentResponse")
 	if(not relinquishResponses):
-		print("Unreadable data. Expecting JSON formatted payload. Relinquishment(s) invalid.")
+		print("Unreadable data. Expecting JSON formatted payload with key 'relinquishmentResponse'. Relinquishment(s) invalid.")
 		return
 	else:
-		print("Relinquishment Response Received")
+		print("Relinquishment Response(s) Received")
 	for relinquishment in relinquishResponses:
 		iter = iter + 1
 		print("Relinquishment Response [" + str(iter+1) +"]:")
@@ -1217,7 +1230,7 @@ def handleRelinquishmentResponse(clientio, data):
 				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Relinquishment invalid.")
 				continue
 		else:
-			print("No cbsdId provided. Heartbeat invalid.")
+			print("No cbsdId provided. Deregistration invalid.")
 			continue
 
 		grantId = _grabPossibleEntry(relinquishment, "grantId")
@@ -1225,7 +1238,8 @@ def handleRelinquishmentResponse(clientio, data):
 			print("No grantId provided. Relinquishment invalid")
 			continue
 		
-		grant = node.getGrantRequest()
+		# Grab the Grant that is being relinquished and re-initialize it
+		grant = node.getGrant()
 		grant.__init__() # TODO: Make sure this resets the Grant
 		# TODO: If a heartbeat is scheduled, make sure to address it
 # End Relinquishment Request---------------------------------------------------------------
@@ -1300,16 +1314,36 @@ def handleDeregistrationResponse(clientio, data):
 	Handles SAS Deregistration Response sent to CBSD
 	"""
 	jsonData = json.loads(data)
-	for dereg in jsonData["deregistrationResponse"]:
-		if(dereg["cbsdId"]):
-			cbsdId = dereg["cbsdId"]
-		if(dereg["response"]):
-			response = dereg["response"]
+	iter = -1 # Starts at -1 in case of need to use indexing
+	deregistrationResponses = _grabPossibleEntry(jsonData, "deregistrationResponse")
+	if(not deregistrationResponses):
+		print("Unreadable data. Expecting JSON formatted payload with key 'deregistrationResponse'. Deregistration(s) invalid.")
+		return
+	else:
+		print("Deregistration Response(s) Received")
+	for dereg in deregistrationResponses:
+		iter = iter + 1
+		print("Deregistration Response [" + str(iter+1) +"]:")
+		response = _grabPossibleEntry(dereg, "response")
+		if(not _isValidResponse(response)):
+			print("Deregistration invalid.")
+			continue
+		cbsdId = _grabPossibleEntry(dereg, "cbsdId")
+		if(cbsdId):
+			node = findTempNodeByCbsdId(cbsdId)
+			if(not node):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Deregistration invalid.")
+				continue
+		else:
+			print("No cbsdId provided. Deregistration invalid.")
+			continue
+
 # End Deregistration Request---------------------------------------------------------------
 
 def spectrumData(cbsdId, clientio):
 	"""
 	Provide SAS with Spectrum Data by emitting "spectrumData"
+	There is a presumption that the SAS is not askng for more than 10MHz from 1 node.
 
 	Parameters
 	----------
@@ -1324,15 +1358,19 @@ def spectrumData(cbsdId, clientio):
 	payload = {"cbsdId":cbsdId, "spectrumData": MeasReport(reports).asdict()}
 	clientio.emit("spectrumData", json.dumps(payload))
 
-def updateRxParams(cbsdId, params):
+def updateRxParams(data):
 	"""
 	Handles SAS Command to change RX Parameters
+
+	Parameters
+	----------
+	data : dictonary
+		Keys include cbsdId, lowFreq, and highFreq for RX Node
 	"""
-	# Find node from CBSD ID
-	# Take out lowFreq and highFreq from dict
+	cbsdId = _grabPossibleEntry(data, "cbsdId")
 	node = findRegisteredNodeByCbsdId(cbsdId)
-	lowFreq = _grabPossibleEntry(params, "lowFreq")
-	highFreq = _grabPossibleEntry(params, "highFreq")
+	lowFreq = _grabPossibleEntry(data, "lowFreq")
+	highFreq = _grabPossibleEntry(data, "highFreq")
 	bw = (highFreq - lowFreq)
 	fc =  highFreq - (bw / 2)
 	node.updateRxParams(fc, bw)
@@ -1357,10 +1395,9 @@ def startNode(cbsdId):
 			return
 	print("No node found with CBSD ID: " + cbsdId)
 
-
 def defineSocketEvents(clientio):
 	"""
-	List of events the SAS may echo, and functions to call to handle them
+	List of events the SAS may emit, and functions to call to handle them
 
 	Parameters
 	----------
@@ -1410,6 +1447,15 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def deregistrationResponse(data):
+		"""
+		SAS response to a deregistrationRequest
+		Calls 'handleDeregistrationResponse(data)'
+
+		Parameters
+		----------
+		data : dictonary
+			Expected keys are cbsdId, highFreq, and lowFreq
+		"""
 		global __blocked
 		handleDeregistrationResponse(clientio, data)
 		__blocked = False
@@ -1420,10 +1466,17 @@ def defineSocketEvents(clientio):
 	# 	send_params(clientio, node)
 
 	@clientio.event
-	def changeRadioParams(cbsdId, params):
+	def changeRadioParams(data):
 		"""
+		SAS command to change RX Parameters for a Node with a cbsdId.
+		Calls 'updateRxParams(data)'
+
+		Parameters
+		----------
+		data : dictonary
+			Expected keys are cbsdId, highFreq, and lowFreq
 		"""
-		updateRxParams(cbsdId, params)
+		updateRxParams(data)
 
 	# @clientio.event
 	# def stop_radio(cbsdId):
@@ -1435,7 +1488,12 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def disconnect():
-		print('Server terminated connection')
+		"""
+		SAS Command to tell the socket connection to close
+
+		TODO: determine how to properly/gracefully disconnect from a socket
+		"""
+		print('SAS requested for connection to be terminated')
 
 def init(args):
 	"""
