@@ -568,7 +568,6 @@ class VTParams:
 			return_dict["isMobile"] = self.isMobile
 		return return_dict
 
-
 class RegistrationResponse:
 	"""
 	RegistrationResponse - This parameter is an array of RegistrationResponse data objects. 
@@ -1112,11 +1111,11 @@ class HeartbeatResponse:
 
 	transmitExpireTime : string (required)
 		The CBSD shall cease transmission using the SAS authorized radio resource within 60 seconds after the value of the transmitExpireTime parameter expires, in accordance with part 96.39(c)(2) (ref. [n.8]). 
-		The transmitExpireTimeis UTC time expressed in the format, YYYY-MM-DDThh:mm:ssZ as defined by [n.7].The transmitExpireTime value shall be no later thanthe grantExpireTime
+		The transmitExpireTime is UTC time expressed in the format, YYYY-MM-DDThh:mm:ssZ as defined by [n.7].The transmitExpireTime value shall be no later than the grantExpireTime.
 
 	grantExpireTime : string (conditional)
-		Required if the responseCode parameter indicates SUCCESS or SUSPENDED_GRANT and the grantRenew parameter was included and set to True in the corresponding HeartbeatRequestobject. 
-		This parameter may be included at other times by SAS choice.When included, if the channelTypeof this Grantis "PAL", thisparameter shall be set to the value that does not extend beyond the licenseExpirationof the corresponding PAL recorded in the PAL Database [n.23].
+		Required if the responseCode parameter indicates SUCCESS or SUSPENDED_GRANT and the grantRenew parameter was included and set to True in the corresponding HeartbeatRequest object. 
+		This parameter may be included at other times by SAS choice. When included, if the channelType of this Grantis "PAL", this parameter shall be set to the value that does not extend beyond the licenseExpiration of the corresponding PAL recorded in the PAL Database [n.23].
 		
 	heartbeatInterval : number (optional)
 		This parameter is a positive integer and indicates the maximum time interval in units of seconds between two consecutive heartbeat requeststhat the CBSD should attempt to meet. 

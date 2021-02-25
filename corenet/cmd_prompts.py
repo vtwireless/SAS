@@ -8,34 +8,47 @@
 from WinnForum import CbsdInfo, InstallationParam, FrequencyRange, OperationParam, VTGrantParams, RcvdPowerMeasReport
 from gnuradio import uhd
 
-# Helpers
-def getSelectorBoolean(selection):
+# Helper Functions -----------------------------------------------------------------
+def getSelectorBoolean(prompt):
 	"""
-	Translates Yes and No to True and False
+	Prompts user a Y/N question and translates value to True and False.
+	If user enters "exit", then function returns 'None'
+
+	Parameters
+	----------
+	prompt : string
+		Prompt that asks a Y/N question
+	
+	Returns
+	-------
+	user_input : boolean
+		If user enters Yes, returns True; if No, False; if "exit", None
 	"""
-	data = selection
 	while True:
-		if(data == 'Y' or data == 'y'):
+		user_input = input(prompt)
+		if(user_input == 'Y' or user_input == 'y'):
 			return True
-		elif(data == 'N' or data == 'n'):
+		elif(user_input == 'N' or user_input == 'n'):
 			return False
+		elif(user_input == "exit"):
+			return None
 		else:
-			data = input("Please enter Y for Yes or N for No: ")
+			print("Please enter Y for Yes or N for No...")
 
 def getValidFloat(prompt):
 	"""
-	Prompts user with prompt and returns a float (or 'enter')
+	Prompts user with prompt and returns a float (or 'exit')
+	If user enters 'exit' then this function returns 'None'
 	"""
 	while(True):
-		value = input(prompt)
-		if(value != ""): # If data is not 'enter'
-			try:
-				value = float(value)
-				return value
-			except ValueError:
-				print("Please enter a valid number...")
-		else:
-			return value
+		user_input = input(prompt)
+		if(user_input == "exit"):
+			return None
+		try:
+			return float(user_input)
+		except ValueError:
+			print("Please enter a valid number (or 'exit' to quit this operation)...")
+
 
 def getValidInt(prompt):
 	"""
@@ -44,15 +57,14 @@ def getValidInt(prompt):
 	TODO: Should I really allow this to pass ' "" ' if user presses enter?
 	"""
 	while(True):
-		value = input(prompt)
-		if(value != ""):
-			try:
-				value = int(value)
-				return int(value)
-			except ValueError:
-				print("Please enter a vaild integer...")
-		else:
-			return value
+		user_input = input(prompt)
+		if(user_input == "exit"):
+			return None
+		try:
+			return int(user_input)
+		except ValueError:
+			print("Please enter a vaild integer or 'exit' to quit...")
+# End Helper Functions -------------------------------------------------------------
 
 def promptNumOfRequests(prompt):
 	"""
@@ -71,55 +83,74 @@ def promptUsrpMode():
 	Prompts User for USRP Mode (Either TX or RX)
 	"""
 	while True:
-		usrpMode = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
-		if(usrpMode == 'T' or usrpMode == 't'):
-			return 'TX'
-		elif(usrpMode == 'R' or usrpMode == 'r'):
-			return 'RX'
+		user_input = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
+		if(user_input == 'T' or user_input == 't'):
+			return "TX"
+		elif(user_input == 'R' or user_input == 'r'):
+			return "RX"
+		elif(user_input == "exit"):
+			return None
 		else:
-			print("Please enter T for a Transmitter or R for a Receiver...")
+			print("Please enter T for a Transmitter or R for a Receiver or 'exit'...")
 
 def promptUsrpIpAddr():
 	"""
 	Prompts User for valid USRP IP Address and cross references with UHD list
 
-	**Maybe refresh usrps list after each attempt? In case a node becomes available.
+	TODO: Maybe refresh usrps list after each attempt? In case a node becomes available.
 	"""
 	while(True):
 		ip = input("Enter the IP Address of the node (Ex. 192.168.40.110): ")
 		for node in list(uhd.find_devices()):
 			if(ip == node['addr']):
-				print("UHD Lib has found a node matching the IP you entered! Would you like to use info from UHD ")
+				print("UHD Lib has found a node matching the IP you entered!")
 				return ip
-		keepIP = getSelectorBoolean(input("IP: " + ip + "not found by the UHD lib. Would you like still register this IP? Y/N: "))
+		keepIP = getSelectorBoolean("IP: " + ip + "not found by the UHD lib. Would you like still register this IP? Y/N: ")
 		if(keepIP):
 			return ip
 
-def promptUsrpGain():
+def promptUsrpGain(min_gain=0, max_gain=31.5):
 		"""
 		Prompt user to enter Usrp Gain
 		"""
 		while(True):
 			gain = getValidFloat("Enter USRP gain (in dB): ")
-			# TODO: Check to ensure gain is in valid range
+			if(gain < min_gain):
+				print("Gain of '" + gain + "' is below the minimum of '" + min_gain + "'.")
+			elif(gain > max_gain):
+				print("Gain of '" + gain + "' is above the maximum of '" + max_gain + "'.")
 			return gain
 
-def promptUsrpSampleRate():
+def promptUsrpBandwidth(min_bw=0, max_bw=10000000):
 	"""
-	Prompts user to enter a valid sample rate
+	Prompts user to enter a valid integer for bandwidth.
+	Bandwidth range may be set using the optional parameters.
 
-	TODO: ensure sampRate is in range
+	Parameters
+	----------
+	min_bw : int (optional)
+		Minimum bandwidth. Default: 0Hz.
+	max_bw : int (optional)
+		Maximum bandwidth. Defualt 10000000 (10MHz).
 	"""
 	while(True):
-		sampRate = getValidFloat("Enter Sample Rate of the node (in Hz): ")
-		return sampRate
+		bandwidth = getValidInt("Enter bandwidth (in Hz): ")
+		if(bandwidth < min_bw):
+			print("Bandwidth must be greater than "+ str(min_bw) +".")
+		elif(bandwidth > max_bw):
+			print("Bandwidth must be less than "+ str(max_bw) +".")
+		else:
+			return bandwidth
+
+
+	return bandwidth
 
 def promptUsrpCenterFreq():
 	"""
-	Prompt user to enter center frequency of Tx/Rx 
+	Prompt user to enter Center Frequency
 	"""
 	while(True):
-		cfreq = input("Enter the center frequency of the node (in Hz): ")
+		cfreq = input("Enter the Center Frequency (in Hz): ")
 		if(int(cfreq) < 0):
 			print("Please enter a positive integer for frequency...")
 		else:
@@ -205,7 +236,7 @@ def promptCbsdInfo(cbsdSerialNumber, usrps):
 	-------
 
 	"""
-	cbsdInfoSelector = getSelectorBoolean(input("Do you want to enter CBSD Device Information (Y)es or (N)o: "))
+	cbsdInfoSelector = getSelectorBoolean("Do you want to enter CBSD Device Information (Y)es or (N)o: ")
 	cbsdInfo = None
 	if(cbsdInfoSelector):
 		print("All Device info is optional - press enter to skip any field...")
@@ -305,6 +336,21 @@ def promptInstallationParam():
 	indoorDeployment, antennaAzimuth, antennaDowntilt, antennaGain,	eirpCapability, antennaBeamwidth, antennaModel)
 	return installationParam
 
+def promptMeasCapability():
+	"""
+	Prompts user for Node measCapability
+
+	TODO: Allow user to enter this/Pull these using USRP data.
+	For now, they are hardcoded.
+	
+	Returns
+	-------
+	measCapability : array of string
+	"""
+	measCapabilities = [None]
+	measCapabilities.append("RECEIVED_POWER_WITHOUT_GRANT")
+	measCapabilities.append("RECEIVED_POWER_WITH_GRANT")
+	return measCapabilities
 
 # Spectrum Inquiry Request
 def promptFrequencyRange():
@@ -371,7 +417,7 @@ def promptVtGrantParams():
 	dataType = input("Enter data type being transferred (e.g. text, video, audio): ")
 	powerLevel = input("Enter desired transmitter power output (in dBm): ")
 	location = input("Enter location of grant transmission: ") # TODO: what location? Tx, desired Rx?
-	mobility = getSelectorBoolean(input("Will this grant need to be mobile? (Y)es or (N)o: "))
+	mobility = getSelectorBoolean("Will this grant need to be mobile? (Y)es or (N)o: ")
 	if(mobility):
 		maxVelocity = input("Enter approximate byte size of data: ")
 	else:

@@ -50,11 +50,11 @@ class Grant:
         Constructor for a Grant Object. Grants are created once a node registers on the SAS.
         Nodes are automatically sent to IDLE since they have yet to send a sucessfull Grant request.
         """
-        self.grantId           = ""
-        self.grantStatus       = "IDLE"
-        self.grantExpireTime   = ""
-        self.heartbeatInterval = "" 
-        self.channelType       = ""
+        self.__grantId           = ""
+        self.__grantStatus       = "IDLE"
+        self.__grantExpireTime   = ""
+        self.__heartbeatInterval = "" 
+        self.__channelType       = ""
     
     def getGrantId(self):
         """
@@ -65,55 +65,55 @@ class Grant:
         grantId : string
             ID of grant the Node is assigned to 
         """ 
-        return self.grantId
+        return self.__grantId
 
     def setGrantId(self, id):
         """
         Assigns grantId to passed parameter id
         """
-        self.grantId = id
+        self.__grantId = id
     
     def getGrantStatus(self):
         """
         Returns grantStatus for the Grant the node is assigned to
         """
-        return self.grantStatus
+        return self.__grantStatus
 
     def setGrantStatus(self, status):
         """
         Assigns grantStatus to passed parameter status
         """
-        self.grantStatus = status
+        self.__grantStatus = status
 
     def getGrantExpireTime(self):
         """
         Returns grantExpireTime for the Grant the node is assigned to
         """
-        return self.grantExpireTime
+        return self.__grantExpireTime
 
     def setGrantExpireTime(self, expireTime):
         """
         Assigns grantExpireTime to passed parameter status
         """
-        self.grantExpireTime = expireTime
+        self.__grantExpireTime = expireTime
     
     def getHeartbeatInterval(self):
         """
         Returns heartbeatInterval for the Grant the node is assigned to
         """
-        return self.heartbeatInterval
+        return self.__heartbeatInterval
     
     def setHeartbeatInterval(self, hbInt):
         """
         Assigns heartbeatInterval to passed parameter status
         """
-        self.heartbeatInterval = hbInt
+        self.__heartbeatInterval = hbInt
 
     def getChannelType(self):
-        return self.channelType
+        return self.__channelType
 
     def setChannelType(self, ctype):
-        self.channelType = ctype
+        self.__channelType = ctype
 
 class TX_USRP(gr.top_block):
     """
@@ -266,24 +266,24 @@ class TXRX_USRP(gr.top_block):
     device_addr : string
         IP Address of USRP. E.g. "192.168.40.110"
     tx_fc : float
-        TX Center Frequency
+        TX Center Frequency (Hz). Default: 0 MHz.
     tx_bw : float
-        TX Signal Bandwidth
+        TX Signal Bandwidth (Hz). Default: 0 Hz. 
     tx_src_amp : float
-        TX Signal Source Amplitude
+        TX Signal Source Amplitude. Default: 0.
     tx_gain : float
-        TX Gain
+        TX Gain (dB).  Default: 0 dB.
     rx_fc : float
-        RX Center Frequency
+        RX Center Frequency (Hz). Default: 3555000000 Hz (3555 MHz).
     rx_bw : float
-        RX Bandwidth
+        RX Bandwidth. Default: 10000000 Hz (10 MHz).
     rx_gain : float
-        RX Gain
+        RX Gain (dB). Default: 0 dB.
     rx_bins : float
-        Number of data points that should be probed from the FFT (Should be a power of 2 e.g. 1024, 2048, ...)
+        Number of data points that should be probed from the FFT (Should be a power of 2 e.g. 1024, 2048, ...). Default: 1024.
     """
 
-    def __init__(self, device_addr, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins):
+    def __init__(self, device_addr, tx_fc=0, tx_bw=0, tx_gain=0, tx_src_amp=0, rx_fc=3555000000, rx_bw=10000000, rx_gain=0, rx_bins=1024):
         gr.top_block.__init__(self)
 
         ##################################################
@@ -592,6 +592,21 @@ class Node:
     def setMeasReportConfig(self, config):
         self.measReportConfig = config
 
+    def changeGrantStatus(self, status):
+        """
+        Upon a Heartbeat Response, a Node may be allowed to begin TX.
+        This function calls grant.setGrantStatus(status)
+        and also turns on TX is status is AUTHORIZED
+
+        Parameters
+        ----------
+        status : string
+            Grant status
+        """
+        self.getGrant().setGrantStatus(status)
+        if(status == "AUTHORIZED"):
+            self.turnOnTx()            
+
     def turnOffTx(self):
         """
         This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
@@ -643,7 +658,6 @@ class Node:
         """
         self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.turnOffTx())
         self.__heartbeatTimer.start()
-        print("Starting Heartbeat Timer...")
     
     def stopHbTimer(self):
         if(self.__heartbeatTimer):
