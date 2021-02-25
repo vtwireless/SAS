@@ -9,6 +9,8 @@ from gnuradio.filter import firdes
 from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
+import threading
+
 
 class Grant:
     """
@@ -106,6 +108,12 @@ class Grant:
         Assigns heartbeatInterval to passed parameter status
         """
         self.heartbeatInterval = hbInt
+
+    def getChannelType(self):
+        return self.channelType
+
+    def setChannelType(self, ctype):
+        self.channelType = ctype
 
 class TX_USRP(gr.top_block):
     """
@@ -231,6 +239,12 @@ class TX_USRP(gr.top_block):
 
     def set_waveform(self, waveform):
         self.waveform = self._convert_waveform(waveform)
+    
+    def turnOffTx(self):
+        self.interest_signal.set_amplitude(0)
+    
+    def turnOnTx(self):
+        self.interest_signal.set_amplitude(self.signal_amp)
 
 class RX_USRP():
     """
@@ -375,6 +389,12 @@ class TXRX_USRP(gr.top_block):
         self.src_amp = src_amp
         self.analog_noise_source_x_0.set_amplitude(self.src_amp)
 
+    def turnOffTx(self):
+        self.analog_noise_source_x_0.set_amplitude(0)
+    
+    def turnOnTx(self):
+        self.analog_noise_source_x_0.set_amplitude(self.src_amp)
+
     def get_rx_fc(self):
         return self.rx_fc
 
@@ -452,6 +472,8 @@ class Node:
         self.grant            = Grant()
         self.cbsdId           = None
         self.measReportConfig = []
+        self.__heartbeatTimer = None # This timer waiting for a Heartbeat Response after a Request is made
+
     
     def getIpAddress(self):
         return self.ipAddress
@@ -581,6 +603,17 @@ class Node:
         else:
             print("Invalid Node/operationMode for turnOffTx. No changes made.")
 
+    def turnOnTx(self):
+        """
+        This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
+        """
+        if(self.operationMode == "TX"):
+            self.usrp.set_signal_amp(self.usrp.get_signal_amp())
+        elif(self.operationMode == "TXRX"):
+            self.usrp.set_tx_src_amp(0)
+        else:
+            print("Invalid Node/operationMode for turnOffTx. No changes made.")
+
     def updateRxParams(self, fc=None, bw=None, gain=None):
         if(self.operationMode == "TXRX" or self.operationMode == "RX"):
             if(fc):
@@ -601,6 +634,23 @@ class Node:
         else:
             print("Invalid function call to getSpectrumData: unsupported current operationMode '" + str(self.operationMode) + "'.")
             return None
+
+    def startHbTimer(self, timeTilHearbeatExpires):
+        """
+        After a Heartbeat Request is sent, start a timer that is cancelled once a Hearbeat response comes in.
+
+        If the repsonse does not come in time (once the heartbeat expires), then ensure TX is OFF.
+        """
+        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.turnOffTx())
+        self.__heartbeatTimer.start()
+        print("Starting Heartbeat Timer...")
+    
+    def stopHbTimer(self):
+        if(self.__heartbeatTimer):
+            self.__heartbeatTimer.cancel()
+            self.__heartbeatTimer = None
+        else:
+            print("No active Heartbeat Timer running to cancel.")
 
     def printInfo(self):
         """
