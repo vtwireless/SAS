@@ -440,7 +440,7 @@ class Node:
 
     Attributes
     ----------
-    operationMode : string
+    __operationMode : string
         This will be 'TX', 'RX', or 'TXRX'
     tx_usrp : TX_USRP Object
         Object associated with the TX Flowgraph
@@ -448,6 +448,8 @@ class Node:
         Object associated with the RX Flowgraph
     txrx_usrp : TXRX_USRP Object
         Object associated with TX/RX Flowgraph
+    registrationState : string
+        Registration Status of Node
     grant : Grant object
         All nodes will have 1 Grant that includes all grant related data
     cbsdId : string
@@ -464,40 +466,41 @@ class Node:
         #TODO do not duplicate with create_nodes that are inactive
         __available_radios = list(uhd.find_devices()) # Pull list of nodes available once, for use when creating usrp obj
 
-        self.ipAddress        = ipAddress
-        self.serialNum        = self._ipToSerial(ipAddress, __available_radios)
-        self.model            = self._getProductOrType(ipAddress, __available_radios)
-        self.operationMode    = None
-        self.usrp             = None
-        self.grant            = Grant()
-        self.cbsdId           = None
-        self.measReportConfig = []
-        self.__heartbeatTimer = None # This timer waiting for a Heartbeat Response after a Request is made
+        self.__ipAddress         = ipAddress
+        self.__serialNum         = self._ipToSerial(ipAddress, __available_radios)
+        self.__model             = self._getProductOrType(ipAddress, __available_radios)
+        self.__operationMode     = None
+        self.__usrp              = None
+        self.__isSasRegistered   = False
+        self.__grant             = Grant()
+        self.__cbsdId            = None
+        self.__measReportConfig  = []
+        self.__heartbeatTimer    = None # This timer waiting for a Heartbeat Response after a Request is made
 
     
     def getIpAddress(self):
-        return self.ipAddress
+        return self.__ipAddress
 
     def setIpAddress(self, ip):
-        self.ipAddress = ip
+        self.__ipAddress = ip
 
     def getSerialNumber(self):
-        return self.serialNum
+        return self.__serialNum
 
     def setSerialNumber(self, num): 
-        self.serialNum = num
+        self.__serialNum = num
     
     def getModel(self):
-        return self.model
+        return self.__model
     
-    def setModel(self, model):
-        self.model = model
+    def setModel(self, __model):
+        self.__model = __model
 
     def getOperationMode(self):
-        return self.operationMode
+        return self.__operationMode
 
     def setOperationMode(self, mode):
-        self.operationMode = mode 
+        self.__operationMode = mode 
 
     def createTxUsrp(self, centerFreq, gain, bandwidth, signalAmp, waveform):
         """
@@ -511,7 +514,7 @@ class Node:
             True if USRP can handle the demanded parameters, False otherwise
         """
         if((centerFreq > 0) and (gain >= 0) and (bandwidth > 0) and (signalAmp >= 0) and (self._convert_waveform(waveform))):
-            self.usrp = TX_USRP(self.ipAddress, centerFreq, gain, bandwidth, signalAmp, self._convert_waveform(waveform))
+            self.__usrp = TX_USRP(self.__ipAddress, centerFreq, gain, bandwidth, signalAmp, self._convert_waveform(waveform))
         else:
             return None
         
@@ -522,7 +525,7 @@ class Node:
         If a user wants to create an spectrum sensor that is exclusive to the SAS,
         then this would be a good place to add a RX only Node.
         """
-        self.usrp = None
+        self.__usrp = None
     
     def createTxRxUsrp(self, tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain, rx_bins=1024):
         """
@@ -563,7 +566,7 @@ class Node:
             print("TX Signal Source Amplitude of '" + tx_src_amp + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
             tx_src_amp = 0 # TX OFF
 
-        self.usrp = TXRX_USRP(self.ipAddress, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins)
+        self.__usrp = TXRX_USRP(self.__ipAddress, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins)
 
     def getUsrp(self):
         """
@@ -572,25 +575,34 @@ class Node:
         usrp : USRP/Flowgraph Object Object
             USRP/Flowgraph Object the Node represents (May be TX, RX, or TXRX USRP)
         """
-        return self.usrp
+        return self.__usrp
+
+    def getRegistrationStatus(self):
+        """
+        If Node is registered with the SAS, this returns 'True'
+        """
+        return self.__isSasRegistered
+
+    def setRegistrationStatus(self, status):
+        self.__isSasRegistered = status
 
     def getGrant(self):
-        return self.grant
+        return self.__grant
 
     def setGrant(self, grant):
-        self.grant = grant
+        self.__grant = grant
 
     def getCbsdId(self):
-        return self.cbsdId 
+        return self.__cbsdId 
 
     def setCbsdId(self, id):
-        self.cbsdId = id
+        self.__cbsdId = id
     
     def getMeasReportConfig(self):
-        return self.measReportConfig
+        return self.__measReportConfig
     
     def setMeasReportConfig(self, config):
-        self.measReportConfig = config
+        self.__measReportConfig = config
 
     def changeGrantStatus(self, status):
         """
@@ -611,26 +623,26 @@ class Node:
         """
         This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
         """
-        if(self.operationMode == "TX"):
+        if(self.__operationMode == "TX"):
             self.usrp.set_signal_amp(0)
-        elif(self.operationMode == "TXRX"):
+        elif(self.__operationMode == "TXRX"):
             self.usrp.set_tx_src_amp(0)
         else:
-            print("Invalid Node/operationMode for turnOffTx. No changes made.")
+            print("Invalid Node/__operationMode for turnOffTx. No changes made.")
 
     def turnOnTx(self):
         """
         This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
         """
-        if(self.operationMode == "TX"):
+        if(self.__operationMode == "TX"):
             self.usrp.set_signal_amp(self.usrp.get_signal_amp())
-        elif(self.operationMode == "TXRX"):
+        elif(self.__operationMode == "TXRX"):
             self.usrp.set_tx_src_amp(0)
         else:
-            print("Invalid Node/operationMode for turnOffTx. No changes made.")
+            print("Invalid Node/__operationMode for turnOffTx. No changes made.")
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
-        if(self.operationMode == "TXRX" or self.operationMode == "RX"):
+        if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
             if(fc):
                 self.usrp.set_rx_fc(fc)
             if(bw):
@@ -638,16 +650,16 @@ class Node:
             if(gain):
                 self.usrp.set_rx_gain(gain) 
         else:
-            print("Invalid Node operationMode for setRxParams command. No Node updated.")       
+            print("Invalid Node __operationMode for setRxParams command. No Node updated.")       
 
     def getSpectrumData(self):
         """
         Uses the probe block to pull spectrum data
         """
-        if(self.operationMode == "TXRX" or self.operationMode == "RX"):
+        if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
             return self.usrp.getRxProbeList()
         else:
-            print("Invalid function call to getSpectrumData: unsupported current operationMode '" + str(self.operationMode) + "'.")
+            print("Invalid function call to getSpectrumData: unsupported current __operationMode '" + str(self.__operationMode) + "'.")
             return None
 
     def startHbTimer(self, timeTilHearbeatExpires):

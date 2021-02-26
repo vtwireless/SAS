@@ -693,6 +693,7 @@ def handleRegistrationResponse(clientio, data):
 			print("Measurment Report Configuration(s) Assigned: " + measReportConfig)
 			node.setMeasReportConfig(measReportConfig)
 
+		node.setRegistrationStatus(True)
 		# TODO Update RX USRP with these params
 		# TODO Do we go right in and start RX?
 # End Registation ------------------------------------------------------------------
@@ -1353,15 +1354,13 @@ def handleDeregistrationResponse(clientio, data):
 		if(not _isValidResponse(response)):
 			print("Deregistration invalid.")
 			continue
-		cbsdId = _grabPossibleEntry(dereg, "cbsdId")
-		if(cbsdId):
-			node = findTempNodeByCbsdId(cbsdId)
-			if(not node):
-				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Deregistration invalid.")
-				continue
-		else:
+		if(not (cbsdId := _grabPossibleEntry(dereg, "cbsdId"))):
 			print("No cbsdId provided. Deregistration invalid.")
 			continue
+		if(not (node := findTempNodeByCbsdId(cbsdId))):
+			print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Deregistration invalid.")
+			continue
+		node.setRegistrationStatus(False)
 # End Deregistration ---------------------------------------------------------------
 
 # SAS Socket Events (Not WinnForum Specified) --------------------------------------
