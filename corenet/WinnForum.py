@@ -93,7 +93,7 @@ def responseDecode(code):
 		return "TERMINATED_GRANT"
 	elif(code == 501):
 		return "SUSPENDED_GRANT"
-	elif(code == 501):
+	elif(code == 502):
 		return "UNSYNC_OP_PARAM"
 	else:
 		return "INVALID_CODE"
