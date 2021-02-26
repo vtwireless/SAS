@@ -85,7 +85,7 @@ def responseDecode(code):
 		return "GROUP_ERROR"
 	elif(code == 300):
 		return "UNSUPPORTED_SPECTRUM"
-	elif(code == 200):
+	elif(code == 400):
 		return "INTERFERENCE"
 	elif(code == 401):
 		return "GRANT_CONFLICT"
