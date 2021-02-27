@@ -29,7 +29,7 @@ class Grant:
         Maximum number of seconds allowed between Heartbeats
     channelType : string
         "PAL" or "GAA" channel descriptor
-        
+    
     Methods
     -------
     getGrantId()
@@ -45,16 +45,16 @@ class Grant:
     setGrantExpireTime(expireTime)
         assigns grantExpireTime to passed parameter expireTime
     """
-    def __init__(self):
+    def __init__(self, grantId=None, grantStatus="IDLE", grantExpireTime=None, heartbeatInterval=None, channelType=None):
         """
         Constructor for a Grant Object. Grants are created once a node registers on the SAS.
         Nodes are automatically sent to IDLE since they have yet to send a sucessfull Grant request.
         """
-        self.__grantId           = ""
-        self.__grantStatus       = "IDLE"
-        self.__grantExpireTime   = ""
-        self.__heartbeatInterval = "" 
-        self.__channelType       = ""
+        self.__grantId           = grantId
+        self.__grantStatus       = grantStatus
+        self.__grantExpireTime   = grantExpireTime
+        self.__heartbeatInterval = heartbeatInterval
+        self.__channelType       = channelType
     
     def getGrantId(self):
         """
@@ -160,22 +160,23 @@ class TX_USRP(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.SDR_Address = deviceAddr   # Required
-        self.freq        = centerFreq   # Required 
-        self.gain        = gain         # Required 
-        self.bandwidth   = bandwidth    # Required
-        self.signal_amp  = signalAmp    # Required
-        self.waveform    = waveform     # Required
+        self.__SDR_Address = deviceAddr   # Required
+        self.__freq        = centerFreq   # Required 
+        self.__gain        = gain         # Required 
+        self.__bandwidth   = bandwidth    # Required
+        self.__signal_amp  = signalAmp    # Required
+        self.__waveform    = waveform     # Required
 
 
         # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
         # ...then that code can be pasted in here to simply update to this system
+        # TODO: See if GNU Variables can be made Private and still work.
         ##################################################
         # Blocks
         ##################################################
-        self.interest_signal = analog.sig_source_c(self.bandwidth, self.waveform, 0, self.signal_amp, 0, 0)
+        self.interest_signal = analog.sig_source_c(self.__bandwidth, self.__waveform, 0, self.__signal_amp, 0, 0)
         self.TX_SDR = uhd.usrp_sink(
-            ",".join(("addr="+self.SDR_Address, '')),
+            ",".join(("addr="+self.__SDR_Address, '')),
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',
@@ -183,10 +184,10 @@ class TX_USRP(gr.top_block):
             ),
             '',
         )
-        self.TX_SDR.set_center_freq(self.freq, 0)
-        self.TX_SDR.set_gain(self.gain, 0)
+        self.TX_SDR.set_center_freq(self.__freq, 0)
+        self.TX_SDR.set_gain(self.__gain, 0)
         self.TX_SDR.set_antenna('TX/RX', 0) # May need to add controls to this param
-        self.TX_SDR.set_samp_rate(self.bandwidth)
+        self.TX_SDR.set_samp_rate(self.__bandwidth)
 
         # This is used to coordinate changes across mulitple devices it seems like
         # It looks as though an external LO is used to get this nanosecond timing correct
@@ -199,52 +200,52 @@ class TX_USRP(gr.top_block):
         self.connect((self.interest_signal, 0), (self.TX_SDR, 0))
 
     def get_SDR_Address(self):
-        return self.SDR_Address
+        return self.__SDR_Address
 
     def set_SDR_Address(self, SDR_Address):
         """I do not believe that changing SDR_Address will cause any effect at this time"""
-        self.SDR_Address = SDR_Address
+        self.__SDR_Address = SDR_Address
 
     def get_freq(self):
-        return self.freq
+        return self.__freq
 
     def set_freq(self, freq):
-        self.freq = freq
-        self.TX_SDR.set_center_freq(self.freq, 0)
+        self.__freq = freq
+        self.TX_SDR.set_center_freq(self.__freq, 0)
 
     def get_gain(self):
-        return self.gain
+        return self.__gain
 
     def set_gain(self, gain):
-        self.gain = gain
-        self.TX_SDR.set_gain(self.gain, 0)
+        self.__gain = gain
+        self.TX_SDR.set_gain(self.__gain, 0)
 
     def get_bandwidth(self):
         return self.sample_rate
 
     def set_bandwidth(self, bandwidth):
-        self.bandwidth = bandwidth
-        self.TX_SDR.set_bandwidth(self.bandwidth)
-        self.interest_signal.set_sampling_freq(self.bandwidth)
+        self.__bandwidth = bandwidth
+        self.TX_SDR.set_bandwidth(self.__bandwidth)
+        self.interest_signal.set_sampling_freq(self.__bandwidth)
 
     def get_signal_amp(self):
-        return self.signal_amp
+        return self.__signal_amp
 
     def set_signal_amp(self, signal_amp):
-        self.signal_amp = signal_amp
-        self.interest_signal.set_amplitude(self.signal_amp)
+        self.__signal_amp = signal_amp
+        self.interest_signal.set_amplitude(self.__signal_amp)
 
     def get_waveform(self):
-        return self.waveform
+        return self.__waveform
 
     def set_waveform(self, waveform):
-        self.waveform = self._convert_waveform(waveform)
+        self.__waveform = self._convert_waveform(waveform)
     
     def turnOffTx(self):
         self.interest_signal.set_amplitude(0)
     
     def turnOnTx(self):
-        self.interest_signal.set_amplitude(self.signal_amp)
+        self.interest_signal.set_amplitude(self.__signal_amp)
 
 class RX_USRP():
     """
@@ -289,15 +290,15 @@ class TXRX_USRP(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.device_addr = device_addr
-        self.tx_fc = tx_fc
-        self.tx_bw = tx_bw
-        self.tx_gain = tx_gain
-        self.tx_src_amp = tx_src_amp 
-        self.rx_fc = rx_fc
-        self.rx_bw = rx_bw
-        self.rx_gain = rx_gain
-        self.rx_bins = rx_bins
+        self.__device_addr = device_addr
+        self.__tx_fc       = tx_fc
+        self.__tx_bw       = tx_bw
+        self.__tx_gain     = tx_gain
+        self.__tx_src_amp  = tx_src_amp 
+        self.__rx_fc       = rx_fc
+        self.__rx_bw       = rx_bw
+        self.__rx_gain     = rx_gain
+        self.__rx_bins     = rx_bins
 
         ##################################################
         # Blocks
@@ -355,35 +356,35 @@ class TXRX_USRP(gr.top_block):
 
 
     def get_device_addr(self):
-        return self.device_addr
+        return self.__device_addr
 
     def set_device_addr(self, device_addr):
-        self.device_addr = device_addr
+        self.__device_addr = device_addr
 
     def get_tx_fc(self):
-        return self.tx_fc
+        return self.__tx_fc
 
     def set_tx_fc(self, fc):
-        self.tx_fc = fc
+        self.__tx_fc = fc
         self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
 
     def get_tx_bw(self):
         return self.bw
 
     def set_tx_bw(self, tx_bw):
-        self.tx_bw = tx_bw
-        self.uhd_usrp_sink_0.set_samp_rate(self.tx_bw)
-        self.uhd_usrp_sink_0.set_bandwidth(self.tx_bw, 0)
+        self.__tx_bw = tx_bw
+        self.uhd_usrp_sink_0.set_samp_rate(self.__tx_bw)
+        self.uhd_usrp_sink_0.set_bandwidth(self.__tx_bw, 0)
 
     def get_tx_gain(self):
-        return self.tx_gain
+        return self.__tx_gain
 
     def set_tx_gain(self, gain):
-        self.tx_gain = gain
-        self.uhd_usrp_sink_0.set_gain(self.gain, 0)
+        self.__tx_gain = gain
+        self.uhd_usrp_sink_0.set_gain(self.__gain, 0)
 
     def get_tx_src_amp(self):
-        return self.tx_src_amp
+        return self.__tx_src_amp
 
     def set_tx_src_amp(self, src_amp):
         self.src_amp = src_amp
@@ -396,32 +397,32 @@ class TXRX_USRP(gr.top_block):
         self.analog_noise_source_x_0.set_amplitude(self.src_amp)
 
     def get_rx_fc(self):
-        return self.rx_fc
+        return self.__rx_fc
 
     def set_rx_fc(self, fc):
-        self.rx_fc = fc
+        self.__rx_fc = fc
         self.uhd_usrp_source_1.set_center_freq(self.fc, 0)
 
     def get_rx_bw(self):
-        return self.rx_bw
+        return self.__rx_bw
 
     def set_rx_bw(self, rx_bw):
-        self.rx_bw = rx_bw
-        self.uhd_usrp_source_1.set_samp_rate(self.rx_bw)
-        self.uhd_usrp_source_1.set_bandwidth(self.rx_bw, 0)
+        self.__rx_bw = rx_bw
+        self.uhd_usrp_source_1.set_samp_rate(self.__rx_bw)
+        self.uhd_usrp_source_1.set_bandwidth(self.__rx_bw, 0)
 
     def get_rx_gain(self):
-        return self.rx_gain
+        return self.__rx_gain
 
     def set_rx_gain(self, rx_gain):
-        self.rx_gain = rx_gain
-        self.uhd_usrp_source_1.set_gain(self.rx_gain, 0)
+        self.__rx_gain = rx_gain
+        self.uhd_usrp_source_1.set_gain(self.__rx_gain, 0)
 
     def get_rx_bins(self):
-        return self.rx_bins
+        return self.__rx_bins
 
     def set_rx_bins(self, bins):
-        self.rx_bins = bins
+        self.__rx_bins = bins
 
     def getRxProbeList(self):
         """
@@ -472,7 +473,7 @@ class Node:
         self.__operationMode     = None
         self.__usrp              = None
         self.__isSasRegistered   = False
-        self.__grant             = Grant()
+        self.__grant             = None
         self.__cbsdId            = None
         self.__measReportConfig  = []
         self.__heartbeatTimer    = None # This timer waiting for a Heartbeat Response after a Request is made
@@ -589,8 +590,8 @@ class Node:
     def getGrant(self):
         return self.__grant
 
-    def setGrant(self, grant):
-        self.__grant = grant
+    def setGrant(self,  grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType):
+        self.__grant = Grant( grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType)
 
     def getCbsdId(self):
         return self.__cbsdId 
@@ -608,7 +609,7 @@ class Node:
         """
         Upon a Heartbeat Response, a Node may be allowed to begin TX.
         This function calls grant.setGrantStatus(status)
-        and also turns on TX is status is AUTHORIZED
+        and also turns on TX is status is AUTHORIZED.
 
         Parameters
         ----------
@@ -617,38 +618,41 @@ class Node:
         """
         self.getGrant().setGrantStatus(status)
         if(status == "AUTHORIZED"):
-            self.turnOnTx()            
+            self.turnOnTx()
+        else:
+            self.turnOffTx() # Ensure Node isnt TX if it is not "AUTH"
+        if(status == "IDLE"):
+            self.__grant = Grant() # TODO: Is this the best way of resetting an object?
 
     def turnOffTx(self):
         """
-        This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
+        This makes the TX Signal Amplitude 0 which effectivly turns of Transmission.
+        This does not assign the Object instance variable "signal amplitude" to 0 however.
         """
-        if(self.__operationMode == "TX"):
-            self.usrp.set_signal_amp(0)
-        elif(self.__operationMode == "TXRX"):
-            self.usrp.set_tx_src_amp(0)
+        if(self.__operationMode == "TX" or self.__operationMode == "TXRX"):
+            self.__usrp.turnOffTx()
         else:
-            print("Invalid Node/__operationMode for turnOffTx. No changes made.")
+            print("Invalid Node / operationMode for turnOffTx. No changes made.")
 
     def turnOnTx(self):
         """
         This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
         """
         if(self.__operationMode == "TX"):
-            self.usrp.set_signal_amp(self.usrp.get_signal_amp())
+            self.__usrp.set_signal_amp(self.__usrp.get_signal_amp())
         elif(self.__operationMode == "TXRX"):
-            self.usrp.set_tx_src_amp(0)
+            self.__usrp.set_tx_src_amp(self.__usrp.get_tx_src_amp())
         else:
             print("Invalid Node/__operationMode for turnOffTx. No changes made.")
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
             if(fc):
-                self.usrp.set_rx_fc(fc)
+                self.__usrp.set_rx_fc(fc)
             if(bw):
-                self.usrp.set_rx_bw(bw)
+                self.__usrp.set_rx_bw(bw)
             if(gain):
-                self.usrp.set_rx_gain(gain) 
+                self.__usrp.set_rx_gain(gain) 
         else:
             print("Invalid Node __operationMode for setRxParams command. No Node updated.")       
 
@@ -657,7 +661,7 @@ class Node:
         Uses the probe block to pull spectrum data
         """
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
-            return self.usrp.getRxProbeList()
+            return self.__usrp.getRxProbeList()
         else:
             print("Invalid function call to getSpectrumData: unsupported current __operationMode '" + str(self.__operationMode) + "'.")
             return None
@@ -668,7 +672,7 @@ class Node:
 
         If the repsonse does not come in time (once the heartbeat expires), then ensure TX is OFF.
         """
-        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.turnOffTx())
+        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.getUsrp().turnOffTx())
         self.__heartbeatTimer.start()
     
     def stopHbTimer(self):

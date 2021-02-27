@@ -310,24 +310,26 @@ def promptInstallationParam():
 			break
 		try:
 			antennaAzimuth = float(antennaAzimuth)
+		except ValueError:
+			print("Please enter a vaild number...")
+		else:
 			if(antennaAzimuth < 0 or antennaAzimuth > 359):
 				print("Please enter a value between 0 and 359 (inclusive)...")
 			else:
 				break
-		except ValueError:
-			print("Please enter a vaild number...")
 	while(True):
 		antennaDowntilt = input("Enter Antenna Downtilt (-90 to 90 degrees, Negative is tilted UP): ")
 		if(antennaDowntilt == ""):
 			break
 		try:
 			antennaDowntilt = float(antennaDowntilt)
+		except ValueError:
+			print("Please enter a vaild number...")
+		else:
 			if(antennaDowntilt < -90 and antennaDowntilt > 90):
 				print("Please enter an angle between -90 and 90 (inclusive)...")
 			else:
 				break
-		except ValueError:
-			print("Please enter a vaild number...")
 	antennaGain = input("Peak Antenna Gain (-127 to 128 dBi): ")
 	eirpCapability = input("Enter Max EIRP (between -127 and +47) (in dBm/10MHz): ")
 	antennaBeamwidth = input("Enter Antenna Beamwidth (3-dB antenna beamwidth of the antenna in the horizontal-plane in degrees): ")

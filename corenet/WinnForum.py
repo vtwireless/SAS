@@ -1119,7 +1119,7 @@ class HeartbeatResponse:
 		
 	heartbeatInterval : number (optional)
 		This parameter is a positive integer and indicates the maximum time interval in units of seconds between two consecutive heartbeat requeststhat the CBSD should attempt to meet. 
-		This parameter isincluded when the SAS wants tochange the heartbeat interval.
+		This parameter is included when the SAS wants to change the heartbeat interval.
 
 	operationParam : object OperationParam (optional)
 		If heartbeat request is disapproved or the SAS intends to change the CBSD operation parameters, the SAS can provide a new set of operation parameters to the CBSD using this object as a recommendation to request a new Grant
