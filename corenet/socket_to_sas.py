@@ -264,18 +264,18 @@ def _hasResponseCode(data):
 	responseCode : string
 		Will return responseCode if it is there, otherwise 'None'
 	"""
-	if(response := _grabPossibleEntry(data, "response")):
-		if(not (responseCode := _grabPossibleEntry(response, "responseCode"))):
-			print("SAS Error: No response code provided.")
-			return None
-		# print("Response Code: " + responseCode)
-		# if(responseMessage := _grabPossibleEntry(response, "responseMessage")):
-		# 	print("Response Message: " + responseMessage)
-		# if(responseData := _grabPossibleEntry(response, "responseData")):
-		# 	print("Response Data: " + responseData)
-	else:
+	if(not (response := _grabPossibleEntry(data, "response"))):
 		print("SAS Error: No reponse object found.")
 		return None
+	if(not (responseCode := _grabPossibleEntry(response, "responseCode"))):
+		print("SAS Error: No response code provided.")
+		return None
+	# print("Response Code: " + responseCode)
+	# if(responseMessage := _grabPossibleEntry(response, "responseMessage")):
+	# 	print("Response Message: " + responseMessage)
+	# if(responseData := _grabPossibleEntry(response, "responseData")):
+	# 	print("Response Data: " + responseData)
+
 	return responseCode
 
 def _getSpectrumDataByCbsdId(cbsdId):
@@ -990,6 +990,24 @@ def handleGrantResponse(clientio, data):
 # End Grant ------------------------------------------------------------------------
 
 # Heartbeat ------------------------------------------------------------------------
+def scheduleNextHeartbeat(heartbeatInterval, clientio, node):
+	"""
+	Helper function that schedules a Heartbeat Request for a CBSD/Node
+
+	Parameters
+	----------
+	heartbeatInterval : string
+		Time (in seconds) until the next Heartbeat is due
+	clientio : socket Object
+		Socket to SAS
+	node : Node object
+		Node that will be making the heartbeat request
+	"""
+	delayTilNextHeartbeat = float(heartbeatInterval) * 0.9 # Send heartbeats a little sooner than the interval
+	if(delayTilNextHeartbeat < 1):
+		delayTilNextHeartbeat = 1
+	threading.Timer(delayTilNextHeartbeat, heartbeatRequest(clientio, node=node)).start()
+
 def simHeartbeatReq(requests):
 	"""
 	The simulation file should only kick off the very first heartbeat for a grant.
@@ -1035,7 +1053,7 @@ def cmdHeartbeatReq():
 	arr.append(HeartbeatRequest(cbsdId, grantId, grantRenew, operationState, measReport).asdict())
 	return arr
 
-def heartbeatRequest(clientio, payload=None, node=None):
+def heartbeatRequest(clientio, node=None, payload=None):
 	"""
 	Function is always called to create a Heartbeat Request.
 
@@ -1080,6 +1098,9 @@ def heartbeatRequest(clientio, payload=None, node=None):
 def handleHeartbeatResponse(clientio, data):
 	"""
 	Handles Heartbeat Response message from SAS to CBSD
+
+	TODO: This assumes every Node can only have 1 Grant. 
+	Changes must be made here to accommodate multiple Grants per Node.
 	"""
 	jsonData = json.loads(data)
 	iter = -1 # Starts at -1 in case of need to use indexing
@@ -1087,81 +1108,79 @@ def handleHeartbeatResponse(clientio, data):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
 		return
 	print("Heartbeat Response(s) Received")
+
 	for hbResponse in hbResponses:
+		isIncompleteResponse = False
 		iter = iter + 1
 		print("Heartbeat Response [" + str(iter+1) +"]:")
+		print(hbResponse)
 		
+		# TODO: If there are zero Nodes awaiting a reponse, do print something
+
 		# Step 1: Check to see what Node this response belongs to
 		if(not (cbsdId := _grabPossibleEntry(hbResponse, "cbsdId"))):
-			print("No cbsdId provided. Heartbeat invalid.")
+			print("Missing conditional parameter: cbsdId. Cannot match this response to any Node without a CBSD ID. Heartbeat Response Invalid.")
 			continue
-		if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
-			print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Heartbeat invalid.")
-			continue
+		else:
+			if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Heartbeat Response invalid.")
+				continue
 		
-		# Step 2a: Stop the heartbeat response timer 
+		# Step 2a: Stop the heartbeat response timer and remove Node from waiting list
 		node.stopHbTimer()
+		nodeAwaitingResponse.remove(node)	
 		
-		# Step 2b: Remove the Node from the response waiting list
-		nodeAwaitingResponse.remove(node)		
-
-		# Side Step: Create helper function to easily schedule next heartbeat request
-		def scheduleNextHeartbeat(heartbeatInterval, clientio, cbsd):
-			delayTilNextHeartbeat = float(heartbeatInterval) * 0.9 # Send heartbeats a little sooner than the interval
-			if(delayTilNextHeartbeat < 1):
-				delayTilNextHeartbeat = 1
-			threading.Timer(delayTilNextHeartbeat, heartbeatRequest(clientio, node=cbsd)).start()
-
-		# Get optional Heartbeat Interval
-		if(heartbeatInterval := _grabPossibleEntry(hbResponse, "heartbeatInterval")):
-			node.getGrant().setHeartbeatInterval(heartbeatInterval)
-
-		# Step 3: Get the Response Code
+		# Step 3: Check the Response Code
 		if(not (responseCode := _hasResponseCode(hbResponse))):
 			print("Heartbeat Response invalid.")
 			continue
-		if(responseCode != "0"):
-			# TODO: If SAS provides Operation Parameters, decided if the Node
-			# should re-send a new Grant request with the parameters or not
-			# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
-			# 	pass
-			if(responseCode == "500"): 		# 500 --> TERMINATED_GRANT
-				node.changeGrantStatus("IDLE") 
-			elif(responseCode == "501"):	# 501 --> SUSPENDED_GRANT
-				node.changeGrantStatus("GRANTED")
-				# Pause TX, keep heartbeats coming tho
-				scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
-			print("Response Code does not indicate successful heartbeat request. Heartbeat Response invalid.")
-			continue
 
-		if(not (grantId := _grabPossibleEntry(hbResponse, "grantId"))):
-			print("No grantId provided.")
-			continue
-
+		# Step 4: Unpack remaining data and checked for required data
 		if(not (transmitExpireTime := _grabPossibleEntry(hbResponse, "transmitExpireTime"))):
-			print("No transmitExpireTime provided. Heartbeat invalid.")
-			continue
-
-		if(not (grantExpireTime := _grabPossibleEntry(hbResponse, "grantExpireTime"))):
-			print("No grantExpireTime provided. Heartbeat invalid.")
-			continue
-	
+			print("Missing required parameter: transmitExpireTime.")
+			isIncompleteResponse = True
+		if(responseCode == "0"):
+			if(not (grantId := _grabPossibleEntry(hbResponse, "grantId"))):
+				print("Missing required parameter: grantId.")
+				isIncompleteResponse = True
+		if(responseCode == "0" or responseCode == "501"):
+			if(not (grantExpireTime := _grabPossibleEntry(hbResponse, "grantExpireTime"))):
+				print("Missing required parameter: grantExpireTime.")
+				isIncompleteResponse = True
 		if(measReportConfig :=  _grabPossibleEntry(hbResponse, "measReportConfig")):
 			if(not isinstance(measReportConfig, list)):
 				measReportConfig = [measReportConfig]
 			node.setMeasReportConfig(measReportConfig)
-
-		# if good response code
-		grantStatus = node.getGrant().getGrantStatus()
-		# Should be granted by here
-		if(grantStatus == "GRANTED"):
-			node.changeGrantStatus("AUTHORIZED")
-
-
-		#if good reposne code or grant suspeneded
-		# Schedule the next HeartbeatRequest
-		# TODO: Find when *not* to send another heartbeat
-		scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
+		if(heartbeatInterval := _grabPossibleEntry(hbResponse, "heartbeatInterval")):
+			node.getGrant().setHeartbeatInterval(heartbeatInterval)
+		# TODO: If SAS provides Operation Parameters, decide if the Node
+		# should re-send a new Grant request with the parameters or not
+		# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
+		# 	pass
+		
+		# Step 5: Determine what to do with the information provided at this point
+		if(isIncompleteResponse): # Terminate Grant if SAS did not send a completely valid Response
+			node.changeGrantStatus("IDLE") 
+			print("SAS Heartbeat Response Invalid. Terminating Grant.")
+			continue
+		elif(responseCode == "500"): 	# 500 --> TERMINATED_GRANT
+			node.changeGrantStatus("IDLE") 
+			print("SAS indicates terminated Grant. Terminating Grant.")
+			continue
+		elif(responseCode == "501"):	# 501 --> SUSPENDED_GRANT
+			node.changeGrantStatus("GRANTED")
+			print("SAS indicates suspended Grant. Suspending Grant.")
+			scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
+			continue
+		elif(responseCode == "502"):	# 502 --> UNSYNC_OP_PARAM
+			node.changeGrantStatus("IDLE")
+			print("SAS indicates that Grant state is out of sync with the CBSD. Terminating Grant.")
+			continue
+		elif(responseCode == "0"):		# 0   --> SUCCSESS
+			grantStatus = node.getGrant().getGrantStatus()
+			if(grantStatus == "GRANTED"):
+				node.changeGrantStatus("AUTHORIZED")
+			scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
 
 # End Heartbeat --------------------------------------------------------------------
 

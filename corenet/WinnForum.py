@@ -981,15 +981,15 @@ class VTGrantParams:
 
 class GrantResponse:
 	"""
-	GrantResponse - Array of GrantResponseobjects.
-		Each GrantResponseobject represents a Grantresponseto a Grant request of a CBSD
+	GrantResponse - Array of GrantResponse objects.
+		Each GrantResponseobject represents a Grantresponse to a Grant request of a CBSD
 	
 	Attributes
 	----------
-	cbsdId : string (conditinoal)
+	cbsdId : string (conditional)
 		his parameter is includedif and only if the cbsdId parameter in the GrantRequest object contains a valid CBSD identity.If included, the SAS shall set this parameterto the value of the cbsdIdparameter in the corresponding GrantRequestobject.
 
-	grantId : string (contitional)
+	grantId : string (conditional)
 		An ID provided by the SAS for this Grant. Included: If and only if the Grant request is approved by the SAS.
 		The CBSD shall set the Grant identity for this Grant to the value received in this parameter.
 
@@ -1064,7 +1064,7 @@ class HeartbeatRequest:
 		The CBSD shall set this parameter to the value ofthe Grant identity of this Grant.
 
 	grantRenew : boolean (optional)
-		If set to True, the CBSD asks for renewal of the current Grant. SAS shall include a grantExpireTimeparameter in the following HeartbeatResponseobject.
+		If set to True, the CBSD asks for renewal of the current Grant. SAS shall include a grantExpireTime parameter in the following HeartbeatResponse object.
 
 	operationState : string (required)
 		This parameter contains the CBSD operation state ("AUTHORIZED" or "GRANTED").

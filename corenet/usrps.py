@@ -590,7 +590,7 @@ class Node:
     def getGrant(self):
         return self.__grant
 
-    def setGrant(self,  grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType):
+    def setGrant(self, grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType):
         self.__grant = Grant( grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType)
 
     def getCbsdId(self):
@@ -672,7 +672,7 @@ class Node:
 
         If the repsonse does not come in time (once the heartbeat expires), then ensure TX is OFF.
         """
-        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.getUsrp().turnOffTx())
+        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.turnOffTx())
         self.__heartbeatTimer.start()
     
     def stopHbTimer(self):
