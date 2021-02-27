@@ -40,14 +40,13 @@ __sim_mode = False
 # Tracks time since last heartbeatRequest is sent.
 __heartbeatTimer = None
 
-# nodeAwaitingResponse: used to hold the order of which nodes are sending requests...
-#	...so that when the response comes in, data can be assigned properly
-nodeAwaitingResponse = []
+# nodesAwaitingResponse: Holds Nodes that have sent a request to the SAS and are waiting for a response
+nodesAwaitingResponse = []
 
 # created_nodes: used to hold all created CRTS USRP Nodes objects
 created_nodes = []
 
-# registered_nodes: nodes that have requested to be registered with the SAS.
+# registered_nodes: Nodes that are SAS registered
 registered_nodes = []
 
 # Parser extracts command line flags/parameters  
@@ -165,16 +164,17 @@ def findNodeAwaitingResponseByCbsdId(cbsdId):
 	Parameters
 	----------
 	cbsdId : string
-		CBSD ID of a desired Node awaiting a SAS response (i.e a node in nodeAwaitingResponse)
+		CBSD ID of a desired Node awaiting a SAS response (i.e a node in nodesAwaitingResponse)
 
 	Returns
 	-------
 	node : Object
 		The Node with the same cbsdId. Will return 'None' if no Node has the cbsdId.
 	"""
-	for node in nodeAwaitingResponse:
-		if(node.getCbsdId() == cbsdId):
-			return node
+	if(cbsdId):
+		for node in nodesAwaitingResponse:
+			if(node.getCbsdId() == cbsdId):
+				return node
 	return None
 
 def findRegisteredNodeByCbsdId(cbsdId):
@@ -553,7 +553,7 @@ def simRegistrationReq(requests):
 		cpiSignatureData = _grabPossibleEntry(request, "cpiSignatureData")
 		vtParams = _grabPossibleEntry(request, "vtParams")
 
-		nodeAwaitingResponse.append(node)
+		nodesAwaitingResponse.append(node)
 		arr.append(RegistrationRequest(userId, fccId, 
 			cbsdSerialNumber, callSign, cbsdCategory,
 			cbsdInfo, airInterface, installationParam, 
@@ -579,14 +579,14 @@ def cmdRegistrationReq():
 		 TODO Change from "How many ..." to "Do you wanna do another?") && Is type USRP model?
 	"""
 	arr = []
-	global nodeAwaitingResponse
-	nodeAwaitingResponse = []
+	global nodesAwaitingResponse
+	nodesAwaitingResponse = []
 	num = promptNumOfRequests("How many Registration Requests would you like to create at this moment?: ")
 	for _ in range(num):
 		userId = input("Enter User ID: ")
 		fccId = input("Enter FCC ID: ")
 		cbsdSerialNumber = promptCbsdSerial(created_nodes) # TODO: Redo this so that array holds node
-		nodeAwaitingResponse.append(cbsdSerialNumber)
+		nodesAwaitingResponse.append(cbsdSerialNumber)
 		callSign = input("Enter Call Sign (Optional - Press Enter to Skip): ")
 		cbsdCategory = promptCbsdCategory()
 		cbsdInfo = promptCbsdInfo(cbsdSerialNumber, created_nodes)
@@ -664,7 +664,7 @@ def handleRegistrationResponse(clientio, data):
 	if(not regResponses):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
-	print("Registration Response Received")
+	print("Registration Response(s) Received")
 	for regResponse in regResponses:
 		iter = iter + 1 # Must increment at beginning because we may 'continue' at any point
 		print("Registration Response [" + str(iter+1) + "]:")
@@ -677,7 +677,7 @@ def handleRegistrationResponse(clientio, data):
 		if(not node):
 			print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Registration Response invalid.")
 			continue
-		nodeAwaitingResponse.remove(node) # Remove node from waiting list
+		nodesAwaitingResponse.remove(node) # Remove node from waiting list
 		node.setCbsdId(cbsdId)
 		print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 			
@@ -693,6 +693,8 @@ def handleRegistrationResponse(clientio, data):
 			print("Measurment Report Configuration(s) Assigned: " + measReportConfig)
 			node.setMeasReportConfig(measReportConfig)
 
+		global registered_nodes
+		registered_nodes.append(node)
 		node.setRegistrationStatus(True)
 		# TODO Update RX USRP with these params
 		# TODO Do we go right in and start RX?
@@ -727,7 +729,7 @@ def simSpectrumInquiryReq(requests):
 		# there must be a function call to pull real RX data at this point
 		# TODO: measReport is required before a Node makes its first Grant request
 		# Possibly ensure that if this is the first Spectrum Inquiry, that it includes measReport
-		nodeAwaitingResponse.append(node)
+		nodesAwaitingResponse.append(node)
 		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport))
 	return arr
 
@@ -801,7 +803,7 @@ def handleSpectrumInquiryResponse(clientio, data):
 			if(not node):
 				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Spectrum Inquiry Response invalid.")
 				continue
-			nodeAwaitingResponse.remove(node) # Remove node from waiting list
+			nodesAwaitingResponse.remove(node) # Remove node from waiting list
 		else:
 			print("No cbsdId provided. Spectrum Inquiry Response invalid.")
 			continue
@@ -868,7 +870,7 @@ def simGrantReq(requests):
 		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
 		# TODO: Further Check for vtGrantParams data
 
-		nodeAwaitingResponse.append(node)
+		nodesAwaitingResponse.append(node)
 		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
 	return arr
 
@@ -951,7 +953,7 @@ def handleGrantResponse(clientio, data):
 			continue
 		
 		# Step 2: Remove the Node from the waiting list
-		nodeAwaitingResponse.remove(node)
+		nodesAwaitingResponse.remove(node)
 		
 		# Step 3: Get the Response Code
 		if(not (responseCode := _hasResponseCode(grantResponse))):
@@ -1043,7 +1045,6 @@ def cmdHeartbeatReq():
 			cbsd = node
 	grantId = cbsd.get_GrantId() # TODO: error handle this
 	grantRenew = getSelectorBoolean(input("Would you like to renew the grant? (Y)es or (N)o: "))
-	# operationState = input("Is this CBSD AUTHORIZED or GRANTED: ") # @Joseph Either 'AUTHORIZED' or 'GRANTED'. Which is which, I forget
 	operationState = cbsd.getGrant().getGrantStatus()
 	measReport = None
 	provideRcvdPowerMeas = getSelectorBoolean(input("Do you want to provide Received Power Measurments to the SAS? (Y)es or (N)o: "))
@@ -1087,13 +1088,39 @@ def heartbeatRequest(clientio, node=None, payload=None):
 	payload = {"heartbeatRequest": arrOfRequest}
 	clientio.emit("heartbeatRequest", json.dumps(payload))
 
-	# start timer to track how long it takes for the response to come in 
+	# Start timer to track how long it takes for each response to come in 
 	timeTilHearbeatExpires = 240 # seconds
 	for req in arrOfRequest:
 		for node in registered_nodes:
 			if(node.getCbsdId() == req["cbsdId"]):
 				node.startHbTimer(timeTilHearbeatExpires)
 				break
+
+def unpackResponseWithKeys(response, *keys):
+	"""
+	Takes a response and returns the values of the desired keys by calling _grabPossibleEntry().
+	The *keys parameter is important because you never know what keys the SAS will send.
+	This will be sure to check for every expected key and return its value in order.
+
+	Parameters
+	----------
+	response : dictonary
+		A SAS response
+	*keys : unknown number of strings
+		These are the keys to specifically look for in a dictonary
+
+	Returns
+	-------
+	arr : array of string
+		An array holding the key values. 
+	"""
+	arr = []
+	for key in keys:
+		if(key == "responseCode"):
+			arr.append(_hasResponseCode(response))
+		else:
+			arr.append(_grabPossibleEntry(response, key))
+	return arr	
 
 def handleHeartbeatResponse(clientio, data):
 	"""
@@ -1114,71 +1141,78 @@ def handleHeartbeatResponse(clientio, data):
 		iter = iter + 1
 		print("Heartbeat Response [" + str(iter+1) +"]:")
 		print(hbResponse)
-		
-		# TODO: If there are zero Nodes awaiting a reponse, do print something
+	
 
-		# Step 1: Check to see what Node this response belongs to
-		if(not (cbsdId := _grabPossibleEntry(hbResponse, "cbsdId"))):
-			print("Missing conditional parameter: cbsdId. Cannot match this response to any Node without a CBSD ID. Heartbeat Response Invalid.")
-			continue
+		# Unpack Heartbeat Response data
+		(cbsdId, grantId, transmitExpireTime, grantExpireTime,
+		heartbeatInterval, measReportConfig, responseCode) = unpackResponseWithKeys(
+			hbResponse,  "cbsdId", "grantId", "transmitExpireTime", "grantExpireTime", 
+		"heartbeatInterval", "measReportConfig", "responseCode")
+
+		if(cbsdId): 
+			if((node := findNodeAwaitingResponseByCbsdId(cbsdId))): # Find the Node with the given CBSD ID
+				node.stopHbTimer() # TODO: Should this be stopped when the grantId is matched or just the Node?
+				nodesAwaitingResponse.remove(node)
+				if(grantId):
+					if(not (node.getGrant().getGrantId() == grantId)):  # Find if the Node has a Grant with the given Grant ID
+						print("This Node with CBSD ID: '" + cbsdId + "' does not have a Grant with Grant ID: '" + grantId + "'.")
+						isIncompleteResponse = True
+				else:
+					if(responseCode == "0"):
+						print("Missing required parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
+					else:
+						print("Missing conditional parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
+					isIncompleteResponse = True
+			else:
+				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'.")
+				isIncompleteResponse = True
 		else:
-			if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
-				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Heartbeat Response invalid.")
-				continue
+			print("Missing conditional parameter: cbsdId. Cannot match this response to any Node without a CBSD ID.")
+			isIncompleteResponse = True
 		
-		# Step 2a: Stop the heartbeat response timer and remove Node from waiting list
-		node.stopHbTimer()
-		nodeAwaitingResponse.remove(node)	
-		
-		# Step 3: Check the Response Code
-		if(not (responseCode := _hasResponseCode(hbResponse))):
-			print("Heartbeat Response invalid.")
-			continue
-
-		# Step 4: Unpack remaining data and checked for required data
-		if(not (transmitExpireTime := _grabPossibleEntry(hbResponse, "transmitExpireTime"))):
+		if(transmitExpireTime):
+			pass # TODO: import datetime and do math
+			# Take transmitExpireTime and subtract current time from it
+			# txExpiration = transmitExpireTime - currentTime
+			# With the time difference, start a delayed thread that turns off tx
+			# threading.Timer(txExpiration, node.turnOffTx())
+		else:
 			print("Missing required parameter: transmitExpireTime.")
 			isIncompleteResponse = True
-		if(responseCode == "0"):
-			if(not (grantId := _grabPossibleEntry(hbResponse, "grantId"))):
-				print("Missing required parameter: grantId.")
-				isIncompleteResponse = True
-		if(responseCode == "0" or responseCode == "501"):
-			if(not (grantExpireTime := _grabPossibleEntry(hbResponse, "grantExpireTime"))):
-				print("Missing required parameter: grantExpireTime.")
-				isIncompleteResponse = True
-		if(measReportConfig :=  _grabPossibleEntry(hbResponse, "measReportConfig")):
+
+		# TODO: grantExpireTime is required when (responseCode is 0 or 501) and (the heartbeat request asked to renew the Grant)
+		# Must find out how to determine is a Node asked to renew at this point
+		if(grantExpireTime):
+			node.getGrant().setGrantExpireTime(grantExpireTime)
+
+		if(measReportConfig):
 			if(not isinstance(measReportConfig, list)):
 				measReportConfig = [measReportConfig]
 			node.setMeasReportConfig(measReportConfig)
-		if(heartbeatInterval := _grabPossibleEntry(hbResponse, "heartbeatInterval")):
+		if(heartbeatInterval):
 			node.getGrant().setHeartbeatInterval(heartbeatInterval)
+		
 		# TODO: If SAS provides Operation Parameters, decide if the Node
 		# should re-send a new Grant request with the parameters or not
 		# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
 		# 	pass
 		
-		# Step 5: Determine what to do with the information provided at this point
+		# Determine what to do with the information provided at this point
 		if(isIncompleteResponse): # Terminate Grant if SAS did not send a completely valid Response
 			node.changeGrantStatus("IDLE") 
 			print("SAS Heartbeat Response Invalid. Terminating Grant.")
-			continue
 		elif(responseCode == "500"): 	# 500 --> TERMINATED_GRANT
 			node.changeGrantStatus("IDLE") 
 			print("SAS indicates terminated Grant. Terminating Grant.")
-			continue
 		elif(responseCode == "501"):	# 501 --> SUSPENDED_GRANT
 			node.changeGrantStatus("GRANTED")
 			print("SAS indicates suspended Grant. Suspending Grant.")
 			scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
-			continue
 		elif(responseCode == "502"):	# 502 --> UNSYNC_OP_PARAM
 			node.changeGrantStatus("IDLE")
 			print("SAS indicates that Grant state is out of sync with the CBSD. Terminating Grant.")
-			continue
 		elif(responseCode == "0"):		# 0   --> SUCCSESS
-			grantStatus = node.getGrant().getGrantStatus()
-			if(grantStatus == "GRANTED"):
+			if(node.getGrant().getGrantStatus() == "GRANTED"):
 				node.changeGrantStatus("AUTHORIZED")
 			scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
 
@@ -1190,8 +1224,8 @@ def simRelinquishmentReq(requests):
 	Read sim file for Relinquishment Request(s)
 	"""
 	arr = []
-	global nodeAwaitingResponse
-	nodeAwaitingResponse = []
+	global nodesAwaitingResponse
+	nodesAwaitingResponse = []
 	iter = 0
 	for request in requests:
 		print("Creating Relinquishment Request [" + str(iter+1) + "]:")
@@ -1204,7 +1238,7 @@ def simRelinquishmentReq(requests):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
 			continue
 		grantId = node.getGrant().getGrantId()
-		nodeAwaitingResponse.append(node)
+		nodesAwaitingResponse.append(node)
 		arr.append(RelinquishmentRequest(cbsdId, grantId))
 	return arr
 
@@ -1300,8 +1334,8 @@ def simDeregistrationReq(requests):
 	Read sim file for Deregistration Request(s)
 	"""
 	arr = []
-	global nodeAwaitingResponse
-	nodeAwaitingResponse = []
+	global nodesAwaitingResponse
+	nodesAwaitingResponse = []
 	iter = 0
 	for request in requests:
 		print("Creating Deregistration Request [" + str(iter+1) + "]:")
@@ -1313,7 +1347,7 @@ def simDeregistrationReq(requests):
 		if(not cbsdId):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
 			continue
-		nodeAwaitingResponse.append(node)
+		nodesAwaitingResponse.append(node)
 		arr.append(DeregistrationRequest(cbsdId))
 	return arr
 
@@ -1468,15 +1502,21 @@ def defineSocketEvents(clientio):
 	# Official WinnForum Predefined Functionality
 	@clientio.event
 	def registrationResponse(data):
-		global __blocked
-		handleRegistrationResponse(clientio, data)
-		__blocked = False
+		if(nodesAwaitingResponse):
+			handleRegistrationResponse(clientio, data)
+			global __blocked
+			__blocked = False
+		else:
+			print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
 
 	@clientio.event
 	def sprectumInquiryResponse(data):
-		global __blocked
-		handleSpectrumInquiryResponse(clientio, data)
-		__blocked = False
+		if(nodesAwaitingResponse):
+			handleSpectrumInquiryResponse(clientio, data)
+			global __blocked
+			__blocked = False
+		else:
+			print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
 
 	@clientio.event
 	def grantResponse(data):
