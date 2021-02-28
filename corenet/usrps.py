@@ -446,7 +446,7 @@ class Node:
     __usrp : TX_USRP Object
         Object associated with 1 of 3 possible USRP Flowgraphs
     __isSasRegistered : boolean
-        Registration Status of Node
+        Registration Status of Node (True if SAS Registered, else False)
     grant : Grant object
         All nodes will have 1 Grant that includes all grant related data
     cbsdId : string
@@ -463,17 +463,16 @@ class Node:
         #TODO do not duplicate with create_nodes that are inactive
         __available_radios = list(uhd.find_devices()) # Pull list of nodes available once, for use when creating usrp obj
 
-        self.__ipAddress         = ipAddress
-        self.__serialNum         = self._ipToSerial(ipAddress, __available_radios)
-        self.__model             = self._getProductOrType(ipAddress, __available_radios)
-        self.__operationMode     = None
-        self.__usrp              = None
-        self.__isSasRegistered   = False
-        self.__grant             = None
-        self.__cbsdId            = None
-        self.__measReportConfig  = []
-        self.__heartbeatTimer    = None # This timer waiting for a Heartbeat Response after a Request is made
-
+        self.__ipAddress                = ipAddress
+        self.__serialNum, self.__model  = self._ipToSerialAndModel(ipAddress, __available_radios)
+        self.__operationMode            = None
+        self.__usrp                     = None
+        self.__isSasRegistered          = False
+        self.__grant                    = None
+        self.__cbsdId                   = None
+        self.__measReportConfig         = []
+        self.__heartbeatTimer           = None # This timer waiting for a Heartbeat Response after a Request is made
+        # TODO: heartbeatTimer should go into the Grant object since they are specfic to a Grant, not a Node
     
     def getIpAddress(self):
         return self.__ipAddress
@@ -490,8 +489,8 @@ class Node:
     def getModel(self):
         return self.__model
     
-    def setModel(self, __model):
-        self.__model = __model
+    def setModel(self, model):
+        self.__model = model
 
     def getOperationMode(self):
         return self.__operationMode
@@ -652,14 +651,14 @@ class Node:
         else:
             print("Invalid Node __operationMode for setRxParams command. No Node updated.")       
 
-    def getSpectrumData(self):
+    def getSpectrumProbeData(self):
         """
-        Uses the probe block to pull spectrum data
+        Uses the probe block to pull spectrum data.
         """
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
             return self.__usrp.getRxProbeList()
         else:
-            print("Invalid function call to getSpectrumData: unsupported current __operationMode '" + str(self.__operationMode) + "'.")
+            print("Invalid function call to getSpectrumProbeData: unsupported current __operationMode '" + str(self.__operationMode) + "'.")
             return None
 
     def startHbTimer(self, timeTilHearbeatExpires):
@@ -685,43 +684,38 @@ class Node:
         print("node data")
 
 # Helper Functions------------------------------
-    def _ipToSerial(self, ip, __available_radios):
+    def _ipToSerialAndModel(self, ip, __available_radios):
         """
-        Takes USRP IP Address and returns its serial number.
-        If no USRP is found with the given serial number, then return 'N/A'.
+        Takes USRP IP Address and returns its serial number and model.
+        If no serial number or model is found for the USRP return None.
 
         Parameter
         ---------
         ip : string
             IP address of USRP to find serial number
+        
         """
-        for node in __available_radios:
-            if(ip == node['addr']):
-                return node['serial']
-        return "N/A" # If no serial matches the IP Address provided
-
-    def _getProductOrType(self, ip, __available_radios):
-        """
-        Using USRP IP Address, find the USRP product/type (e.g. X310 or usrp2).
-
-        Returns
-        -------
-        usrpType : string
-            USRP product or type. If no match, returns 'N/A'
-        """
+        serial = None
+        productOrType = None
         for node in __available_radios:
             try:
                 if(ip == node['addr']):
                     try:
-                        return node['product']
-                    except RuntimeError:
+                        serial = node['serial']
+                    except:
+                        break # If node with the given IP cannot provide Serial#, just quit
+                    finally:
                         try:
-                            return node['type']
-                        except RuntimeError:
-                            pass
+                            productOrType = node['product'] # If product does not exist, 'type' should
+                        except: # TODO: Used to use RuntimeError 
+                            try:
+                                productOrType = node['type']
+                            except:
+                                pass
             except:
                 pass
-        return "N/A"
+        
+        return serial, productOrType
     
     def _convert_waveform(self, waveform):
         """

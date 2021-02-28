@@ -36,17 +36,14 @@ __blocked = False
 # sim_mode: Used to ensure functions do not attempt blocking user-input features.
 __sim_mode = False
 
-# Tracks time since last heartbeatRequest is sent.
-__heartbeatTimer = None
-
-# nodesAwaitingResponse: Holds Nodes that have sent a request to the SAS and are waiting for a response
-nodesAwaitingResponse = []
-
-# created_nodes: used to hold all created CRTS USRP Nodes objects
+# created_nodes: holds all created CRTS USRP Nodes objects
 created_nodes = []
 
 # registered_nodes: Nodes that are SAS registered
 registered_nodes = []
+
+# nodes_awaiting_response: Holds Nodes that have sent a request to the SAS and are waiting for a response
+nodes_awaiting_response = []
 
 # Parser extracts command line flags/parameters  
 parser = ArgumentParser(description='SAS USRP RX Interface Script - Provide a server address and port in order to connect to the SAS.')
@@ -67,11 +64,29 @@ parser.add_argument('-s','--sim',\
 #------------------------------------------------------------------------------------------
 
 # Helper Functions-------------------------------------------------------------------------
-def printCreatedNodes(registered=False):
+def printNodeArray(whichArray):
 	"""
-	Prints out create_nodes to terminal
+	Prints out either create_nodes, registered_nodes, or nodes_awaiting_response to terminal
+
+	Parameters
+	----------
+	whichArray : string
+		Only possible values are "created", "registered", or "waiting"
 	"""
-	for node in created_nodes:
+	if(whichArray == "created"):
+		nodeArray = created_nodes
+		print("Showing Nodes that have been created:")
+	elif(whichArray == "registered"):
+		print("Showing Nodes that have been SAS Registered:")
+		nodeArray = registered_nodes
+	elif(whichArray == "waiting"):
+		print("Showing Nodes that are waiting for a SAS Response:")
+		nodeArray = nodes_awaiting_response
+	else:
+		print("Invalid parameter value passed to 'printNodeArray'.")
+		return
+
+	for node in nodeArray:
 		node.printInfo()
 
 def _grabPossibleEntry(entry, key):
@@ -103,7 +118,7 @@ def findNodeAwaitingResponseByCbsdId(cbsdId):
 	Parameters
 	----------
 	cbsdId : string
-		CBSD ID of a desired Node awaiting a SAS response (i.e a node in nodesAwaitingResponse)
+		CBSD ID of a desired Node awaiting a SAS response (i.e a node in nodes_awaiting_response)
 
 	Returns
 	-------
@@ -111,7 +126,7 @@ def findNodeAwaitingResponseByCbsdId(cbsdId):
 		The Node with the same cbsdId. Will return 'None' if no Node has the cbsdId.
 	"""
 	if(cbsdId):
-		for node in nodesAwaitingResponse:
+		for node in nodes_awaiting_response:
 			if(node.getCbsdId() == cbsdId):
 				return node
 	return None
@@ -167,7 +182,7 @@ def reqAddressToNode(request, mustBeRegistered=True):
 	----------
 	request : dictionary
 		A single request from a simulation file
-	muBeRegistered : boolean
+	mustBeRegistered : boolean
 		If True, only return back a Node obj if it has a cbsdId (i.e. if it is already registered)
 
 	Returns
@@ -175,15 +190,13 @@ def reqAddressToNode(request, mustBeRegistered=True):
 	node : Node object
 		If a node match is found, return the Node, else return None
 	"""
-	address = _grabPossibleEntry(request, "nodeIp")
-	if(not address):
+	if(not (address := _grabPossibleEntry(request, "nodeIp"))):
 		print("No nodeIp address found.")
 		return None
-	node = findCreatedNodeByIp(address)
-	if(not node):
+	if(not (node := findCreatedNodeByIp(address))):
 		print("No Created Node was found with the IP Address: '" + address + "'.")
 		return None
-	if(mustBeRegistered and not node.getCbsdId()):
+	if(mustBeRegistered and (not node.getRegistrationStatus())):
 		print("Node found but not yet registered.")
 		return None
 	return node
@@ -209,17 +222,11 @@ def _hasResponseCode(data):
 	if(not (responseCode := _grabPossibleEntry(response, "responseCode"))):
 		print("SAS Error: No response code provided.")
 		return None
-	# print("Response Code: " + responseCode)
-	# if(responseMessage := _grabPossibleEntry(response, "responseMessage")):
-	# 	print("Response Message: " + responseMessage)
-	# if(responseData := _grabPossibleEntry(response, "responseData")):
-	# 	print("Response Data: " + responseData)
-
 	return responseCode
 
-def _getSpectrumDataByCbsdId(cbsdId):
+def _getSpectrumProbeDataByCbsdId(cbsdId):
 	"""
-	Calls the getSpectrumData function of a Node with given cbsdId.
+	Calls the getSpectrumProbeData function of a Node with given cbsdId.
 	Takes the Average value from a spectrum reading and sends back a report.
 
 	Parameters
@@ -239,7 +246,7 @@ def _getSpectrumDataByCbsdId(cbsdId):
 	bw = node.getUsrp.get_rx_bw()
 	lowFreq = fc - (bw/2)
 
-	data = node.getSpectrumData()
+	data = node.getSpectrumProbeData()
 	spectrumAvg = sum(data)/len(data)
 	return RcvdPowerMeasReport(lowFreq, bw, spectrumAvg)
 
@@ -291,18 +298,20 @@ def simCreateNode(requests):
 	arr = []
 	iter = 0
 	for request in requests:
-		print("Parsing through Create Node [" + str(iter := iter+1) + "]:"))
-		if(not (address := _grabPossibleEntry(request, "address"))):
+		print("Parsing through Create Node [" + str(iter := iter+1) + "]:")
+		print(request)
+
+		if(address := _grabPossibleEntry(request, "address")):
+			# Ensure IP address is not in an already created_node
+			if(findCreatedNodeByIp(address)):
+				print("IP Address already belongs to a created Node. Node not created.")
+				continue
+		else:
 			print("No address found for simCreateNode. Node not created.")
 			continue
-		# Ensure IP address is not in an already created_node that may be inactive
-		if(findCreatedNodeByIp(address)):
-			print("IP Address already belongs to a created Node. Node not created.")
-			continue
 		
-		usrpMode = _grabPossibleEntry(request, "mode")
-		if(not usrpMode):
-			print("No usrpMode found for simCreateNode. Node not created.")
+		if(not (usrpMode := _grabPossibleEntry(request, "mode"))):
+			print("No mode found for simCreateNode. Node not created.")
 			continue
 		elif(not (usrpMode == "TX" or usrpMode == "RX" or usrpMode == "TXRX")):
 			print("Invalid mode '"+ usrpMode +"' for simCreateNode. Node not created.")
@@ -329,16 +338,13 @@ def simCreateNode(requests):
 			node.createTxUsrp(centerFreq, gain, bandwidth, signalAmp, waveform)
 			node.turnOffTx()
 		elif(usrpMode == "RX"):
-			centerFreq = _grabPossibleEntry(request, "centerFreq")
-			if(not centerFreq):
+			if(not (centerFreq := _grabPossibleEntry(request, "mode"))):
 				print("No centerFreq found for simCreateNode. Node not created.")
 				continue
-			gain = _grabPossibleEntry(request, "gain")
-			if(not gain):
+			if(not (gain := _grabPossibleEntry(request, "gain"))):
 				print("No gain found for simCreateNode. Defaulting to 0.")
 				gain = 0
-			bandwidth = _grabPossibleEntry(request, "bandwidth")
-			if(not bandwidth):
+			if(not (bandwidth := _grabPossibleEntry(request, "bandwidth"))):
 				print("No bandwidth found for simCreateNode. Node not created.")
 				continue
 
@@ -346,41 +352,31 @@ def simCreateNode(requests):
 			node.setOperationMode(usrpMode)
 			node.createRxUsrp(centerFreq, gain, bandwidth)
 		elif(usrpMode == "TXRX"):
-			tx_fc = _grabPossibleEntry(request, "tx_fc")
-			if(not tx_fc):
+			if(not (tx_fc := _grabPossibleEntry(request, "tx_fc"))):
 				print("No tx_fc found for simCreateNode. Node not created.")
 				continue
-			tx_gain = _grabPossibleEntry(request, "tx_gain")
-			if(not tx_gain):
+			if(not (tx_gain := _grabPossibleEntry(request, "tx_gain"))):
 				print("No tx_gain found for simCreateNode. Defaulting to 0.")
 				tx_gain = 0
-			tx_bw = _grabPossibleEntry(request, "tx_bw")
-			if(not tx_bw):
+			if(not (tx_bw := _grabPossibleEntry(request, "tx_bw"))):
 				print("No tx_bw found for simCreateNode. Node not created.")
 				continue
-			tx_src_amp = _grabPossibleEntry(request, "tx_src_amp")
-			if(not tx_src_amp):
+			if(not (tx_src_amp := _grabPossibleEntry(request, "tx_src_amp"))):
 				print("No tx_src_amp found for simCreateNode. Node not created.")
 				continue
-			rx_fc = _grabPossibleEntry(request, "rx_fc")
-			if(not rx_fc):
+			if(not (rx_fc := _grabPossibleEntry(request, "rx_fc"))):
 				print("No rx_fc found for simCreateNode. Node not created.")
 				continue
-			rx_gain = _grabPossibleEntry(request, "rx_gain")
-			if(not rx_gain):
+			if(not (rx_gain := _grabPossibleEntry(request, "rx_gain"))):
 				print("No rx_gain found for simCreateNode. Defaulting to 0.")
 				rx_gain = 0
-			rx_bw = _grabPossibleEntry(request, "rx_bw")
-			if(not rx_bw):
+			if(not (rx_bw := _grabPossibleEntry(request, "rx_bw"))):
 				print("No rx_bw found for simCreateNode. Node not created.")
 				continue
 
 			node = Node(address)
 			node.setOperationMode(usrpMode)
 			node.createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain)
-			
-			# Once a Node is created, turn its frequency off and start the Flowgraph.
-			# This ensures that uhd_find_devices does not list a Node that the user has created
 			node.turnOffTx()
 		node.getUsrp().start()
 		arr.append(node)
@@ -466,26 +462,22 @@ def simRegistrationReq(requests):
 		Registration Request data
 	"""
 	arr = []
-	iter = -1
+	iter = 0
 	for request in requests:
-		iter = iter + 1
 		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = vtParams = None
 		print("Creating Registration Request [" + str(iter := iter+1) + "]:")
-		node = reqAddressToNode(request, False)
-		if(not node):
+		print(request)
+		if(not (node := reqAddressToNode(request, False))):
 			print("Registration Request invalid.")
 			continue
-		cbsdSerialNumber = node.getSerialNumber()
-		if(not cbsdSerialNumber):
+		if(not (cbsdSerialNumber := node.getSerialNumber())):
 			print("No cbsdSerialNumber found for the node with IP Address: '" + node.getIpaAddress + "'. Registration Request invalid.")
 			continue
-		userId = _grabPossibleEntry(request, "userId")
-		if(not userId):
+		if(not (userId := _grabPossibleEntry(request, "userId"))):
 			print("No userId found for simRegistrationReq. Registration Request invalid.")
 			continue
-		fccId = _grabPossibleEntry(request, "fccId")
-		if(not fccId):
+		if(not (fccId := _grabPossibleEntry(request, "fccId"))):
 			print("No fccId found for simRegistrationReq. Registration Request invalid.")
 			continue
 		callSign = _grabPossibleEntry(request, "callSign")
@@ -494,7 +486,9 @@ def simRegistrationReq(requests):
 		# if(not cbsdCategory):
 		# 	print("No cbsdCategory provided. Registration Request invalid.")
 		# 	continue
-		cbsdInfo = _grabPossibleEntry(request, "cbsdInfo")
+		if(cbsdInfo := _grabPossibleEntry(request, "cbsdInfo")):
+			if(nodeModel := node.getModel()):
+				cbsdInfo["model"] = nodeModel
 		airInterface = _grabPossibleEntry(request, "airInterface")
 		# TODO: Determine the proper airInterfaces for the USRPs
 		# if(not airInterface):
@@ -518,7 +512,7 @@ def simRegistrationReq(requests):
 		cpiSignatureData = _grabPossibleEntry(request, "cpiSignatureData")
 		vtParams = _grabPossibleEntry(request, "vtParams")
 
-		nodesAwaitingResponse.append(node)
+		nodes_awaiting_response.append(node)
 		arr.append(RegistrationRequest(userId, fccId, 
 			cbsdSerialNumber, callSign, cbsdCategory,
 			cbsdInfo, airInterface, installationParam, 
@@ -536,14 +530,14 @@ def cmdRegistrationReq():
 	TODO Change from "How many ..." to "Do you wanna do another?" && Is type USRP model?
 	"""
 	arr = []
-	global nodesAwaitingResponse
-	nodesAwaitingResponse = []
+	global nodes_awaiting_response
+	nodes_awaiting_response = []
 	num = promptNumOfRequests("How many Registration Requests would you like to create at this moment?: ")
 	for _ in range(num):
 		userId = input("Enter User ID: ")
 		fccId = input("Enter FCC ID: ")
 		cbsdSerialNumber = promptCbsdSerial(created_nodes) # TODO: Redo this so that array holds node
-		nodesAwaitingResponse.append(cbsdSerialNumber)
+		nodes_awaiting_response.append(cbsdSerialNumber)
 		callSign = input("Enter Call Sign (Optional - Press Enter to Skip): ")
 		cbsdCategory = promptCbsdCategory()
 		cbsdInfo = promptCbsdInfo(cbsdSerialNumber, created_nodes)
@@ -634,7 +628,7 @@ def handleRegistrationResponse(clientio, data):
 		if(not node):
 			print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Registration Response invalid.")
 			continue
-		nodesAwaitingResponse.remove(node) # Remove node from waiting list
+		nodes_awaiting_response.remove(node) # Remove node from waiting list
 		node.setCbsdId(cbsdId)
 		print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 			
@@ -686,7 +680,7 @@ def simSpectrumInquiryReq(requests):
 		# there must be a function call to pull real RX data at this point
 		# TODO: measReport is required before a Node makes its first Grant request
 		# Possibly ensure that if this is the first Spectrum Inquiry, that it includes measReport
-		nodesAwaitingResponse.append(node)
+		nodes_awaiting_response.append(node)
 		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport))
 	return arr
 
@@ -754,7 +748,7 @@ def handleSpectrumInquiryResponse(clientio, data):
 			if(not node):
 				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Spectrum Inquiry Response invalid.")
 				continue
-			nodesAwaitingResponse.remove(node) # Remove node from waiting list
+			nodes_awaiting_response.remove(node) # Remove node from waiting list
 		else:
 			print("No cbsdId provided. Spectrum Inquiry Response invalid.")
 			continue
@@ -821,7 +815,7 @@ def simGrantReq(requests):
 		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
 		# TODO: Further Check for vtGrantParams data
 
-		nodesAwaitingResponse.append(node)
+		nodes_awaiting_response.append(node)
 		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
 	return arr
 
@@ -904,7 +898,7 @@ def handleGrantResponse(clientio, data):
 			continue
 		
 		# Step 2: Remove the Node from the waiting list
-		nodesAwaitingResponse.remove(node)
+		nodes_awaiting_response.remove(node)
 		
 		# Step 3: Get the Response Code
 		if(not (responseCode := _hasResponseCode(grantResponse))):
@@ -973,7 +967,7 @@ def repeatHeartbeatRequest(node):
 	grantId = node.getGrantId()
 	grantRenew = False # TODO: Properly implement this feature
 	operationState = node.getGrant().getGrantStatus()
-	measReport = None #node.getSpectrumData() # TODO
+	measReport = None #node.getSpectrumProbeData() # TODO
 	return [HeartbeatRequest(cbsdId, grantId, grantRenew, operationState, measReport).asdict()]
 
 def simHeartbeatReq(requests):
@@ -1095,7 +1089,7 @@ def handleHeartbeatResponse(clientio, data):
 		if(cbsdId): 
 			if((node := findNodeAwaitingResponseByCbsdId(cbsdId))): # Find the Node with the given CBSD ID
 				node.stopHbTimer() # TODO: Should this be stopped when the grantId is matched or just the Node?
-				nodesAwaitingResponse.remove(node)
+				nodes_awaiting_response.remove(node)
 				if(grantId):
 					if(not (node.getGrant().getGrantId() == grantId)):  # Find if the Node has a Grant with the given Grant ID
 						print("This Node with CBSD ID: '" + cbsdId + "' does not have a Grant with Grant ID: '" + grantId + "'.")
@@ -1166,8 +1160,8 @@ def simRelinquishmentReq(requests):
 	Read sim file for Relinquishment Request(s)
 	"""
 	arr = []
-	global nodesAwaitingResponse
-	nodesAwaitingResponse = []
+	global nodes_awaiting_response
+	nodes_awaiting_response = []
 	iter = 0
 	for request in requests:
 		print("Creating Relinquishment Request [" + str(iter := iter+1) + "]:")
@@ -1180,7 +1174,7 @@ def simRelinquishmentReq(requests):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
 			continue
 		grantId = node.getGrant().getGrantId()
-		nodesAwaitingResponse.append(node)
+		nodes_awaiting_response.append(node)
 		arr.append(RelinquishmentRequest(cbsdId, grantId))
 	return arr
 
@@ -1277,8 +1271,8 @@ def simDeregistrationReq(requests):
 	Read sim file for Deregistration Request(s)
 	"""
 	arr = []
-	global nodesAwaitingResponse
-	nodesAwaitingResponse = []
+	global nodes_awaiting_response
+	nodes_awaiting_response = []
 	iter = 0
 	for request in requests:
 		print("Creating Deregistration Request [" + str(iter := iter+1) + "]:")
@@ -1290,7 +1284,7 @@ def simDeregistrationReq(requests):
 		if(not cbsdId):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
 			continue
-		nodesAwaitingResponse.append(node)
+		nodes_awaiting_response.append(node)
 		arr.append(DeregistrationRequest(cbsdId))
 	return arr
 
@@ -1383,7 +1377,7 @@ def spectrumData(cbsdId, clientio):
 		SAS Socket connection
 	"""
 	reports = []
-	reports.append(_getSpectrumDataByCbsdId(cbsdId))
+	reports.append(_getSpectrumProbeDataByCbsdId(cbsdId))
 	payload = {"cbsdId":cbsdId, "spectrumData": MeasReport(reports).asdict()}
 	clientio.emit("spectrumData", json.dumps(payload))
 
@@ -1442,7 +1436,7 @@ def defineSocketEvents(clientio):
 	# Official WinnForum Predefined Functionality
 	@clientio.event
 	def registrationResponse(data):
-		if(nodesAwaitingResponse):
+		if(nodes_awaiting_response):
 			handleRegistrationResponse(clientio, data)
 			global __blocked
 			__blocked = False
@@ -1451,7 +1445,7 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def sprectumInquiryResponse(data):
-		if(nodesAwaitingResponse):
+		if(nodes_awaiting_response):
 			handleSpectrumInquiryResponse(clientio, data)
 			global __blocked
 			__blocked = False
@@ -1460,7 +1454,7 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def grantResponse(data):
-		if(nodesAwaitingResponse):
+		if(nodes_awaiting_response):
 			handleGrantResponse(clientio, data)
 			global __blocked
 			__blocked = False
@@ -1469,7 +1463,7 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def heartbeatResponse(clientio, data):
-		if(nodesAwaitingResponse):
+		if(nodes_awaiting_response):
 			handleHeartbeatResponse(clientio, data)
 			global __blocked
 			__blocked = False
@@ -1478,7 +1472,7 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def relinquishmentResponse(data):
-		if(nodesAwaitingResponse):		
+		if(nodes_awaiting_response):		
 			handleRelinquishmentResponse(clientio, data)
 			global __blocked
 			__blocked = False
@@ -1496,7 +1490,7 @@ def defineSocketEvents(clientio):
 		data : dictonary
 			Expected keys are cbsdId, highFreq, and lowFreq
 		"""
-		if(nodesAwaitingResponse):
+		if(nodes_awaiting_response):
 			handleDeregistrationResponse(clientio, data)
 			global __blocked
 			__blocked = False
