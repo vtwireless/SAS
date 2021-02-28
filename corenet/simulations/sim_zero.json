@@ -24,7 +24,6 @@
 					"cbsdCategory":"A",
 					"cbsdInfo":{
 						"vendor":"Ettus Research",
-						"model":"CAN BE FOUND WITH UHD",
 						"softwareVersion":"fakeSftwVrs",
 						"hardwareVersion":"fakeHrdwVrs",
 						"firmwareVersion":"fakeFrmwVrs"

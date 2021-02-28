@@ -464,8 +464,6 @@ def simRegistrationReq(requests):
 	arr = []
 	iter = 0
 	for request in requests:
-		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
-		installationParam = measCapability = groupingParam = cpiSignatureData = vtParams = None
 		print("Creating Registration Request [" + str(iter := iter+1) + "]:")
 		print(request)
 		if(not (node := reqAddressToNode(request, False))):
@@ -1543,14 +1541,9 @@ def init(args):
 	"""
 
 	clientio = socketio.Client()  # Create Client Socket
-	defineSocketEvents(clientio)  # Create handlers for events the SAS may emit
+	defineSocketEvents(clientio)  # Define handlers for events the SAS may emit
 	socket_addr = 'http://' + args['address'] +':' + args['port']
 	clientio.connect(socket_addr) # Connect to SAS
-
-	# Create global array of USRPs for use across functions
-	# TODO: I should not have to reiterate what created_node is in here since I READ_ONLY in here
-	# global created_nodes
-	# created_nodes = []
 
 	if(args['sim']):
 		'''
@@ -1563,9 +1556,10 @@ def init(args):
 		try:
 			with open(path) as config:
 				data = json.load(config)
-		except FileNotFoundError:
+		except:
 			sys.exit("Fatal Error: No valid simulation file found at " + path + "\nExiting program...")
 		for time in data: 				# Sim file may have multiple instances of time to trigger events
+			#TODO Check the time
 			for action in data[time]: 	# Each time may have multiple actions (requests)
 				for func in action:		# Each requests may have multiple payloads
 					print("Going to execute: " + func)
@@ -1641,5 +1635,5 @@ def init(args):
 
 if __name__ == '__main__':
 	args = vars(parser.parse_args())	# Get command line arguments
-	init(args)							# Init Tx USRP and Socket
+	init(args)							
 	
