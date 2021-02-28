@@ -1058,17 +1058,13 @@ class HeartbeatRequest:
 	Attributes
 	----------
 	cbsdId : string (required)
-		The CBSD shall set this parameter to the value ofitsCBSD identity
-
+		The CBSD shall set this parameter to the value of its CBSD identity
 	grantId : string (required)
-		The CBSD shall set this parameter to the value ofthe Grant identity of this Grant.
-
+		The CBSD shall set this parameter to the value of the Grant identity of this Grant.
 	grantRenew : boolean (optional)
 		If set to True, the CBSD asks for renewal of the current Grant. SAS shall include a grantExpireTime parameter in the following HeartbeatResponse object.
-
 	operationState : string (required)
 		This parameter contains the CBSD operation state ("AUTHORIZED" or "GRANTED").
-
 	measReport : object MeasReport (conditional)
 		The CBSD uses this parameter to report measurements to the SAS. The format of the MeasReport object is provided in [n.21]. 
 		Refer to section 8 and [n.21] for inclusion rules.
@@ -1202,7 +1198,8 @@ class RelinquishmentResponse:
 		This parameter is included if and only if the cbsdId parameter in the RelinquishmentRequest object contains a valid CBSD identity.  If included, the SAS shall set this parameter to the value of the cbsdId parameter in the corresponding RelinquishmentRequest object.
 
 	grantId : string (conditional)
-		This parameter is included if and only if the grantId parameter in the RelinquishmentRequest object contains a valid Grant identity.  If included, the SAS shall set this parameter to the value of the grantId parameter in the corresponding RelinquishmentRequest object.
+		This parameter is included if and only if the grantId parameter in the RelinquishmentRequest object contains a valid Grant identity.
+		If included, the SAS shall set this parameter to the value of the grantId parameter in the corresponding RelinquishmentRequest object.
 
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason. See Table 14: ResponseObject Definition.

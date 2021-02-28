@@ -28,7 +28,6 @@ from WinnForum import *		# File containing object definitions used
 from cmd_prompts import * 	# User defined library for cmd prompts
 import threading
 
-
 # Globals
 # blocked: Used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface .
 # This variable is set to 'True' right before a client emit with an expected response executes. The response will set it back to False.
@@ -95,66 +94,6 @@ def _grabPossibleEntry(entry, key):
 		return entry[key]
 	except KeyError:
 		return None
-
-# def send_params(clientio, node):
-# 	"""
-# 	Collects current node parameters and sends to host via socket as JSON
-
-# 	Parameters
-# 	----------
-# 	clientio : socket object
-# 		socket connection to host
-# 	node : SDR object
-# 		USRP object to gather operating parameters from
-# 	"""
-
-# 	data = {
-# 		"SDR Address": node.get_SDR_Address(),
-# 		"Center Frequency": node.get_freq(),
-# 		"Gain": node.get_gain(),
-# 		"Sample Rate": node.get_signal_amp(),
-# 		"Signal Amplitude": node.get_signal_amp(),
-# 		"Waveform": str(node.get_waveform()),
-# 		"Status": node.get_status()
-# 	}
-# 	payload = json.dumps(data)
-# 	clientio.emit('getNodeParams', payload)
-
-def updateRadio(node, params):
-	"""
-	Updates radio operating parameters
-
-	Parameters
-	----------
-	node : SDR object
-		USRP object to gather operating parameters from
-	params : dictionary
-		JSON package of parameters to update
-	"""
-
-	# check params for every key:value pair
-	params = json.loads(params)
-	if "freq" in params:
-		node.set_freq(float(params['freq'])*1e6)
-	if "gain" in params:
-		node.set_gain(int(params['gain']))
-	if "samplerate" in params:
-		node.set_sample_rate(int(params['samplerate'])*1e6)
-	if "sigamp" in params:
-		signalAmp = float(params['sigamp'])
-		if signalAmp > 1:
-			signalAmp = 1
-		node.set_signal_amp(signalAmp)
-	if "waveform" in params:
-		waveform  = (params['waveform'])
-		node.set_waveform(waveform)
-	if "device" in params:
-		node.set_SDR_Address(params['device'])
-	if "status" in params:
-		node.set_status(params['status'])
-
-	# Ack to server with new params
-	# send_params(clientio, node)
 
 def findNodeAwaitingResponseByCbsdId(cbsdId):
 	"""
@@ -303,6 +242,32 @@ def _getSpectrumDataByCbsdId(cbsdId):
 	data = node.getSpectrumData()
 	spectrumAvg = sum(data)/len(data)
 	return RcvdPowerMeasReport(lowFreq, bw, spectrumAvg)
+
+def unpackResponseWithKeys(response, *keys):
+	"""
+	Takes a response and returns the values of the desired keys by calling _grabPossibleEntry().
+	The *keys parameter is important because you never know what keys the SAS will send.
+	This will be sure to check for every expected key and return its value in order.
+
+	Parameters
+	----------
+	response : dictonary
+		A SAS response
+	*keys : unknown number of strings
+		These are the keys to specifically look for in a dictonary
+
+	Returns
+	-------
+	arr : array of string
+		An array holding the key values. 
+	"""
+	arr = []
+	for key in keys:
+		if(key == "responseCode"):
+			arr.append(_hasResponseCode(response))
+		else:
+			arr.append(_grabPossibleEntry(response, key))
+	return arr	
 # End Helper Functions---------------------------------------------------------------------
 
 # Create Node------------------------------------------------------------------------------
@@ -324,10 +289,10 @@ def simCreateNode(requests):
 	arr : array of Node object(s)
 	"""
 	arr = []
+	iter = 0
 	for request in requests:
-
-		address = _grabPossibleEntry(request, "address")
-		if(not address):
+		print("Parsing through Create Node [" + str(iter := iter+1) + "]:"))
+		if(not (address := _grabPossibleEntry(request, "address"))):
 			print("No address found for simCreateNode. Node not created.")
 			continue
 		# Ensure IP address is not in an already created_node that may be inactive
@@ -506,7 +471,7 @@ def simRegistrationReq(requests):
 		iter = iter + 1
 		cbsdSerialNumber = userId = fccId = callSign = cbsdCategory = cbsdInfo = airInterface = None
 		installationParam = measCapability = groupingParam = cpiSignatureData = vtParams = None
-		print("Creating Registration Request [" + str(iter+1) + "]:")
+		print("Creating Registration Request [" + str(iter := iter+1) + "]:")
 		node = reqAddressToNode(request, False)
 		if(not node):
 			print("Registration Request invalid.")
@@ -559,24 +524,16 @@ def simRegistrationReq(requests):
 			cbsdInfo, airInterface, installationParam, 
 			measCapability, groupingParam, cpiSignatureData, vtParams).asdict())
 	return arr		
-	
-def configRegistrationReq():
-	"""
-	Pulls Registration Request Info from a file the user selects
-
-	TODO
-	"""
-	return []
 
 def cmdRegistrationReq():
 	"""
 	Provides Command Line Prompts for a user to create Registration Request(s)
  
 	Note: UHD Lib provides the serial, addr, and model ('type' for the uhd lib) for all usrps. Nodes with an FPGA includes the fpga.
-		  Some 'type' matches with their 'product'. If there is a 'product', it is the same as the 'type' (e.g. x300).
-		  When 'product' doesn't exist, it seems to be of type 'usrp2' 
+	Some 'type' matches with their 'product'. If there is a 'product', it is the same as the 'type' (e.g. x300).
+	When 'product' doesn't exist, it seems to be of type 'usrp2' 
 
-		 TODO Change from "How many ..." to "Do you wanna do another?") && Is type USRP model?
+	TODO Change from "How many ..." to "Do you wanna do another?" && Is type USRP model?
 	"""
 	arr = []
 	global nodesAwaitingResponse
@@ -667,7 +624,7 @@ def handleRegistrationResponse(clientio, data):
 	print("Registration Response(s) Received")
 	for regResponse in regResponses:
 		iter = iter + 1 # Must increment at beginning because we may 'continue' at any point
-		print("Registration Response [" + str(iter+1) + "]:")
+		print("Registration Response [" + str(iter := iter+1) + "]:")
 
 		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
 		if(not cbsdId):
@@ -714,7 +671,7 @@ def simSpectrumInquiryReq(requests):
 	iter = -1
 	for request in requests:
 		iter = iter + 1
-		print("Spectrum Inquiry Request [" + str(iter+1) + "':")
+		print("Spectrum Inquiry Request [" + str(iter := iter+1) + "':")
 		node = reqAddressToNode(request)
 		if(not node):
 			print("Spectrum Inquiry Request invalid.")
@@ -732,12 +689,6 @@ def simSpectrumInquiryReq(requests):
 		nodesAwaitingResponse.append(node)
 		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport))
 	return arr
-
-def configSpectrumInquiryReq():
-	"""
-	TODO
-	"""
-	return [None]
 
 def cmdSpectrumInquiryReq():
 	"""
@@ -762,21 +713,21 @@ def spectrumInquiryRequest(clientio, payload=None):
 	"""
 	Sends Spectrum Inquiry Request to the SAS
 	"""
-	arrOfRequest = None
 	if(__sim_mode):
 		arrOfRequest = simSpectrumInquiryReq(payload)
-	while(True):
-		dataSource = input("Would you like to manually enter the Spectrum Inquiry Request info or load from a file? (E)nter or (L)oad: ")
-		if(dataSource == 'E' or dataSource == 'e'):
-			arrOfRequest = cmdSpectrumInquiryReq() # Prompt User
-			break
-		elif(dataSource == 'L' or dataSource == 'l'):
-			arrOfRequest = configSpectrumInquiryReq() # load config file
-			break
-		elif(dataSource == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+	else:
+		while(True):
+			dataSource = input("Would you like to manually enter the Spectrum Inquiry Request info or load from a file? (E)nter or (L)oad: ")
+			if(dataSource == 'E' or dataSource == 'e'):
+				arrOfRequest = cmdSpectrumInquiryReq() # Prompt User
+				break
+			elif(dataSource == 'L' or dataSource == 'l'):
+				arrOfRequest = configSpectrumInquiryReq() # load config file
+				break
+			elif(dataSource == 'exit'):
+				return
+			else:
+				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	payload = {"spectrumInquiryRequest": arrOfRequest}
 	clientio.emit("spectrumInquiryRequest", json.dumps(payload))
 
@@ -795,7 +746,7 @@ def handleSpectrumInquiryResponse(clientio, data):
 	print("Spectrum Inquiry Response Received")
 	for SIResponse in siResponses:
 		iter = iter + 1
-		print("Spectrum Inquiry Response [" + str(iter+1) +"]:")
+		print("Spectrum Inquiry Response [" + str(iter := iter+1) +"]:")
 		
 		cbsdId = _grabPossibleEntry(SIResponse, "cbsdId")
 		if(cbsdId):
@@ -849,7 +800,7 @@ def simGrantReq(requests):
 	iter = -1
 	for request in requests:
 		iter = iter + 1
-		print("Grant Request [" + str(iter+1) + "':")
+		print("Grant Request [" + str(iter := iter+1) + "':")
 
 		node = reqAddressToNode(request)
 		if(not node):
@@ -940,7 +891,7 @@ def handleGrantResponse(clientio, data):
 	print("Grant Response(s) Received")
 	for grantResponse in grantResponses:
 		iter = iter + 1
-		print("Grant Response [" + str(iter+1) +"]:")
+		print("Grant Response [" + str(iter := iter+1) +"]:")
 		print(grantResponse)
 
 		# Step 1: Check to see what Node this response belongs to
@@ -992,23 +943,38 @@ def handleGrantResponse(clientio, data):
 # End Grant ------------------------------------------------------------------------
 
 # Heartbeat ------------------------------------------------------------------------
-def scheduleNextHeartbeat(heartbeatInterval, clientio, node):
+def scheduleNextHeartbeat(clientio, node):
 	"""
 	Helper function that schedules a Heartbeat Request for a CBSD/Node
 
 	Parameters
 	----------
-	heartbeatInterval : string
-		Time (in seconds) until the next Heartbeat is due
 	clientio : socket Object
 		Socket to SAS
 	node : Node object
 		Node that will be making the heartbeat request
 	"""
-	delayTilNextHeartbeat = float(heartbeatInterval) * 0.9 # Send heartbeats a little sooner than the interval
+	delayTilNextHeartbeat = float(node.getGrant().getHeartbeatInterval()) * 0.9 # Send heartbeats a little sooner than the interval
 	if(delayTilNextHeartbeat < 1):
 		delayTilNextHeartbeat = 1
 	threading.Timer(delayTilNextHeartbeat, heartbeatRequest(clientio, node=node)).start()
+
+def repeatHeartbeatRequest(node):
+	"""
+	This is called when a threaded heartbeat request creates a Heartbeat Request.
+	The Thread calls heartbeatRequest() with a node parameter indicating that it is not the first heartbeat.
+
+	Parameters
+	----------
+	node : Node object
+		Node that is making a heartbeat request
+	"""
+	cbsdId = node.getCbsdId()
+	grantId = node.getGrantId()
+	grantRenew = False # TODO: Properly implement this feature
+	operationState = node.getGrant().getGrantStatus()
+	measReport = None #node.getSpectrumData() # TODO
+	return [HeartbeatRequest(cbsdId, grantId, grantRenew, operationState, measReport).asdict()]
 
 def simHeartbeatReq(requests):
 	"""
@@ -1062,15 +1028,19 @@ def heartbeatRequest(clientio, node=None, payload=None):
 
 	Parameters
 	----------
-	clientio : socket Object
-		SAS socket connection
-	payload : dictonary
-		Dictonary of data used by simulation file to create hb request
-	node : Node Object
-		Node that is actively sending Heartbeats 
+	clientio : socket Object (required)
+		SAS socket connection.
+	payload : dictonary (conditional)
+		Dictonary of data used by simulation file to create hb request.
+		Only included if Simulation file is kicking off the first heartbeat for a Grant.
+	node : Node Object (conditional)
+		Node that is actively sending Heartbeats.
+		Only included if the heartbeat is NOT the first one for a Grant.
 	"""
-	if(__sim_mode):
+	if(payload):
 		arrOfRequest = simHeartbeatReq(payload)
+	elif(node):
+		arrOfRequest = repeatHeartbeatRequest(node)
 	else:
 		while(True):
 			dataSource = input("Would you like to manually enter the Heartbeat Request info or load from a file? (E)nter or (L)oad: ")
@@ -1090,37 +1060,11 @@ def heartbeatRequest(clientio, node=None, payload=None):
 
 	# Start timer to track how long it takes for each response to come in 
 	timeTilHearbeatExpires = 240 # seconds
-	for req in arrOfRequest:
+	for hbReq in arrOfRequest:
 		for node in registered_nodes:
-			if(node.getCbsdId() == req["cbsdId"]):
+			if(node.getCbsdId() == hbReq["cbsdId"]):
 				node.startHbTimer(timeTilHearbeatExpires)
 				break
-
-def unpackResponseWithKeys(response, *keys):
-	"""
-	Takes a response and returns the values of the desired keys by calling _grabPossibleEntry().
-	The *keys parameter is important because you never know what keys the SAS will send.
-	This will be sure to check for every expected key and return its value in order.
-
-	Parameters
-	----------
-	response : dictonary
-		A SAS response
-	*keys : unknown number of strings
-		These are the keys to specifically look for in a dictonary
-
-	Returns
-	-------
-	arr : array of string
-		An array holding the key values. 
-	"""
-	arr = []
-	for key in keys:
-		if(key == "responseCode"):
-			arr.append(_hasResponseCode(response))
-		else:
-			arr.append(_grabPossibleEntry(response, key))
-	return arr	
 
 def handleHeartbeatResponse(clientio, data):
 	"""
@@ -1130,25 +1074,24 @@ def handleHeartbeatResponse(clientio, data):
 	Changes must be made here to accommodate multiple Grants per Node.
 	"""
 	jsonData = json.loads(data)
-	iter = -1 # Starts at -1 in case of need to use indexing
 	if(not (hbResponses := _grabPossibleEntry(jsonData, "heartbeatResponse"))):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
 		return
 	print("Heartbeat Response(s) Received")
-
+	iter = -1 # Starts at -1 in case of need to use indexing
 	for hbResponse in hbResponses:
 		isIncompleteResponse = False
 		iter = iter + 1
-		print("Heartbeat Response [" + str(iter+1) +"]:")
+		print("Heartbeat Response [" + str(iter := iter+1) +"]:")
 		print(hbResponse)
 	
-
 		# Unpack Heartbeat Response data
 		(cbsdId, grantId, transmitExpireTime, grantExpireTime,
 		heartbeatInterval, measReportConfig, responseCode) = unpackResponseWithKeys(
 			hbResponse,  "cbsdId", "grantId", "transmitExpireTime", "grantExpireTime", 
 		"heartbeatInterval", "measReportConfig", "responseCode")
 
+		# Check for a Node with the cbsdId+grantId the SAS sent in the response
 		if(cbsdId): 
 			if((node := findNodeAwaitingResponseByCbsdId(cbsdId))): # Find the Node with the given CBSD ID
 				node.stopHbTimer() # TODO: Should this be stopped when the grantId is matched or just the Node?
@@ -1197,7 +1140,7 @@ def handleHeartbeatResponse(clientio, data):
 		# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
 		# 	pass
 		
-		# Determine what to do with the information provided at this point
+		# Determine what action to take with the information provided
 		if(isIncompleteResponse): # Terminate Grant if SAS did not send a completely valid Response
 			node.changeGrantStatus("IDLE") 
 			print("SAS Heartbeat Response Invalid. Terminating Grant.")
@@ -1207,15 +1150,14 @@ def handleHeartbeatResponse(clientio, data):
 		elif(responseCode == "501"):	# 501 --> SUSPENDED_GRANT
 			node.changeGrantStatus("GRANTED")
 			print("SAS indicates suspended Grant. Suspending Grant.")
-			scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
+			scheduleNextHeartbeat(clientio, node)
 		elif(responseCode == "502"):	# 502 --> UNSYNC_OP_PARAM
 			node.changeGrantStatus("IDLE")
 			print("SAS indicates that Grant state is out of sync with the CBSD. Terminating Grant.")
-		elif(responseCode == "0"):		# 0   --> SUCCSESS
+		elif(responseCode == "0"):		# 0   --> SUCCESS
 			if(node.getGrant().getGrantStatus() == "GRANTED"):
 				node.changeGrantStatus("AUTHORIZED")
-			scheduleNextHeartbeat(node.getGrant().getHeartbeatInterval(), clientio, node)
-
+			scheduleNextHeartbeat(clientio, node)
 # End Heartbeat --------------------------------------------------------------------
 
 # Relinquishment -------------------------------------------------------------------
@@ -1228,7 +1170,7 @@ def simRelinquishmentReq(requests):
 	nodesAwaitingResponse = []
 	iter = 0
 	for request in requests:
-		print("Creating Relinquishment Request [" + str(iter+1) + "]:")
+		print("Creating Relinquishment Request [" + str(iter := iter+1) + "]:")
 		node = reqAddressToNode(request)
 		if(not node):
 			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
@@ -1292,40 +1234,41 @@ def handleRelinquishmentResponse(clientio, data):
 	Relinquishment Requests resets the Grant object for a Node
 	"""
 	jsonData = json.loads(data)
-	iter = -1 # Starts at -1 in case of need to use indexing
-	relinquishResponses = _grabPossibleEntry(jsonData, "relinquishmentResponse")
-	if(not relinquishResponses):
+	if(not (relinquishResponses := _grabPossibleEntry(jsonData, "relinquishmentResponse"))):
 		print("Unreadable data. Expecting JSON formatted payload with key 'relinquishmentResponse'. Relinquishment(s) invalid.")
 		return
-	else:
-		print("Relinquishment Response(s) Received")
+	print("Relinquishment Response(s) Received")
+	iter = 0
 	for relinquishment in relinquishResponses:
-		iter = iter + 1
-		print("Relinquishment Response [" + str(iter+1) +"]:")
-		response = _grabPossibleEntry(relinquishment, "response")
-		if(not _hasResponseCode(response)):
-			print("Relinquishment invalid.")
-			continue
+		print("Relinquishment Response [" + str(iter := iter+1) +"]:")
+		print(relinquishment)
 
-		cbsdId = _grabPossibleEntry(relinquishment, "cbsdId")
+		(cbsdId, grantId, responseCode) = unpackResponseWithKeys(relinquishment, "cbsdId", "grantId", "responseCode")
+
 		if(cbsdId):
-			node = findNodeAwaitingResponseByCbsdId(cbsdId)
-			if(not node):
+			if(node := findNodeAwaitingResponseByCbsdId(cbsdId)):
+				if(grantId):
+					if(not (node.getGrant().getGrantId() == grantId)):  # Find if the Node has a Grant with the given Grant ID
+						print("This Node with CBSD ID: '" + cbsdId + "' does not have a Grant with Grant ID: '" + grantId + "'.")
+						isIncompleteResponse = True
+				else:
+					if(responseCode == "0"):
+						print("Missing required parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
+					else:
+						print("Missing conditional parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
+					isIncompleteResponse = True					
+			else:
 				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Relinquishment invalid.")
-				continue
+				isIncompleteResponse = True					
 		else:
-			print("No cbsdId provided. Deregistration invalid.")
-			continue
-
-		grantId = _grabPossibleEntry(relinquishment, "grantId")
-		if(not grantId):
-			print("No grantId provided. Relinquishment invalid")
-			continue
+			print("Missing conditional parameter: cbsdId. Cannot match this response to any Node without a CBSD ID.")
+			isIncompleteResponse = True	
 		
-		# Grab the Grant that is being relinquished and re-initialize it
-		grant = node.getGrant()
-		grant.__init__() # TODO: Make sure this resets the Grant
-		# TODO: If a heartbeat is scheduled, make sure to address it
+		if(isIncompleteResponse): 
+			print("SAS Relinquishment Response Invalid. Grant Remains Active.")
+		elif(responseCode == "0"):
+			node.setGrant()
+			print("Grant Relinquished.")
 # End Relinquishment ---------------------------------------------------------------
 
 # Deregistration -------------------------------------------------------------------
@@ -1338,7 +1281,7 @@ def simDeregistrationReq(requests):
 	nodesAwaitingResponse = []
 	iter = 0
 	for request in requests:
-		print("Creating Deregistration Request [" + str(iter+1) + "]:")
+		print("Creating Deregistration Request [" + str(iter := iter+1) + "]:")
 		node = reqAddressToNode(request)
 		if(not node):
 			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
@@ -1399,16 +1342,13 @@ def handleDeregistrationResponse(clientio, data):
 	Deletes deregistered Node from created_nodes
 	"""
 	jsonData = json.loads(data)
-	iter = -1 # Starts at -1 in case of need to use indexing
-	deregistrationResponses = _grabPossibleEntry(jsonData, "deregistrationResponse")
-	if(not deregistrationResponses):
+	if(not (deregistrationResponses := _grabPossibleEntry(jsonData, "deregistrationResponse"))):
 		print("Unreadable data. Expecting JSON formatted payload with key 'deregistrationResponse'. Deregistration(s) invalid.")
 		return
-	else:
-		print("Deregistration Response(s) Received")
+	iter = 0
+	print("Deregistration Response(s) Received")
 	for dereg in deregistrationResponses:
-		iter = iter + 1
-		print("Deregistration Response [" + str(iter+1) +"]:")
+		print("Deregistration Response [" + str(iter := iter+1) +"]:")
 		response = _grabPossibleEntry(dereg, "response")
 		if(not _hasResponseCode(response)):
 			print("Deregistration invalid.")
@@ -1516,25 +1456,34 @@ def defineSocketEvents(clientio):
 			global __blocked
 			__blocked = False
 		else:
-			print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
+			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 
 	@clientio.event
 	def grantResponse(data):
-		global __blocked
-		handleGrantResponse(clientio, data)
-		__blocked = False
+		if(nodesAwaitingResponse):
+			handleGrantResponse(clientio, data)
+			global __blocked
+			__blocked = False
+		else:
+			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 
 	@clientio.event
-	def heartbeatResponse(data):
-		global __blocked
-		handleHeartbeatResponse(clientio, data)
-		__blocked = False
+	def heartbeatResponse(clientio, data):
+		if(nodesAwaitingResponse):
+			handleHeartbeatResponse(clientio, data)
+			global __blocked
+			__blocked = False
+		else:
+			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 
 	@clientio.event
 	def relinquishmentResponse(data):
-		global __blocked
-		handleRelinquishmentResponse(clientio, data)
-		__blocked = False
+		if(nodesAwaitingResponse):		
+			handleRelinquishmentResponse(clientio, data)
+			global __blocked
+			__blocked = False
+		else:
+			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 
 	@clientio.event
 	def deregistrationResponse(data):
@@ -1547,9 +1496,12 @@ def defineSocketEvents(clientio):
 		data : dictonary
 			Expected keys are cbsdId, highFreq, and lowFreq
 		"""
-		global __blocked
-		handleDeregistrationResponse(clientio, data)
-		__blocked = False
+		if(nodesAwaitingResponse):
+			handleDeregistrationResponse(clientio, data)
+			global __blocked
+			__blocked = False
+		else:
+			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 	# end official WinnForum functions
 
 	# @clientio.event
@@ -1633,7 +1585,7 @@ def init(args):
 					elif(func == "grantRequest"):
 						grantRequest(clientio, payload)
 					elif(func == "heartbeatRequest"):
-						pass
+						heartbeatRequest(clientio, payload=payload)
 					elif(func == "relinquishmentRequest"):
 						pass
 					elif(func == "deregistrationRequest"):
@@ -1654,7 +1606,7 @@ def init(args):
 				userInput = input("User Input: ")
 				if(userInput == 'h'):
 					print("""Commands Include:
-						0 - Exit Interface
+						0 - Exit SAS Interface
 						1 - Create USRP Node
 						2 - View Created Nodes
 						3 - Create Registration Request
@@ -1668,7 +1620,7 @@ def init(args):
 					print("Exiting System...")
 					sys.exit()
 				elif(userInput == '1'):
-					cmdCreateNode()
+					createNode()
 				elif(userInput == '2'):
 					printCreatedNodes()
 				elif(userInput == '3'):

@@ -35,7 +35,7 @@ def getSelectorBoolean(prompt):
 		else:
 			print("Please enter Y for Yes or N for No...")
 
-def getValidFloat(prompt):
+def _getValidFloat(prompt):
 	"""
 	Prompts user with prompt and returns a float (or 'exit')
 	If user enters 'exit' then this function returns 'None'
@@ -49,8 +49,7 @@ def getValidFloat(prompt):
 		except ValueError:
 			print("Please enter a valid number (or 'exit' to quit this operation)...")
 
-
-def getValidInt(prompt):
+def _getValidInt(prompt):
 	"""
 	Prompts user to either enter an integer or 'enter' and returns the value
 
@@ -64,18 +63,18 @@ def getValidInt(prompt):
 			return int(user_input)
 		except ValueError:
 			print("Please enter a vaild integer or 'exit' to quit...")
-# End Helper Functions -------------------------------------------------------------
 
 def promptNumOfRequests(prompt):
 	"""
 	Prompts user to enter a non-negative integer for the # of requests they'd like to make
 	"""
 	while(True):
-		num = getValidInt(prompt)
+		num = _getValidInt(prompt)
 		if(num < 0):
 			print("Please enter a value >= 0...")
 		else:
 			return num
+# End Helper Functions -------------------------------------------------------------
 
 # Create Node
 def promptUsrpMode():
@@ -114,7 +113,7 @@ def promptUsrpGain(min_gain=0, max_gain=31.5):
 		Prompt user to enter Usrp Gain
 		"""
 		while(True):
-			gain = getValidFloat("Enter USRP gain (in dB): ")
+			gain = _getValidFloat("Enter USRP gain (in dB): ")
 			if(gain < min_gain):
 				print("Gain of '" + gain + "' is below the minimum of '" + min_gain + "'.")
 			elif(gain > max_gain):
@@ -134,7 +133,7 @@ def promptUsrpBandwidth(min_bw=0, max_bw=10000000):
 		Maximum bandwidth. Defualt 10000000 (10MHz).
 	"""
 	while(True):
-		bandwidth = getValidInt("Enter bandwidth (in Hz): ")
+		bandwidth = _getValidInt("Enter bandwidth (in Hz): ")
 		if(bandwidth < min_bw):
 			print("Bandwidth must be greater than "+ str(min_bw) +".")
 		elif(bandwidth > max_bw):
@@ -287,17 +286,17 @@ def promptInstallationParam():
 	-------
 	param : InstallationParam object
 	"""
-	latitude = getValidFloat("Enter latitude: ")
-	longitude = getValidFloat("Enter longitude: ")
-	height = getValidFloat("Enter antenna height (in meters): ")
+	latitude = _getValidFloat("Enter latitude: ")
+	longitude = _getValidFloat("Enter longitude: ")
+	height = _getValidFloat("Enter antenna height (in meters): ")
 	while(True):
 		heightType = input("Enter height type ('AGL' for relative to ground level or 'AMSL' for realtive to mean sea level: ")
 		if(heightType != 'AGL' and heightType != 'AMSL' and heightType != ""):
 			print("Please enter 'AGL' or 'AMSL'...")
 		else:
 			break
-	horizontalAccuracy = getValidFloat("Enter horizontal accuracy (in meters): ")
-	verticalAccuracy = getValidFloat("Enter vertical accuracy: ")
+	horizontalAccuracy = _getValidFloat("Enter horizontal accuracy (in meters): ")
+	verticalAccuracy = _getValidFloat("Enter vertical accuracy: ")
 	while(True):
 		indoorDeployment = input("Enter Deployment Type (0 for Outdoor or 1 for Indoor: ")
 		if(indoorDeployment != '0' and indoorDeployment != '1'):
@@ -364,8 +363,8 @@ def promptFrequencyRange():
 	range : FrequencyRange object
 	"""
 	while(True):
-		minFreq = getValidInt("Enter low frequency (in Hz): ")
-		maxFreq = getValidInt("Enter high frequency (in Hz): ")
+		minFreq = _getValidInt("Enter low frequency (in Hz): ")
+		maxFreq = _getValidInt("Enter high frequency (in Hz): ")
 		if(minFreq > maxFreq):
 			print("Minimum/Low Frequency (" + minFreq + ") cannot be greater than Maximum/High Frequency (" + maxFreq + ")...")
 		else:
@@ -379,9 +378,9 @@ def promptRcvdPowerMeasReport():
 	-------
 	rcvdPowerMeasReport : RcvdPowerMeasReport object
 	"""
-	measFreq = getValidInt("Enter Low Frequency of the  spectrum (in Hz): ")
-	measBand = getValidInt("Enter measurement bandwidth where Low Frequency + bandwidth = High Frequency (in Hz): ")
-	measRcvdPower = getValidFloat("Enter the dBm value that USRP sees at the  receiver (between -100 and -25 dBm): ")
+	measFreq = _getValidInt("Enter Low Frequency of the  spectrum (in Hz): ")
+	measBand = _getValidInt("Enter measurement bandwidth where Low Frequency + bandwidth = High Frequency (in Hz): ")
+	measRcvdPower = _getValidFloat("Enter the dBm value that USRP sees at the  receiver (between -100 and -25 dBm): ")
 	rcvdPowerMeasReport = RcvdPowerMeasReport(measFreq, measBand, measRcvdPower)
 	return rcvdPowerMeasReport
 

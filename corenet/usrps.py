@@ -443,13 +443,9 @@ class Node:
     ----------
     __operationMode : string
         This will be 'TX', 'RX', or 'TXRX'
-    tx_usrp : TX_USRP Object
-        Object associated with the TX Flowgraph
-    rx_usrp : RX_Usrp Object
-        Object associated with the RX Flowgraph
-    txrx_usrp : TXRX_USRP Object
-        Object associated with TX/RX Flowgraph
-    registrationState : string
+    __usrp : TX_USRP Object
+        Object associated with 1 of 3 possible USRP Flowgraphs
+    __isSasRegistered : boolean
         Registration Status of Node
     grant : Grant object
         All nodes will have 1 Grant that includes all grant related data
@@ -591,7 +587,7 @@ class Node:
         return self.__grant
 
     def setGrant(self, grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType):
-        self.__grant = Grant( grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType)
+        self.__grant = Grant(grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType)
 
     def getCbsdId(self):
         return self.__cbsdId 
