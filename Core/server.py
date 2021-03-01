@@ -214,7 +214,8 @@ def register(sid, data):
             assignmentArr.append(cbsd)
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
         responseArr.append(response.asdict())
-    socket.emit('registrationResponse', responseArr)
+    responseDict = {"registrationResponse":responseArr}
+    socket.emit('registrationResponse', json.dumps(responseDict))
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
 

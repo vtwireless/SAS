@@ -28,7 +28,7 @@
 						"hardwareVersion":"fakeHrdwVrs",
 						"firmwareVersion":"fakeFrmwVrs"
 					},
-					"airInterface":"E_UTRA",
+					"airInterface":{"radioTechnology":"E_UTRA"},
 					"installationParam":{
 						"latitude":"100",
 						"longitude":"-78",
@@ -45,10 +45,10 @@
 						"antennaModel":"ASXE11"
 					},
 					"measCapability":["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"],
-					"groupingParam":{
+					"groupingParam":[{
 						"groupId":"CamUserId:A",
 						"groupType":"INTERFERENCE_COORDINATION"
-					},
+					}],
 					"cpiSignatureData": {
 						"protectedHeader":"protectedHeader",
 						"encodedCpiSignedData":"encodedCpiSignedData",
