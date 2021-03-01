@@ -52,10 +52,10 @@ parser = ArgumentParser(description='SAS USRP RX Interface Script - Provide a se
 # Socket Params----------------------------------------------------------------------------
 parser.add_argument('-a','--address',\
 		help='Server address. Example: -a \'127.0.0.1\'',\
-		default='127.0.0.1')
+		default='localhost')
 parser.add_argument('-p','--port',\
 		help='Server port. Example: -p 65432',\
-		default='5000')
+		default='8000')
 #------------------------------------------------------------------------------------------
 
 # Use Simulation File----------------------------------------------------------------------

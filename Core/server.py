@@ -453,9 +453,7 @@ def checkPUAlert():
                     cbsd.sid.emit('pauseGrant', { 'grantId' : grant.id })
     
     threading.Timer(1.5, checkPUAlert).start()
-
-
-    
+   
 
 if __name__ == '__main__':
     getSettings()

@@ -532,7 +532,7 @@ class Node:
         ----------
         tx_fc : float
             TX Center Frequency
-        tx_bw : float
+        tx_bw : int
             TX Signal Bandwidth
         tx_src_amp : float
             TX Signal Source Amplitude
@@ -549,6 +549,12 @@ class Node:
         """
 
         # TODO: Should not have to validate these at this point
+        tx_fc = int(tx_fc)
+        tx_bw = int(tx_bw)
+        tx_src_amp = float(tx_src_amp)
+        tx_gain = float(tx_gain)
+        rx_fc = int(rx_fc)
+        
         if(tx_gain > 31.5):
             print("TX Gain of '" + tx_gain + "' exceeds limit of 31.5. Setting TX Gain to maximum of 31.5")
             tx_gain = 31.5
