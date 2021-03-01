@@ -442,7 +442,7 @@ def checkPUAlert():
     freqRange = 3700000000 - 3550000000
     tenMHz = 10000000
     blocks = freqRange/10000000
-    for i in range(blocks):
+    for i in range(int(blocks)):
         low = i * tenMHz
         high = (i + 1) * tenMHz
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
