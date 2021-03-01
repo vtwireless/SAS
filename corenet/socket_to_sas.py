@@ -489,18 +489,34 @@ def simRegistrationReq(requests):
 			if(nodeModel := node.getModel()):
 				cbsdInfo["model"] = nodeModel
 			cbsdInfo = CbsdInfo(
-				_grabPossibleEntry(request, "vendor"),
-				_grabPossibleEntry(request, "model"),
-				_grabPossibleEntry(request, "softwareVersion"),
-				_grabPossibleEntry(request, "hardwareVersion"),
-				_grabPossibleEntry(request, "firmwareVersion")
+				_grabPossibleEntry(cbsdInfo, "vendor"),
+				_grabPossibleEntry(cbsdInfo, "model"),
+				_grabPossibleEntry(cbsdInfo, "softwareVersion"),
+				_grabPossibleEntry(cbsdInfo, "hardwareVersion"),
+				_grabPossibleEntry(cbsdInfo, "firmwareVersion")
 				)
 		airInterface = _grabPossibleEntry(request, "airInterface")
+		airInterface = AirInterface(_grabPossibleEntry(airInterface, "radioTechnology"))
 		# TODO: Determine the proper airInterfaces for the USRPs
 		# if(not airInterface):
 		# 	print("No airInterface provided. Registration Request invalid.")
 		# 	continue
 		installationParam = _grabPossibleEntry(request, "installationParam")
+		installationParam = InstallationParam(
+			_grabPossibleEntry(installationParam, "latitude"),
+			_grabPossibleEntry(installationParam, "longitude"),
+			_grabPossibleEntry(installationParam, "height"),
+			_grabPossibleEntry(installationParam, "heightType"),
+			_grabPossibleEntry(installationParam, "horizontalAccuracy"),
+			_grabPossibleEntry(installationParam, "verticalAccuracy"),
+			_grabPossibleEntry(installationParam, "indoorDeployment"),
+			_grabPossibleEntry(installationParam, "antennaAzimuth"),
+			_grabPossibleEntry(installationParam, "antennaDowntilt"),
+			_grabPossibleEntry(installationParam, "antennaGain"),
+			_grabPossibleEntry(installationParam, "eirpCapability"),
+			_grabPossibleEntry(installationParam, "antennaBeamwidth"),
+			_grabPossibleEntry(installationParam, "antennaModel")
+		)
 		# TODO: installationParam is condiitonal. Determine when it is needed.
 		# if(not installationParam):
 		# 	print("No installationParam provided. Registration Request invalid.")
@@ -514,15 +530,28 @@ def simRegistrationReq(requests):
 		if(not measCapability):
 			print("No measCapability provided. Registration Request invalid.")
 			continue
+		groupingParams = []
 		groupingParam = _grabPossibleEntry(request, "groupingParam")
+		for group in groupingParam:
+			groupingParams.append(GroupParam(
+				_grabPossibleEntry(group, "grouptype"),
+				_grabPossibleEntry(group, "groupId")
+			))
+
 		cpiSignatureData = _grabPossibleEntry(request, "cpiSignatureData")
+		cpiSignatureData = CpiSignatureData(
+			_grabPossibleEntry(cpiSignatureData, "protectedHeader"),
+			_grabPossibleEntry(cpiSignatureData, "encodedCpiSignedData"),
+			_grabPossibleEntry(cpiSignatureData, "digitalSignature")
+		)
+		
 		vtParams = _grabPossibleEntry(request, "vtParams")
 
 		nodes_awaiting_response.append(node)
 		arr.append(RegistrationRequest(userId, fccId, 
 			cbsdSerialNumber, callSign, cbsdCategory,
 			cbsdInfo, airInterface, installationParam, 
-			measCapability, groupingParam, cpiSignatureData, vtParams).asdict())
+			measCapability, groupingParams, cpiSignatureData, vtParams).asdict())
 	return arr		
 
 def cmdRegistrationReq():
@@ -672,15 +701,21 @@ def simSpectrumInquiryReq(requests):
 	for request in requests:
 		iter = iter + 1
 		print("Spectrum Inquiry Request [" + str(iter := iter+1) + "':")
-		node = reqAddressToNode(request)
-		if(not node):
+		if(not (node := reqAddressToNode(request))):
 			print("Spectrum Inquiry Request invalid.")
 			continue
-		cbsdId = node.getCbsdId()
-		if(not cbsdId):
+		if(not (cbsdId := node.getCbsdId())):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Spectrum Inquiry Request invalid.")
 			continue
-		inquiredSpectrum = _grabPossibleEntry(request, "inquiredSpectrum")
+		inquiredSpectrum = []
+		freqRanges = _grabPossibleEntry(request, "inquiredSpectrum")
+		for freqRange in freqRanges:
+			inquiredSpectrum.append(FrequencyRange(
+				_grabPossibleEntry(freqRange, "lowFreq"),
+				_grabPossibleEntry(freqRange, "highFreq")
+			))
+
+		# TOOD: Make MeasReport an Object
 		measReport = _grabPossibleEntry(request, "measReport")
 		# TODO: measReport must be fake if it is getting passed in from the sim.json, or else
 		# there must be a function call to pull real RX data at this point

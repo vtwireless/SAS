@@ -468,7 +468,7 @@ class CpiSignedData:
 			The value of this parameter is the InstallationParam object containing the parameters being certified by the CPI, and only those.
 	
 	professionalInstallerData : object ProfessionalInstallerData (required)
-		The value of this parameter is the data identifying the CPI vouching for the installation parameters included in the installationParamvalue contained in this object.
+		The value of this parameter is the data identifying the CPI vouching for the installation parameters included in the installationParam value contained in this object.
 
 	"""
 	def __init__(self, fccId, cbsdSerialNumber, installationParam, professionalInstallerData):

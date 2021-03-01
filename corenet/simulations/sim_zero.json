@@ -49,7 +49,11 @@
 						"groupId":"CamUserId:A",
 						"groupType":"INTERFERENCE_COORDINATION"
 					},
-					"cpiSignatureData":"certified_professional_installer_signature_001"
+					"cpiSignatureData": {
+						"protectedHeader":"protectedHeader",
+						"encodedCpiSignedData":"encodedCpiSignedData",
+						"digitalSignature":"digitalSignature"
+					}
 				}]
 			}
 		],
