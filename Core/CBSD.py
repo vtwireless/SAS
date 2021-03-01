@@ -23,11 +23,11 @@ class CBSD:
 			 comment=None, cbsdSerialNumber=None, callSign=None, cbsdCategory="A", cbsdInfo="", airInterface=None, \
 				installationParam=None, measCapability=None, groupingParam=None):
 		self.id = id
-	  	self.name = name
-	  	self.latitude = latitude
-	  	self.longitude = longitude
-	  	self.trustLevel = trustLevel
-	  	self.longitude = longitude
+		self.name = name
+		self.latitude = latitude
+		self.longitude = longitude
+		self.trustLevel = trustLevel
+		self.longitude = longitude
 		self.latitude = latitude
 		self.trustLevel = trustLevel
 		self.IPAddress = IPAddress
@@ -52,10 +52,16 @@ class CBSD:
 	def asdict(self):
 		return_dict = {}
 		return_dict["id"] = self.id
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.operationParam):
-			return_dict["operationParam"] = self.operationParam.asdict()
-		if(self.vtGrantParams):
-			return_dict["vtGrantParams"] = self.vtGrantParams.asdict()
+		if(self.name):
+			return_dict["name"] = self.name
+		if(self.latitude):
+			return_dict["latitude"] = self.latitude
+		if(self.longitude):
+			return_dict["longitude"] = self.longitude
+		if(self.trustLevel):
+			return_dict["trustLevel"] = self.trustLevel
+		if(self.minFrequency):
+			return_dict["minFrequency"] = self.minFrequency
+		if(self.maxFrequency):
+			return_dict["maxFrequency"] = self.maxFrequency
 		return return_dict
