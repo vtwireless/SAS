@@ -306,7 +306,7 @@ class TXRX_USRP(gr.top_block):
 
         # Create TX Portion
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
-            ",".join((device_addr, "A:")),
+            ",".join(("addr="+device_addr, "A:")),
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',

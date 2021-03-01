@@ -488,12 +488,19 @@ def simRegistrationReq(requests):
 		if(cbsdInfo := _grabPossibleEntry(request, "cbsdInfo")):
 			if(nodeModel := node.getModel()):
 				cbsdInfo["model"] = nodeModel
+			cbsdInfo = CbsdInfo(
+				_grabPossibleEntry(request, "vendor"),
+				_grabPossibleEntry(request, "model"),
+				_grabPossibleEntry(request, "softwareVersion"),
+				_grabPossibleEntry(request, "hardwareVersion"),
+				_grabPossibleEntry(request, "firmwareVersion")
+				)
 		airInterface = _grabPossibleEntry(request, "airInterface")
 		# TODO: Determine the proper airInterfaces for the USRPs
 		# if(not airInterface):
 		# 	print("No airInterface provided. Registration Request invalid.")
 		# 	continue
-		installationParam = _grabPossibleEntry(request, installationParam)
+		installationParam = _grabPossibleEntry(request, "installationParam")
 		# TODO: installationParam is condiitonal. Determine when it is needed.
 		# if(not installationParam):
 		# 	print("No installationParam provided. Registration Request invalid.")
@@ -1580,7 +1587,7 @@ def init(args):
 							print("Going to execute: " + func, flush=True)
 							payload = action[func]
 							if(func == "createNode"):
-								simCreateNode(payload)
+								createNode(payload)
 							elif(func == "registrationRequest"):
 								__blocked = True
 								registrationRequest(clientio, payload)
