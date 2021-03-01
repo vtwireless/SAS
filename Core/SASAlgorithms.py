@@ -1,6 +1,7 @@
 import WinnForum
 import time
 from datetime import datetime, timedelta
+import threading
 
 class SASAlgorithms:
     def __init__(self):
@@ -13,6 +14,8 @@ class SASAlgorithms:
         self.radius = 1000#Kilometers
         self.maxGrantTime = 300#seconds
         self.ignoringREM = True
+        self.offerNewParams = True
+        self.maxEIRP = 30
 
     def setGrantAlgorithm(self, algorithm):
         self.grantAlgorithm = algorithm
@@ -35,6 +38,9 @@ class SASAlgorithms:
     def getHeartbeatIntervalForGrantId(self, grantId):
         #TODO change
         return self.defaultHeartbeatInterval
+
+    def getMaxEIRP(self):
+        return self.maxEIRP
 
 
     def runGrantAlgorithm(self, grants, REM, request):
@@ -63,7 +69,7 @@ class SASAlgorithms:
         lowFreq = self.getLowFreqFromOP(grant.operationParam)
         highFreq = self.getHighFreqFromOP(grant.operationParam)
         fr = WinnForum.FrequencyRange(lowFreq, highFreq)
-        response.operationParam = WinnForum.OperationParam(30, fr)
+        response.operationParam = WinnForum.OperationParam(self.getMaxEIRP, fr)
         longitude = None
         latitude = None
         radius = None
@@ -73,11 +79,25 @@ class SASAlgorithms:
             latitude = longLat[1]
             radius = 1000
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
-        if present and not self.ignoringREM:
+        if present == 1 and not self.ignoringREM:
             response.transmitExpireTime = datetime.now().strftime("%Y%m%dT%H:%M:%S%Z")
-            response.response = self.generateResponse(401)#Grant conflict
+            response.response = self.generateResponse(501)#Suspended Grant
         else:
             response.response = self.generateResponse(0)
+            if self.offerNewParams:
+                freqRange = 3700000000 - 3550000000
+                tenMHz = 10000000
+                blocks = freqRange/10000000
+                for i in range(blocks):
+                    low = i * tenMHz
+                    high = (i + 1) * tenMHz
+                    result = self.isPUPresentREM(REM, low, high, latitude, longitude, radius)
+                    if result == 0:
+                        op = WinnForum.OperationParam(self.getMaxEIRP(), WinnForum.FrequencyRange(low, high))
+                        tempFakeGrant = WinnForum.Grant(0, 0, op)
+                        tempFakeGrantResponse = self.runGrantAlgorithm(grants, REM, tempFakeGrant)
+                        if tempFakeGrantResponse.response.responseCode == 0:
+                            response.operationParam = op
         return response
 
     def isGrantSuspended(self):
@@ -115,6 +135,7 @@ class SASAlgorithms:
         return response
 
     def isPUPresentREM(self, REM, highFreq, lowFreq, latitude, longitude, radius):
+        #Return 0 = not present, 1 = present, 2 = no spectrum data, 3 = error with alorithm select
         latit = self.latitude
         longit = self.longitude
         rad = self.radius
@@ -126,15 +147,24 @@ class SASAlgorithms:
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)#GET ALL  REM DATA
         if not remData:
             print("Currently no spectrum data")
-            return True
+            return 2
         if self.getREMAlgorithm() == 'DEFAULT':
-            return self.defaultREMAlgorith(remData)
+            if self.defaultREMAlgorith(remData):
+                return 1
+            else:
+                return 0
         elif self.getREMAlgorithm() == 'TRUSTSCORE':
-            return self.trustScoreREMAlgorithm(remData)
+            if self.trustScoreREMAlgorithm(remData):
+                return 1
+            else:
+                return 0
         elif self.getREMAlgorithm() == 'TRUSTED':
-            return self.trustedREMAlgorithm(remData)
+            if self.trustedREMAlgorithm(remData):
+                return 1
+            else:
+                return 0
         else:
-            return False
+            return 3
 
     def calculateGrantExpireTime(self, grants, REM, grant):
         grantCount = len(grants)

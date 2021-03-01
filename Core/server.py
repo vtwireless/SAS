@@ -5,8 +5,11 @@ import json
 import SASAlgorithms
 import SASREM
 import time
+from datetime import datetime, timedelta
 import WinnForum
 import CBSD
+import threading
+import uuid
 
 GETURL = "http://localhost/SASAPI/SAS_API_GET.php"
 POSTURL = "http://localhost/SASAPI/SAS_API.php"
@@ -48,11 +51,16 @@ def sendPostRequest(parameters):
     return x.json()
 
 def getSettings() :
-    getAl = { "action": "getSettings"}
-    result = sendGetRequest(getAl)
-    SASAlgorithms.setGrantAlgorithm(result["algorithm"])
-    SASAlgorithms.setHeartbeatInterval(result["heartbeatInterval"])
-    SASAlgorithms.setREMAlgorithm(result["REMAlgorithm"])
+    if databaseLogging:
+        getAl = { "action": "getSettings"}
+        result = sendGetRequest(getAl)
+        SASAlgorithms.setGrantAlgorithm(result["algorithm"])
+        SASAlgorithms.setHeartbeatInterval(result["heartbeatInterval"])
+        SASAlgorithms.setREMAlgorithm(result["REMAlgorithm"])
+    else:
+        SASAlgorithms.setGrantAlgorithm('DEFAULT')
+        SASAlgorithms.setHeartbeatInterval(5)
+        SASAlgorithms.setREMAlgorithm('DEFAULT')
     print('GRANT: ' + SASAlgorithms.getGrantAlgorithm() + ' HB: ' + str(SASAlgorithms.getHeartbeatInterval()) + ' REM: ' + SASAlgorithms.getREMAlgorithm())
 
 def sendBroadcast(broadcastName, data):
@@ -99,7 +107,7 @@ def loadGrantFromJSON(json):
     return grant 
 
 def generateId():
-    return 50#time.time()#just generate using epoch time, not really that important, but is unique
+    return str(uuid.uuid4())#time.time()#just generate using epoch time, not really that important, but is unique
 
 def getCBSDWithId(cbsdId):
     for cbsd in cbsds:
@@ -147,14 +155,6 @@ def removeCBSD(cbsdId):
     return False
             
 
-getSettings()
-
-param = {
-    "action": "getNodes"
-    }
-#y = sendGetRequest(param)
-#print(y["nodes"])
-
 @socket.event
 def connect(sid, environ):
     print('connect ', sid)
@@ -169,14 +169,24 @@ def disconnect(sid):
     print('disconnect ', sid)
     allClients.remove(sid)
     if sid in allWebApps: allWebApps.remove(sid)
-    if sid in allRadios: allRadios.remove(sid)
     if sid in allSASs: allSASs.remove(sid)
+    for radio in allRadios:
+        if radio.sid == sid:
+            allRadios.remove(radio)
+
+
+#@socket.on('isSensingRadio')
+#def isSensingRadio(sid, data):
+#    sendAssignmentToRadio(sid)
+
+
 
 @socket.on('registrationRequest')
 def register(sid, data):
     jsonData = json.loads(data)
     print(jsonData)
     responseArr = []
+    assignmentArr = []
     for item in jsonData["registrationRequest"]:
         if "vtParams" in item:
             item["nodeType"] = item["vtParams"]["nodeType"]
@@ -199,9 +209,14 @@ def register(sid, data):
             id = radio.id
             allClients.append(radio)
             cbsds.append(radio)
+        if "measReportConfig" in item:#if the registering entity is a radio add it to the array and give it an assignment
+            cbsd = SASREM.CBSDSocket(id, sid, False)
+            assignmentArr.append(cbsd)
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
         responseArr.append(response.asdict())
     socket.emit('registrationResponse', responseArr)
+    for radio in assignmentArr:
+        sendAssignmentToRadio(radio)
 
 @socket.on('deregistrationRequest')
 def deregister(sid, data):
@@ -288,6 +303,10 @@ def heartbeat(sid, data):
         except KeyError:
             print("no measure report")
         response = SASAlgorithms.runHeartbeatAlgorithm(grants, REM, hb, grant)
+        grant.heartbeatTime = datetime.now()
+        grant.heartbeatInterval = response.heartbeatInterval
+        threading.Timer(response.heartbeatInterval*1.1, cancelGrant, grant).start()
+
         hbrArray.append(response.asdict())
     socket.emit('heartbeatResponse', hbrArray)
 
@@ -327,14 +346,19 @@ def spectrumInquiryRequest(sid, data):
             highFreq = fr["highFrequency"]
             channelType = "PAL"
             ruleApplied = "FCC_PART_96"
-            maxEirp = 30.0
+            maxEirp = SASAlgorithms.getMaxEIRP()
             if SASAlgorithms.acceptableRange(lowFreq, highFreq):
                 if highFreq < 3700000000 and highFreq > 3650000000:
                     channelType = "GAA"
-                if not SASAlgorithms.isPUPresentREM(REM, highFreq, lowFreq, None, None, None):
+                present = SASAlgorithms.isPUPresentREM(REM, highFreq, lowFreq, None, None, None)
+                if present == 0:#not present
                     fr = WinnForum.FrequencyRange(lowFreq, highFreq)
                     availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
                     response.availableChannel.append(availChan)
+                elif present == 2:#no spectrum data
+                    initiateSensing(lowFreq, highFreq)
+
+
         inquiryArr.append(response.asdict())
     socket.emit('spectrumInquiryResponse', inquiryArr)
 
@@ -359,5 +383,81 @@ def spectrumData(sid, data):
         print("rcvd power meas error")
 
 
+def initiateSensing(lowFreq, highFreq):
+    count = 0
+    radioCountLimit = 3
+    radiosToChangeBack = []
+    #loop through radios, set 3 as the limit
+    for radio in allRadios:
+        if not radio.justChangedParams:
+            changeParams = dict()
+            changeParams["lowFrequency"] = lowFreq
+            changeParams["highFrequency"] = highFreq
+            changeParams["cbsdId"] = radio.cbsdId
+            radio.justChangedParams = True
+            radio.emit("changeRadioParams", changeParams)
+            radiosToChangeBack.append(radio)
+        if count >= radioCountLimit or count > radio.length/3:
+        #don't use more than 1/3 of the radios to check band
+            break
+    
+    threading.Timer(3.0, resetRadioStatuses, radiosToChangeBack).start()
+
+def resetRadioStatuses(radios):
+    for radio in radios:
+        radio.justChangedParams = False
+
+def cancelGrant(grant):
+    now = datetime.now()
+    if grant.heartbeatTime + datetime.timedelta(0, grant.heartbeatInterval) < now:
+        removeGrant(grant.id, grant.cbsdId)
+        print('grant ' + grant.id + ' canceled')
+
+
+def sendAssignmentToRadio(cbsd):
+    print("a sensing radio has joined")
+    if cbsd in allRadios:
+        allRadios.remove(cbsd)
+    allRadios.append(cbsd)
+    freqRange = 3700000000 - 3550000000
+    tenMHz = 10000000
+    blocks = freqRange/10000000
+    for i in range(blocks):
+        low = i * tenMHz
+        high = (i + 1) * tenMHz
+        result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
+        if result == 2:
+            #if there is no spectrum data available for that frequency range assign radio to it
+            changeParams = dict()
+            changeParams["lowFrequency"] = tenMHz * i
+            changeParams["highFrequency"] = tenMHz * (i+ 1)
+            changeParams["cbsd"] = "50"
+            cbsd.justChangedParams = True
+            socket.emit("changeRadioParams", changeParams)
+            break
+    
+    threading.Timer(3.0, resetRadioStatuses, [cbsd]).start()
+
+def checkPUAlert():
+    freqRange = 3700000000 - 3550000000
+    tenMHz = 10000000
+    blocks = freqRange/10000000
+    for i in range(blocks):
+        low = i * tenMHz
+        high = (i + 1) * tenMHz
+        result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
+        if result == 1:
+            for grant in grants:
+                if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
+                    cbsd = getCBSDWithId(grant.cbsdId)
+                    cbsd.sid.emit('pauseGrant', { 'grantId' : grant.id })
+    
+    threading.Timer(1.5, checkPUAlert).start()
+
+
+    
+
 if __name__ == '__main__':
+    getSettings()
+    threading.Timer(3.0, checkPUAlert).start()
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)

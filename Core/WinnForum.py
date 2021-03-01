@@ -1282,12 +1282,14 @@ class Grant:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14: ResponseObject Definition
 	"""
-	def __init__(self, id, cbsdId, operationParam, vtGrantParams=None, expireTime=None):
+	def __init__(self, id, cbsdId, operationParam, vtGrantParams=None, expireTime=None, heartbeatTime=None, heartbeatInterval=None):
 		self.id = id
 		self.cbsdId = cbsdId #R
 		self.operationParam = operationParam #R
 		self.vtGrantParams = vtGrantParams #O
 		self.expireTime = expireTime
+		self.heartbeatTime = heartbeatTime
+		self.heartbeatInterval = heartbeatInterval
 
 	def asdict(self):
 		return_dict = {}
@@ -1300,4 +1302,8 @@ class Grant:
 			return_dict["vtGrantParams"] = self.vtGrantParams.asdict()
 		if(self.expireTime):
 			return_dict["expireTime"] = self.expireTime
+		if(self.heartbeatTime):
+			return_dict["heartbeatTime"] = self.heartbeatTime
+		if(self.heartbeatInterval):
+			return_dict["heartbeatInterval"] = self.heartbeatInterval
 		return return_dict

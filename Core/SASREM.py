@@ -30,7 +30,7 @@ class SASREM:
         objectsToSend = []
         for node in self.nodes:
             if self.isWithinRegion(longitude, latitude, radius, node.longitude, node.latitude):
-                #objectsToSend.append(object)
+                objectsToSend.append(object)
                 #ask for information
                 #add it
                 print('in')
@@ -40,7 +40,9 @@ class SASREM:
     def getSpectrumDataWithParameters(self, longitude, latitude, highFrequency, lowFrequency, radius):
         objectsToSend = []
         for object in self.objects:
-            if self.isWithinRegion(longitude, latitude, radius, object.longitude, object.latitude):
+            if not object.longitude and not object.longitude:
+                objectsToSend.append(object)
+            elif self.isWithinRegion(longitude, latitude, radius, object.longitude, object.latitude):
                 objectsToSend.append(object)
         return objectsToSend
 
@@ -48,7 +50,7 @@ class SASREM:
 
     def isWithinRegion(self, centerLongitude, centerLatitude, radius, pointLongitude, pointLatitude):
     # convert decimal degrees to radians 
-        lon1, lat1, lon2, lat2 = map(radians, [centerLongitude, centerLatitude, pointLongitude, pointLatitude])
+        lon1, lat1, lon2, lat2 = map(radians, [centerLongitude, centerLatitude, float(pointLongitude), float(pointLatitude)])
     # haversine formula 
         dlon = lon2 - lon1 
         dlat = lat2 - lat1 
@@ -66,12 +68,14 @@ class SASREM:
         return REMPoint(-80, 35)
 
     def measReportToSASREMObject(self, measReport, cbsd):
-        rcvd = measReport.measFrequency[0]
-        freq = rcvd.measFrequency
-        band = rcvd.measBandwidth
-        power = rcvd.measRcvdPower
-        obj = SASREMObject(cbsd.longitude, cbsd.latitude, cbsd, power, freq+band, freq, time.time())
-        self.addREMObject(obj)
+        if cbsd:
+            freq = measReport.measFrequency
+            band = measReport.measBandwidth
+            power = measReport.measRcvdPower
+            obj = SASREMObject(cbsd.longitude, cbsd.latitude, cbsd, power, freq+band, freq, time.time())
+            self.addREMObject(obj)
+
+
 
 
 class SASREMObject:
@@ -95,4 +99,8 @@ class REMPoint:
         self.longitude = longitude
         self.latitude = latitude
 
-    
+class CBSDSocket:
+    def __init__(self, cbsdId, sid, justChangedParams):
+        self.cbsdId = cbsdId
+        self.sid = sid
+        self.justChangedParams = justChangedParams
