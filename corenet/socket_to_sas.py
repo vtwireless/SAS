@@ -19,14 +19,15 @@
 
 
 import sys
+import json
+import time
+import socketio
+import threading
 from argparse import ArgumentParser
 from gnuradio import uhd
-import socketio
-import json
 from usrps import Node
 from WinnForum import *		# File containing object definitions used
-from cmd_prompts import * 	# User defined library for cmd prompts
-import threading
+from cmd_prompts import * 	# User defined module for cmd prompts
 
 # Globals
 # blocked: Used to ensure recieved socket messages display on the terminal before the main menu blocks the command-line interface .
@@ -1412,6 +1413,24 @@ def emergencyStop(data):
 				break
 # End SAS Socket Events (Not WinnForum Specified) ----------------------------------
 
+def delayUntilTime(lastTime, currentTime):
+	"""
+	Used in main() by the simulation file, this uses the 'time' key and waits to execute the command at that time.
+
+	Parameters
+	----------
+	lastTime : int
+		The last key that resembles time
+	currentTime : string
+	"""
+	try:
+		currentTime = int(currentTime)
+	except:
+		print("Could not convert 'time' key into an integer.")
+		return None
+	time.sleep(currentTime - lastTime)
+	return currentTime
+
 def defineSocketEvents(clientio):
 	"""
 	List of events the SAS may emit, and functions to call to handle them
@@ -1442,7 +1461,7 @@ def defineSocketEvents(clientio):
 			print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
 
 	@clientio.event
-	def sprectumInquiryResponse(data):
+	def spectrumInquiryResponse(data):
 		if(nodes_awaiting_response):
 			handleSpectrumInquiryResponse(clientio, data)
 			global __blocked
@@ -1496,10 +1515,6 @@ def defineSocketEvents(clientio):
 			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 	# end official WinnForum functions
 
-	# @clientio.event
-	# def getTxParams(node):
-	# 	send_params(clientio, node)
-
 	@clientio.event
 	def changeRadioParams(data):
 		"""
@@ -1512,14 +1527,6 @@ def defineSocketEvents(clientio):
 			Expected keys are cbsdId, highFreq, and lowFreq
 		"""
 		updateRxParams(data)
-
-	# @clientio.event
-	# def stop_radio(cbsdId):
-	# 	stopNode(cbsdId)
-
-	# @clientio.event
-	# def start_radio(cbsdId):
-	# 	startNode(cbsdId)
 
 	@clientio.event
 	def disconnect():
@@ -1545,6 +1552,8 @@ def init(args):
 	socket_addr = 'http://' + args['address'] +':' + args['port']
 	clientio.connect(socket_addr) # Connect to SAS
 
+	global __blocked
+	__blocked = False
 	if(args['sim']):
 		'''
 		Simulation file includes all requests to make and at what times
@@ -1558,27 +1567,40 @@ def init(args):
 				data = json.load(config)
 		except:
 			sys.exit("Fatal Error: No valid simulation file found at " + path + "\nExiting program...")
-		for time in data: 				# Sim file may have multiple instances of time to trigger events
-			#TODO Check the time
-			for action in data[time]: 	# Each time may have multiple actions (requests)
+		lastTime = 0
+		for timeToExecute in data: 		# Sim file may have multiple instances of time to trigger events
+			lastTime = delayUntilTime(lastTime, timeToExecute)
+			for action in data[timeToExecute]: 	# Each time may have multiple actions (requests)
 				for func in action:		# Each requests may have multiple payloads
-					print("Going to execute: " + func)
-					payload = action[func]
-					if(func == "createNode"):
-						simCreateNode(payload)
-					elif(func == "registrationRequest"):
-						registrationRequest(clientio, payload)
-					elif(func == "spectrumInquiryRequest"):
-						spectrumInquiryRequest(clientio, payload)
-					elif(func == "grantRequest"):
-						grantRequest(clientio, payload)
-					elif(func == "heartbeatRequest"):
-						heartbeatRequest(clientio, payload=payload)
-					elif(func == "relinquishmentRequest"):
-						pass
-					elif(func == "deregistrationRequest"):
-						pass
-					#send payload to appropiate function	
+					funcStarted = False
+					while(True):
+						if(not __blocked):
+							if(funcStarted):
+								break
+							print("Going to execute: " + func, flush=True)
+							payload = action[func]
+							if(func == "createNode"):
+								simCreateNode(payload)
+							elif(func == "registrationRequest"):
+								__blocked = True
+								registrationRequest(clientio, payload)
+							elif(func == "spectrumInquiryRequest"):
+								__blocked = True
+								spectrumInquiryRequest(clientio, payload)
+							elif(func == "grantRequest"):
+								__blocked = True
+								grantRequest(clientio, payload)
+							elif(func == "heartbeatRequest"):
+								__blocked = True
+								heartbeatRequest(clientio, payload=payload)
+							elif(func == "relinquishmentRequest"):
+								__blocked = True
+								relinquishmentRequest(clientio, payload)
+							elif(func == "deregistrationRequest"):
+								__blocked = True
+								deregistrationRequest(clientio, payload)
+							funcStarted = True
+							#send payload to appropiate function	
 	else:
 		# Main Menu
 		# CMD is blocking sockets from printing until user enters another value
@@ -1586,11 +1608,9 @@ def init(args):
 		# Once the socket is done completeing the action the user entered, the bool
 		# should allow the loop to proceed... TODO
 		cmdCreateNode()
-		global __blocked
-		__blocked = False
 		print("Enter 'h' for help/list of commands")
-		while True:
-			while not __blocked:
+		while(True):
+			while(not __blocked):
 				userInput = input("User Input: ")
 				if(userInput == 'h'):
 					print("""Commands Include:
@@ -1610,7 +1630,7 @@ def init(args):
 				elif(userInput == '1'):
 					createNode()
 				elif(userInput == '2'):
-					printCreatedNodes()
+					printNodeArray("created")
 				elif(userInput == '3'):
 					__blocked = True
 					registrationRequest(clientio)

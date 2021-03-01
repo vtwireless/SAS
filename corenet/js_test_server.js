@@ -28,10 +28,8 @@ server.on("connection", (socket) => {
        
     });
 
-    socket.on("doit", (data) => {
+    socket.on("createNode", (data) => {
         console.info(data);
-        socket.emit("doIt");
-        console.info("sent");
     });
 
     // ###################################
@@ -40,23 +38,22 @@ server.on("connection", (socket) => {
     //          As listed in Table 1
     socket.on("registrationRequest", (data) => {
         console.info("Receiving Data: " + (data));
-        var payload = JSON.stringify({registrationResponse: [{
-            cbsdInfo: "CBSDIDNo12",
-            measReportConfig: ["CONFIG_A"],
-            response: {
-                responseCode: "0",
-                responseMessage: "Test message",
-                responseData: "data"
-            } 
-        }]});
-        socket.emit("registrationResponse", payload)
+        // var payload = JSON.stringify({registrationResponse: [{
+        //     cbsdInfo: "CBSDIDNo12",
+        //     measReportConfig: ["CONFIG_A"],
+        //     response: {
+        //         responseCode: "0",
+        //         responseMessage: "Test message",
+        //         responseData: "data"
+        //     } 
+        // }]});
+        socket.emit("registrationResponse", JSON.stringify("SASResponse"))
     });
 
     socket.on("spectrumInquiryRequest", (data) => {
-        console.info("Receiving Data: " + JSON.stringify(data));
-        var payload = JSON.stringify({spectrumInquiryRequest: [{
-            // No need to bother with response
-        }]});
+        console.info("Receiving Data: " + (data));
+   
+        socket.emit("spectrumInquiryResponse", JSON.stringify("SASResponse"))
     });
 
     socket.on("grantRequest", (data) => {
@@ -76,6 +73,8 @@ server.on("connection", (socket) => {
 
     socket.on("deregistrationRequest", (data) => {
         console.info("Deregistration Request Data: " + data);
+        socket.emit("deregistrationResponse", JSON.stringify("repinseadfsdf"))
+
     });
     //  end official functions--------------------------------
 
