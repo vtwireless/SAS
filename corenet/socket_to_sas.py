@@ -351,7 +351,7 @@ def simCreateNode(requests):
 
 			node = Node(address)
 			node.setOperationMode(usrpMode)
-			node.createRxUsrp(centerFreq, gain, bandwidth)
+			node.createRxUsrp(int(centerFreq), float(gain), int(bandwidth))
 		elif(usrpMode == "TXRX"):
 			if(not (tx_fc := _grabPossibleEntry(request, "tx_fc"))):
 				print("No tx_fc found for simCreateNode. Node not created.")
@@ -374,10 +374,10 @@ def simCreateNode(requests):
 			if(not (rx_bw := _grabPossibleEntry(request, "rx_bw"))):
 				print("No rx_bw found for simCreateNode. Node not created.")
 				continue
-
+			
 			node = Node(address)
 			node.setOperationMode(usrpMode)
-			node.createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain)
+			node.createTxRxUsrp(int(tx_fc), int(tx_bw), float(tx_src_amp), float(tx_gain), int(rx_fc), int(rx_bw), float(rx_gain))
 			node.turnOffTx()
 		node.getUsrp().start()
 		arr.append(node)
