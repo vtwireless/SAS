@@ -51,7 +51,8 @@ class CBSD:
 
 	def asdict(self):
 		return_dict = {}
-		return_dict["id"] = self.id
+		if(self.id):
+			return_dict["id"] = self.id
 		if(self.name):
 			return_dict["name"] = self.name
 		if(self.latitude):
@@ -60,8 +61,46 @@ class CBSD:
 			return_dict["longitude"] = self.longitude
 		if(self.trustLevel):
 			return_dict["trustLevel"] = self.trustLevel
+		if(self.longitude):
+			return_dict["longitude"] = self.longitude
+		if(self.latitude):
+			return_dict["latitude"] = self.latitude
+		if(self.trustLevel):
+			return_dict["trustLevel"] = self.trustLevel
+		if(self.IPAddress):
+			return_dict["IPAddress"] = self.IPAddress
 		if(self.minFrequency):
 			return_dict["minFrequency"] = self.minFrequency
 		if(self.maxFrequency):
 			return_dict["maxFrequency"] = self.maxFrequency
+		if(self.minSampleRate):
+			return_dict["minSampleRate"] = self.minSampleRate
+		if(self.maxSampleRate):
+			return_dict["maxSampleRate"] = self.maxSampleRate
+		if(self.nodeType):
+			return_dict["nodeType"] = self.nodeType
+		if(self.mobility):
+			return_dict["mobility"] = self.mobility
+		if(self.status):
+			return_dict["status"] = self.status
+		if(self.comment):
+			return_dict["comment"] = self.comment
+		if(self.fccId):
+			return_dict["fccId"] = self.fccId
+		if(self.cbsdSerialNumber):
+			return_dict["cbsdSerialNumber"] = self.cbsdSerialNumber
+		if(self.callSign):
+			return_dict["callSign"] = self.callSign
+		if(self.cbsdCategroy):
+			return_dict["cbsdCategroy"] = self.cbsdCategroy
+		if(self.cbsdInfo):
+			return_dict["cbsdInfo"] = self.cbsdInfo
+		if(self.airInterface):
+			return_dict["airInterface"] = self.airInterface
+		if(self.installationParam):
+			return_dict["installationParam"] = self.installationParam
+		if(self.measCapability):
+			return_dict["measCapability"] = self.measCapability
+		if(self.groupingParam):
+			return_dict["groupingParam"] = self.groupingParam
 		return return_dict
