@@ -131,7 +131,7 @@ class SASAlgorithms:
         return True
 
     def generateResponse(self, responseCode):
-        response = WinnForum.Response(responseCode, WinnForum.responseDecode(responseCode))
+        response = WinnForum.Response(str(responseCode), WinnForum.responseDecode(responseCode))
         return response
 
     def isPUPresentREM(self, REM, highFreq, lowFreq, latitude, longitude, radius):
