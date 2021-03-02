@@ -803,7 +803,7 @@ class SpectrumInquiryResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason. See Table 14: ResponseObject Definition
 	"""
-	def __init__(self, cbsdId=None, availableChannel=None, response="ERR: No Response"):
+	def __init__(self, cbsdId=None, availableChannel=None, response=None):
 		self.cbsdId = cbsdId #C
 		self.availableChannel = _ensureIsList(availableChannel) #C
 		self.response = response #R

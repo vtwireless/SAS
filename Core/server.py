@@ -40,7 +40,7 @@ def sendGetRequest(parameters):
 
 def generateResponse(responseCode):
     response = {}
-    response["responseCode"] = responseCode
+    response["responseCode"] = str(esponseCode)
     response["message"] = WinnForum.responseDecode(responseCode)
     return response
 

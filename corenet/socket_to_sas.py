@@ -664,16 +664,16 @@ def handleRegistrationResponse(clientio, data):
 		node.setCbsdId(cbsdId)
 		print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 			
-		response = _grabPossibleEntry(regResponse, "response")
-		if(not _hasResponseCode(response)):
+		# response = _grabPossibleEntry(regResponse, "response")
+		if(not (responseCode := _hasResponseCode(regResponse))):
 			print("No valid Response object found. Registration invalid.")
 			continue
 		
-		measReportConfig =  _grabPossibleEntry(response, "measReportConfig")
+		measReportConfig =  _grabPossibleEntry(regResponse, "measReportConfig")
 		if(measReportConfig):
 			if(not isinstance(measReportConfig, list)):
 				measReportConfig = [measReportConfig]
-			print("Measurment Report Configuration(s) Assigned: " + measReportConfig)
+			print("Measurment Report Configuration(s) Assigned: " + str(measReportConfig))
 			node.setMeasReportConfig(measReportConfig)
 
 		global registered_nodes
@@ -694,10 +694,11 @@ def simSpectrumInquiryReq(requests):
 		Spectrum Inquiry Request data
 	"""
 	arr = []
-	iter = -1
+	iter = 0
 	for request in requests:
-		iter = iter + 1
-		print("Spectrum Inquiry Request [" + str(iter := iter+1) + "':")
+		print("Spectrum Inquiry Request [" + str(iter := iter+1) + "]:")
+		print(request)
+
 		if(not (node := reqAddressToNode(request))):
 			print("Spectrum Inquiry Request invalid.")
 			continue
@@ -719,7 +720,7 @@ def simSpectrumInquiryReq(requests):
 		# TODO: measReport is required before a Node makes its first Grant request
 		# Possibly ensure that if this is the first Spectrum Inquiry, that it includes measReport
 		nodes_awaiting_response.append(node)
-		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport))
+		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport).asdict())
 	return arr
 
 def cmdSpectrumInquiryReq():
@@ -791,8 +792,7 @@ def handleSpectrumInquiryResponse(clientio, data):
 			print("No cbsdId provided. Spectrum Inquiry Response invalid.")
 			continue
 
-		response = _grabPossibleEntry(SIResponse, "response")
-		if(not _hasResponseCode(response)):
+		if(not (responseCode := _hasResponseCode(SIResponse))):
 			print("Spectrum Inquiry invalid.")
 			continue
 
@@ -832,7 +832,7 @@ def simGrantReq(requests):
 	iter = -1
 	for request in requests:
 		iter = iter + 1
-		print("Grant Request [" + str(iter := iter+1) + "':")
+		print("Grant Request [" + str(iter := iter+1) + "]:")
 
 		node = reqAddressToNode(request)
 		if(not node):
@@ -847,8 +847,16 @@ def simGrantReq(requests):
 
 		operationParam = _grabPossibleEntry(request, "operationParam")
 		if(not operationParam):
-			print("No opeartionParam found. Grant Request invalid.")
+			print("No operationParam found. Grant Request invalid.")
 			continue
+		freqRange = _grabPossibleEntry(operationParam, "operationFrequencyRange")
+		operationParam = OperationParam(
+				_grabPossibleEntry(operationParam, "maxEirp"),
+				 FrequencyRange(
+				 		_grabPossibleEntry(freqRange, "lowFrequency"),
+				 		_grabPossibleEntry(freqRange, "highFrequency")
+				 	)
+			)
 
 		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
 		# TODO: Further Check for vtGrantParams data
@@ -893,18 +901,19 @@ def grantRequest(clientio, payload=None):
 	arrOfRequest = None
 	if(__sim_mode):
 		arrOfRequest = simGrantReq(payload)
-	while(True):
-		dataSource = input("Would you like to manually enter the Grant Request info or load from a file? (E)nter or (L)oad: ")
-		if(dataSource == 'E' or dataSource == 'e'):
-			arrOfRequest = cmdGrantReq()
-			break
-		elif(dataSource == 'L' or dataSource == 'l'):
-			arrOfRequest = configGrantReq()
-			break
-		elif(dataSource == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+	else:
+		while(True):
+			dataSource = input("Would you like to manually enter the Grant Request info or load from a file? (E)nter or (L)oad: ")
+			if(dataSource == 'E' or dataSource == 'e'):
+				arrOfRequest = cmdGrantReq()
+				break
+			elif(dataSource == 'L' or dataSource == 'l'):
+				arrOfRequest = configGrantReq()
+				break
+			elif(dataSource == 'exit'):
+				return
+			else:
+				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	payload = {"grantRequest": arrOfRequest}
 	clientio.emit("grantRequest", json.dumps(payload))
 
@@ -1381,8 +1390,8 @@ def handleDeregistrationResponse(clientio, data):
 	print("Deregistration Response(s) Received")
 	for dereg in deregistrationResponses:
 		print("Deregistration Response [" + str(iter := iter+1) +"]:")
-		response = _grabPossibleEntry(dereg, "response")
-		if(not _hasResponseCode(response)):
+		print(dereg)
+		if(not (responseCode := _hasResponseCode(dereg))):
 			print("Deregistration invalid.")
 			continue
 		if(not (cbsdId := _grabPossibleEntry(dereg, "cbsdId"))):

@@ -61,10 +61,10 @@
 			{
 				"spectrumInquiryRequest":[{
 					"nodeIp":"192.168.40.101",
-					"inquiredSpectrum":{
+					"inquiredSpectrum":[{
 						"lowFreq":"914500000",
 						"highFreq":"915500000"
-					}
+					}]
 				}]
 			}
 		],
@@ -74,7 +74,7 @@
 					"nodeIp":"192.168.40.101",
 					"operationParam":{
 						"maxEirp":"0",
-						"freqRange":{
+						"operationFrequencyRange":{
 							"lowFrequency":"914900000",
 							"highFrequency":"915500000"
 						}
