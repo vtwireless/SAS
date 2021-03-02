@@ -208,14 +208,16 @@ def register(sid, data):
             id = radio.id
             allClients.append(radio)
             cbsds.append(radio)
-        if "measReportConfig" in item:#if the registering entity is a radio add it to the array and give it an assignment
+        if "measReportCapability" in item:#if the registering entity is a radio add it to the array and give it an assignment
             cbsd = SASREM.CBSDSocket(id, sid, False)
             assignmentArr.append(cbsd)
+            response.measReportConfig = item["measReportCapability"]
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
         responseArr.append(response.asdict())
     responseDict = {"registrationResponse":responseArr}
     print(responseDict)
     socket.emit('registrationResponse', json.dumps(responseDict))
+    #if the radio does not get the assignment out of the meas config
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
 
@@ -435,7 +437,7 @@ def sendAssignmentToRadio(cbsd):
             changeParams = dict()
             changeParams["lowFrequency"] = tenMHz * i
             changeParams["highFrequency"] = tenMHz * (i+ 1)
-            changeParams["cbsd"] = "50"
+            changeParams["cbsd"] = cbsd.id
             cbsd.justChangedParams = True
             socket.emit("changeRadioParams", changeParams)
             break

@@ -110,7 +110,7 @@ class SASAlgorithms:
         gr.cbsdId = request.cbsdId
         gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None)
         gr.heartbeatInterval = self.getHeartbeatIntervalForGrantId(gr.grantId)
-        gr.measReportConfig = "MEASREPORTCONFIG"
+        gr.measReportConfig = ["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"]
         conflict = False
         for grant in grants:
             rangea = self.getHighFreqFromOP(grant.operationParam)

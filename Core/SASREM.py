@@ -1,4 +1,4 @@
-import time
+from datetime import datetime, timedelta
 from math import radians, cos, sin, asin, sqrt
 
 class SASREM:
@@ -6,6 +6,7 @@ class SASREM:
         self.nodes = []
         self.objects = []
         self.regions = []
+        self.secondsAgo = 5
 
     def addREMObject(self, object):
         self.objects.append(object)
@@ -22,7 +23,7 @@ class SASREM:
 
     def clearOldData(self, now, secondsAgo):
         for object in self.objects:
-            if object.timeStamp < (now - secondsAgo):
+            if object.timeStamp < (now - datetime.timedelta(seconds = secondsAgo)):
                 self.objects.remove(object)
 
     #Tell nodes to sense data, actively
@@ -44,6 +45,9 @@ class SASREM:
                 objectsToSend.append(object)
             elif self.isWithinRegion(longitude, latitude, radius, object.longitude, object.latitude):
                 objectsToSend.append(object)
+            if object.timeStamp < (datetime.now() - datetime.timedelta(seconds = self.secondsAgo)):
+                self.objects.remove(object)
+
         return objectsToSend
 
 
@@ -72,7 +76,7 @@ class SASREM:
             freq = measReport.measFrequency
             band = measReport.measBandwidth
             power = measReport.measRcvdPower
-            obj = SASREMObject(cbsd.longitude, cbsd.latitude, cbsd, power, freq+band, freq, time.time())
+            obj = SASREMObject(cbsd.longitude, cbsd.latitude, cbsd, power, freq+band, freq, datetime.now())
             self.addREMObject(obj)
 
 
