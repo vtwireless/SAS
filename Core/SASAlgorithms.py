@@ -146,7 +146,7 @@ class SASAlgorithms:
             rad = radius
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)#GET ALL  REM DATA
         if not remData:
-            print("Currently no spectrum data")
+            #print("Currently no spectrum data") # TODO: remove comment
             return 2
         if self.getREMAlgorithm() == 'DEFAULT':
             if self.defaultREMAlgorith(remData):
@@ -234,7 +234,7 @@ class SASAlgorithms:
 
 
     def acceptableRange(self, lowFreq, highFreq):
-        if lowFreq < highFreq and lowFreq >= 3550000000 and highFreq <= 3700000000:
+        if int(lowFreq) < int(highFreq) and int(lowFreq) >= 3550000000 and int(highFreq) <= 3700000000:
             return True
         else:
             return False

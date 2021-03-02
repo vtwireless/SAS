@@ -215,6 +215,7 @@ def register(sid, data):
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
         responseArr.append(response.asdict())
     responseDict = {"registrationResponse":responseArr}
+    print(responseDict)
     socket.emit('registrationResponse', json.dumps(responseDict))
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
@@ -365,7 +366,7 @@ def spectrumInquiryRequest(sid, data):
 
         inquiryArr.append(response.asdict())
     responseDict = {"spectrumInquiryResponse":inquiryArr}
-    socket.emit('spectrumInquiryResponse', responseDict)
+    socket.emit('spectrumInquiryResponse', json.dumps(responseDict))
 
 @socket.on('changeSettings')
 def changeAlgorithm(sid, data):
