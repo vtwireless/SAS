@@ -644,26 +644,23 @@ def handleRegistrationResponse(clientio, data):
 		Registration response data
 	"""
 	json_data = json.loads(data)
-	iter = -1 # Increment happens at beginning of loop, so start with -1 to have 0 for the 1st loop
-
+	iter = 0
 	regResponses = _grabPossibleEntry(json_data, "registrationResponse")
 	if(not regResponses):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
 	print("Registration Response(s) Received")
 	for regResponse in regResponses:
-		iter = iter + 1 # Must increment at beginning because we may 'continue' at any point
 		print("Registration Response [" + str(iter := iter+1) + "]:")
 
 		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
 		if(not cbsdId):
 			print("SAS Error: No cbsdId provided. Registration Response invalid.")
 			continue
-		node = findNodeAwaitingResponseByCbsdId(cbsdId)
+		node = nodes_awaiting_response.pop(0) # Pop the longest waiting Node
 		if(not node):
-			print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Registration Response invalid.")
+			print("No Node awaiting a response. Registration Response invalid.")
 			continue
-		nodes_awaiting_response.remove(node) # Remove node from waiting list
 		node.setCbsdId(cbsdId)
 		print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 			
