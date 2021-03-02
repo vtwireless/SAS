@@ -240,7 +240,8 @@ def deregister(sid, data):
             response.cbsdId = item["cbsdId"]
             response.response = generateResponse(103)
         responseArr.append(response.asdict())
-    socket.emit('deregistrationResponse', responseArr)   
+    responseDict = {"deregistrationResponse":responseArr}
+    socket.emit('deregistrationResponse', json.dumps(responseDict))   
 
 @socket.on('grantRequest')
 def grantRequest(sid, data):
@@ -286,8 +287,8 @@ def grantRequest(sid, data):
             g = WinnForum.Grant(grantResponse.grantId, item["cbsdId"], grantResponse.operationParam, vtgp, grantResponse.grantExpireTime)
             grants.append(g)
         responseArr.append(grantResponse.asdict())
-    socket.emit('grantResponse', responseArr)
-
+    responseDict = {"grantResponse":responseArr}
+    socket.emit('grantResponse', json.dumps(responseDict))
 
 @socket.on('heartbeatRequest')
 def heartbeat(sid, data):
@@ -309,7 +310,8 @@ def heartbeat(sid, data):
         threading.Timer(response.heartbeatInterval*1.1, cancelGrant, grant).start()
 
         hbrArray.append(response.asdict())
-    socket.emit('heartbeatResponse', hbrArray)
+    responseDict = {"heartbeatResponse":hbrArray}
+    socket.emit('heartbeatResponse', json.dumps(responseDict))
 
 @socket.on('relinquishmentRequest')
 def relinquishment(sid, data):
@@ -333,7 +335,8 @@ def relinquishment(sid, data):
         else:
             response["response"] = generateResponse(103) 
         relinquishArr.append(response)
-    socket.emit('relinquishmentResponse', relinquishArr)
+    responseDict = {"relinquishmentResponse":relinquishArr}
+    socket.emit('relinquishmentResponse', json.dumps(responseDict))
 
 @socket.on('spectrumInquiryRequest')
 def spectrumInquiryRequest(sid, data):
@@ -361,7 +364,8 @@ def spectrumInquiryRequest(sid, data):
 
 
         inquiryArr.append(response.asdict())
-    socket.emit('spectrumInquiryResponse', inquiryArr)
+    responseDict = {"spectrumInquiryResponse":inquiryArr}
+    socket.emit('spectrumInquiryResponse', responseDict)
 
 @socket.on('changeSettings')
 def changeAlgorithm(sid, data):
