@@ -1008,7 +1008,7 @@ def repeatHeartbeatRequest(node):
 		Node that is making a heartbeat request
 	"""
 	cbsdId = node.getCbsdId()
-	grantId = node.getGrantId()
+	grantId = node.getGrant().getGrantId()
 	grantRenew = False # TODO: Properly implement this feature
 	operationState = node.getGrant().getGrantStatus()
 	measReport = None #node.getSpectrumProbeData() # TODO
@@ -1033,7 +1033,7 @@ def simHeartbeatReq(requests):
 		if(not (cbsdId := node.getCbsdId())):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Heartbeat Request invalid.")
 			continue
-		if(not (grantId := node.getGrantId())):
+		if(not (grantId := node.getGrant().getGrantId())):
 			print("No grantId found for the node with cbsdId: '" + cbsdId + "'. Heartbeat Request invalid.")
 			continue
 		operationState = cbsd.getGrant().getGrantStatus()
