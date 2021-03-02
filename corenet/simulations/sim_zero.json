@@ -4,17 +4,17 @@
 				"createNode":[{
 					"address":"192.168.40.101",
 					"mode":"TXRX",
-					"tx_fc":"915000000",
+					"tx_fc":"3565000000",
 					"tx_gain":"31.5",
-					"tx_bw":"5000000",
+					"tx_bw":"8000000",
 					"tx_src_amp":"1",
-					"rx_fc":"916500000",
+					"rx_fc":"3555000000",
                     "rx_gain":"0",
-                    "rx_bw":"3000000"
+                    "rx_bw":"10000000"
 				}]
 			}
 		],
-	"10":[
+	"5":[
 			{
 				"registrationRequest":[{
 					"nodeIp":"192.168.40.101",
@@ -57,40 +57,36 @@
 				}]
 			}
 		],
-	"20":[
+	"10":[
 			{
 				"spectrumInquiryRequest":[{
 					"nodeIp":"192.168.40.101",
 					"inquiredSpectrum":[{
-						"lowFreq":"914500000",
-						"highFreq":"915500000"
+						"lowFreq":"3560000000",
+						"highFreq":"3570000000"
 					}]
 				}]
 			}
 		],
-	"30":[
+	"15":[
 			{
 				"grantRequest":[{
 					"nodeIp":"192.168.40.101",
 					"operationParam":{
 						"maxEirp":"0",
 						"operationFrequencyRange":{
-							"lowFrequency":"914900000",
-							"highFrequency":"915500000"
+							"lowFrequency":"3560000000",
+							"highFrequency":"3570000000"
 						}
 					},
-					"measReport":"",
 					"vtGrantParams":""
 				}]
 			}
 		],
-	"40":[
+	"20":[
 			{
 			"heartbeatRequest":[{
-					"nodeIp":"192.168.40.101",
-					"operationParam":{},
-					"measReport":"",
-					"vtGrantParams":""
+					"nodeIp":"192.168.40.101"
 				}]
 			}
 	]

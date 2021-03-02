@@ -184,7 +184,6 @@ def disconnect(sid):
 @socket.on('registrationRequest')
 def register(sid, data):
     jsonData = json.loads(data)
-    print(jsonData)
     responseArr = []
     assignmentArr = []
     for item in jsonData["registrationRequest"]:
@@ -253,17 +252,17 @@ def grantRequest(sid, data):
         item["secondaryUserID"] = item["cbsdId"]
         if "operationParam" in item:
             item["powerLevel"] = item["operationParam"]["maxEirp"]
-            item["minFrequency"] = item["operationParam"]["operationFrequencyRange"]["lowFrequency"]
-            item["maxFrequency"] = item["operationParam"]["operationFrequencyRange"]["highFrequency"]
+            item["minFrequency"] = int(item["operationParam"]["operationFrequencyRange"]["lowFrequency"])
+            item["maxFrequency"] = int(item["operationParam"]["operationFrequencyRange"]["highFrequency"])
         if "vtGrantParams" in item:
-            item["approximateByteSize"] = item["vtGrantParams"]["approximateByteSize"]
+            item["approximateByteSize"] = int(item["vtGrantParams"]["approximateByteSize"])
             item["dataType"] = item["vtGrantParams"]["dataType"]
             item["mobility"] = item["vtGrantParams"]["mobility"]
             item["maxVelocity"] = item["vtGrantParams"]["maxVelocity"]
-            item["preferredFrequency"] = item["vtGrantParams"]["preferredFrequency"]
-            item["preferredBandwidth"] = item["vtGrantParams"]["preferredBandwidth"]
-            item["minBandwidth"] = item["vtGrantParams"]["minBandwidth"]
-            item["frequencyAbsolute"] = item["vtGrantParams"]["frequencyAbsolute"]
+            item["preferredFrequency"] = int(item["vtGrantParams"]["preferredFrequency"])
+            item["preferredBandwidth"] = int(item["vtGrantParams"]["preferredBandwidth"])
+            item["minBandwidth"] = int(item["vtGrantParams"]["minBandwidth"])
+            item["frequencyAbsolute"] = int(item["vtGrantParams"]["frequencyAbsolute"])
             item["dataType"] = item["vtGrantParams"]["dataType"]
             item["startTime"] = item["vtGrantParams"]["startTime"]
             item["endTime"] = item["vtGrantParams"]["endTime"]
@@ -271,8 +270,8 @@ def grantRequest(sid, data):
         item["action"] = "createGrantRequest"
         grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
         if "operationParam" in item:
-            ofr = WinnForum.FrequencyRange(item["operationParam"]["operationFrequencyRange"]["lowFrequency"], item["operationParam"]["operationFrequencyRange"]["highFrequency"])
-            op = WinnForum.OperationParam(item["operationParam"]["maxEirp"], ofr)
+            ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
+            op = WinnForum.OperationParam(item["powerLevel"], ofr)
             grantRequest.operationParam = op
         vtgp = None
         if "vtGrantParams" in item:
@@ -342,13 +341,12 @@ def relinquishment(sid, data):
 @socket.on('spectrumInquiryRequest')
 def spectrumInquiryRequest(sid, data):
     jsonData = json.loads(data)
-    print(jsonData)
     inquiryArr = []
     for request in jsonData["spectrumInquiryRequest"]:
         response = WinnForum.SpectrumInquiryResponse(request["cbsdId"], [], SASAlgorithms.generateResponse(0))
         for fr in request["inquiredSpectrum"]:
-            lowFreq = fr["lowFrequency"]
-            highFreq = fr["highFrequency"]
+            lowFreq = int(fr["lowFrequency"])
+            highFreq = int(fr["highFrequency"])
             channelType = "PAL"
             ruleApplied = "FCC_PART_96"
             maxEirp = SASAlgorithms.getMaxEIRP()

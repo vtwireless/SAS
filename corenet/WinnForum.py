@@ -789,7 +789,7 @@ class IndoorLossGNSSMeasReport:
 
 class SpectrumInquiryResponse:
 	"""
-	SpectrumInquiryResponse - Array of SpectrumInquiryResponse objects. 
+	SpectrumInquiryResponse - Array of SpectrumInquiry Response objects. 
 	Each SpectrumInquiryResponse object represents a spectrum inquiry response to a spectrum inquiry request of a CBSD.
 
 	Attributes

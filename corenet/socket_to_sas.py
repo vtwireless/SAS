@@ -93,6 +93,10 @@ def printNodeArray(whichArray):
 def _grabPossibleEntry(entry, key):
 	"""
 	Takes a dictionary entry and checks to see if it exists (e.g. check for entry[key]).
+	
+	TODO: this can also be done in 1 line as followed:
+		cbsdId = request["cbsdId"] if "cbsdId" is in request else None
+	Decide which is more readable
 
 	Parameters
 	----------
@@ -486,11 +490,9 @@ def simRegistrationReq(requests):
 		# 	print("No cbsdCategory provided. Registration Request invalid.")
 		# 	continue
 		if(cbsdInfo := _grabPossibleEntry(request, "cbsdInfo")):
-			if(nodeModel := node.getModel()):
-				cbsdInfo["model"] = nodeModel
 			cbsdInfo = CbsdInfo(
 				_grabPossibleEntry(cbsdInfo, "vendor"),
-				_grabPossibleEntry(cbsdInfo, "model"),
+				node.getModel(),
 				_grabPossibleEntry(cbsdInfo, "softwareVersion"),
 				_grabPossibleEntry(cbsdInfo, "hardwareVersion"),
 				_grabPossibleEntry(cbsdInfo, "firmwareVersion")
@@ -545,6 +547,7 @@ def simRegistrationReq(requests):
 			_grabPossibleEntry(cpiSignatureData, "digitalSignature")
 		)
 		
+		# TODO: Convert into VTParams Object
 		vtParams = _grabPossibleEntry(request, "vtParams")
 
 		nodes_awaiting_response.append(node)
@@ -771,18 +774,17 @@ def handleSpectrumInquiryResponse(clientio, data):
 	TODO: Do something with this data. 
 	"""
 	jsonData = json.loads(data)
-	iter = -1
+	iter = 0
 	siResponses = _grabPossibleEntry(jsonData, "spectrumInquiryResponse")
 	if(not siResponses):
 		print("Unreadable data. Expecting JSON formatted payload. Spectrum Inquiry Response(s) invalid.")
 		return
 	print("Spectrum Inquiry Response Received")
 	for SIResponse in siResponses:
-		iter = iter + 1
 		print("Spectrum Inquiry Response [" + str(iter := iter+1) +"]:")
-		
-		cbsdId = _grabPossibleEntry(SIResponse, "cbsdId")
-		if(cbsdId):
+		print(SIResponse)
+
+		if(cbsdId := _grabPossibleEntry(SIResponse, "cbsdId")):
 			node = findNodeAwaitingResponseByCbsdId(cbsdId)
 			if(not node):
 				print("No Node awaiting a response has the cbsdId '" + cbsdId +"'. Spectrum Inquiry Response invalid.")
@@ -796,10 +798,8 @@ def handleSpectrumInquiryResponse(clientio, data):
 			print("Spectrum Inquiry invalid.")
 			continue
 
-		availableChannel = _grabPossibleEntry(SIResponse, "availableChannel")
-		if(availableChannel):
-			frequencyRange = _grabPossibleEntry(SIResponse, "frequencyRange")
-			if(not frequencyRange):
+		if(availableChannel := _grabPossibleEntry(SIResponse, "availableChannel")):
+			if(not (frequencyRange := _grabPossibleEntry(SIResponse, "frequencyRange"))):
 				print("Required parameter frequencyRange not found. Spectrum Inquiry Response invalid.")
 				continue
 			channelType = _grabPossibleEntry(SIResponse, "channelType")
@@ -815,7 +815,6 @@ def handleSpectrumInquiryResponse(clientio, data):
 			print("No availableChannel found.")
 		
 		# TODO: Do  something with all this information
-		print(SIResponse)
 # End Spectrum Inquiry ------------------------------------------------------------
 
 # Grant ---------------------------------------------------------------------------
@@ -829,17 +828,15 @@ def simGrantReq(requests):
 		Grant Request data
 	"""
 	arr = []
-	iter = -1
+	iter = 0
 	for request in requests:
-		iter = iter + 1
 		print("Grant Request [" + str(iter := iter+1) + "]:")
+		print(request)
 
-		node = reqAddressToNode(request)
-		if(not node):
+		if(not (node := reqAddressToNode(request))):
 			print("Grant Request invalid.")
 			continue
-		cbsdId = node.getCbsdId()
-		if(not cbsdId):
+		if(not (cbsdId := node.getCbsdId())):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Grant Request invalid.")
 			continue
 
@@ -1024,7 +1021,26 @@ def simHeartbeatReq(requests):
 
 	TODO
 	"""
-	return [None]
+	arr = []
+	iter = 0
+	for request in requests:
+		print("Heartbeat Request [" + str(iter := iter+1) + "]:")
+		print(request)
+
+		if(not (node := reqAddressToNode(request))):
+			print("Heartbeat Request invalid.")
+			continue
+		if(not (cbsdId := node.getCbsdId())):
+			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Heartbeat Request invalid.")
+			continue
+		if(not (grantId := node.getGrantId())):
+			print("No grantId found for the node with cbsdId: '" + cbsdId + "'. Heartbeat Request invalid.")
+			continue
+		operationState = cbsd.getGrant().getGrantStatus()
+		measReport = None # TODO
+		arr.append(HeartbeatRequest(cbsdId, grantId, operationState=operationState, 
+		measReport=measReport).asdict())
+	return arr
 
 def configHeartbeatReq():
 	"""
@@ -1625,7 +1641,7 @@ def init(args):
 						if(not __blocked):
 							if(funcStarted):
 								break
-							print("Going to execute: " + func, flush=True)
+							print("\nGoing to execute: " + func, flush=True)
 							payload = action[func]
 							if(func == "createNode"):
 								createNode(payload)

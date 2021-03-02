@@ -234,7 +234,7 @@ class SASAlgorithms:
 
 
     def acceptableRange(self, lowFreq, highFreq):
-        if int(lowFreq) < int(highFreq) and int(lowFreq) >= 3550000000 and int(highFreq) <= 3700000000:
+        if lowFreq < highFreq and lowFreq >= 3550000000 and highFreq <= 3700000000:
             return True
         else:
             return False
