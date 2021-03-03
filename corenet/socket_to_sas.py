@@ -229,7 +229,7 @@ def _hasResponseCode(data):
 		return None
 	return responseCode
 
-def _compileMeasReport(node, reportingAlgorithm="eachBin"):
+def _compileMeasReport(node, reportingAlgorithm="every64Bins"):
 	"""
 	Creates a MeasReport(array of RcvdPowerMeasReports) with the given Node's RX capabilities.
 	RcvdPowerMeasReports will be broken into 1MHz reports (of average pwoer) regardless of RX bandwidth.
@@ -241,8 +241,9 @@ def _compileMeasReport(node, reportingAlgorithm="eachBin"):
 		Node to create a MeasReport
 
 	reportingAlgorithm : string
-		This changes the way MeasReort is created. There are 3 proposed methods:
-		"eachBin" - Sends every bin as a RcvdPowerMeasReport (default)
+		This changes the way MeasReort is created. There are 4 proposed methods:
+		"every64Bins" - Averages 64 bins per RcvdPowerMeasReport (default)
+		"eachBin" - Sends every bin as a RcvdPowerMeasReport
 		"oneMhzAtATime" - Averages the bins that are exclusive to each received 1MHz region into 1 RcvdPowerMeasReport
 		"oneChannelAtATime" - Averages the bins that are exclusive to each received 10MHz channel into 1 RcvdPowerMeasReport
 	
@@ -260,16 +261,15 @@ def _compileMeasReport(node, reportingAlgorithm="eachBin"):
 	#
 	#
 
-	reports = []
 	mode = node.getOperationMode()
 	if(mode == "TXRX"):
-		fc = node.getUsrp.get_rx_fc()
-		bw = node.getUsrp.get_rx_bw()
-		bins = node.get_rx_bins()
+		fc = node.getUsrp().get_rx_fc()
+		bw = node.getUsrp().get_rx_bw()
+		bins = node.getUsrp().get_rx_bins()
 	elif(mode == "RX"):
-		fc = node.getUsrp.get_fc()
-		bw = node.getUsrp.get_bw()
-		bins = node.get_bins()
+		fc = node.getUsrp().get_fc()
+		bw = node.getUsrp().get_bw()
+		bins = node.getUsrp().get_bins()
 	else:
 		return None 
 
@@ -277,14 +277,21 @@ def _compileMeasReport(node, reportingAlgorithm="eachBin"):
 	lowFreq = fc - (bw/2)
 	# def HZ_TO_MHZ(hz):
 	# 	return hz/1000000
-
-	if(reportingAlgorithm == "eachBin"):
+	reports = []
+	if(reportingAlgorithm == "every64Bins"):
+		frequencyPerGroup = (bw/bins)*64
+		reportStartFreq = lowFreq
+		for eachGroup in range(int(bins/64)):
+			startIndex = eachGroup*64
+			averagePower = sum(data[int(startIndex):int(startIndex+64)])/64
+			reports.append(RcvdPowerMeasReport(reportStartFreq, frequencyPerGroup, averagePower))	
+	elif(reportingAlgorithm == "eachBin"):
 		frequencyPerBin = bw/bins
 		reportStartFreq = lowFreq
 		for eachBin in bins:
 			reports.append(RcvdPowerMeasReport(reportStartFreq, frequencyPerBin, data[eachBin]))
 			reportStartFreq = reportStartFreq + frequencyPerBin
-	if(reportingAlgorithm == "oneMhzAtATime"):
+	elif(reportingAlgorithm == "oneMhzAtATime"):
 		pass
 	elif(reportingAlgorithm == "oneChannelAtATime"):
 		pass

@@ -468,7 +468,7 @@ class Node:
         self.__operationMode            = None
         self.__usrp                     = None
         self.__isSasRegistered          = False
-        self.__grant                    = None
+        self.__grant                    = Grant()
         self.__cbsdId                   = None
         self.__measReportConfig         = []
         self.__heartbeatTimer           = None # This timer waiting for a Heartbeat Response after a Request is made
