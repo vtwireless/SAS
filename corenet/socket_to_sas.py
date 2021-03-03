@@ -229,31 +229,67 @@ def _hasResponseCode(data):
 		return None
 	return responseCode
 
-def _getSpectrumProbeDataByCbsdId(cbsdId):
+def _compileMeasReport(node, reportingAlgorithm="eachBin"):
 	"""
-	Calls the getSpectrumProbeData function of a Node with given cbsdId.
-	Takes the Average value from a spectrum reading and sends back a report.
+	Creates a MeasReport(array of RcvdPowerMeasReports) with the given Node's RX capabilities.
+	RcvdPowerMeasReports will be broken into 1MHz reports (of average pwoer) regardless of RX bandwidth.
+	This means each channel will be reported in 10 reports for inmproved spectrum estimation accuracy.
 
 	Parameters
 	---------
-	cbsdId : string
-		CBSD ID of a Node with RX capabilities
+	node : Node object
+		Node to create a MeasReport
 
+	reportingAlgorithm : string
+		This changes the way MeasReort is created. There are 3 proposed methods:
+		"eachBin" - Sends every bin as a RcvdPowerMeasReport (default)
+		"oneMhzAtATime" - Averages the bins that are exclusive to each received 1MHz region into 1 RcvdPowerMeasReport
+		"oneChannelAtATime" - Averages the bins that are exclusive to each received 10MHz channel into 1 RcvdPowerMeasReport
+	
 	Returns
 	-------
-	report : RcvdPowerMeasReport Object
+	report : MeasReport object
 	"""
-	node = findRegisteredNodeByCbsdId(cbsdId)
-	if(not node):
-		print("No node found with given CBSD ID. Spectrum Data not being reported.")
-		return None
-	fc = node.getUsrp.get_rx_fc()
-	bw = node.getUsrp.get_rx_bw()
-	lowFreq = fc - (bw/2)
+	# Determine how many reports to create knowing the bandwidth
+	# Math
+	# if bwInMhz = 10, make 10 reports
+	# Get bins
+	# if bins = 1024 and bw = 10Mhz,
+	# that means 1 bin = 10/1024 MHz
+	#
+	#
+	#
+
+	reports = []
+	mode = node.getOperationMode()
+	if(mode == "TXRX"):
+		fc = node.getUsrp.get_rx_fc()
+		bw = node.getUsrp.get_rx_bw()
+		bins = node.get_rx_bins()
+	elif(mode == "RX"):
+		fc = node.getUsrp.get_fc()
+		bw = node.getUsrp.get_bw()
+		bins = node.get_bins()
+	else:
+		return None 
 
 	data = node.getSpectrumProbeData()
-	spectrumAvg = sum(data)/len(data)
-	return RcvdPowerMeasReport(lowFreq, bw, spectrumAvg)
+	lowFreq = fc - (bw/2)
+	# def HZ_TO_MHZ(hz):
+	# 	return hz/1000000
+
+	if(reportingAlgorithm == "eachBin"):
+		frequencyPerBin = bw/bins
+		reportStartFreq = lowFreq
+		for eachBin in bins:
+			reports.append(RcvdPowerMeasReport(reportStartFreq, frequencyPerBin, data[eachBin]))
+			reportStartFreq = reportStartFreq + frequencyPerBin
+	if(reportingAlgorithm == "oneMhzAtATime"):
+		pass
+	elif(reportingAlgorithm == "oneChannelAtATime"):
+		pass
+
+	return MeasReport(reports)
 
 def unpackResponseWithKeys(response, *keys):
 	"""
@@ -648,42 +684,41 @@ def handleRegistrationResponse(clientio, data):
 	"""
 	json_data = json.loads(data)
 	iter = 0
-	regResponses = _grabPossibleEntry(json_data, "registrationResponse")
-	if(not regResponses):
+	if(not (regResponses := _grabPossibleEntry(json_data, "registrationResponse"))):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
 	print("Registration Response(s) Received")
 	for regResponse in regResponses:
 		print("Registration Response [" + str(iter := iter+1) + "]:")
+		print(regResponse)
 
 		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
 		if(not cbsdId):
 			print("SAS Error: No cbsdId provided. Registration Response invalid.")
 			continue
-		node = nodes_awaiting_response.pop(0) # Pop the longest waiting Node
+		
+		# SAS Should send responses in order, so popping from index[0] every time will give the proper Node
+		node = nodes_awaiting_response.pop(0) 
 		if(not node):
 			print("No Node awaiting a response. Registration Response invalid.")
 			continue
 		node.setCbsdId(cbsdId)
 		print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 			
-		# response = _grabPossibleEntry(regResponse, "response")
-		if(not (responseCode := _hasResponseCode(regResponse))):
+		if(not _hasResponseCode(regResponse)):
 			print("No valid Response object found. Registration invalid.")
 			continue
 		
-		measReportConfig =  _grabPossibleEntry(regResponse, "measReportConfig")
-		if(measReportConfig):
+		if(measReportConfig := _grabPossibleEntry(regResponse, "measReportConfig")):
 			if(not isinstance(measReportConfig, list)):
 				measReportConfig = [measReportConfig]
-			print("Measurment Report Configuration(s) Assigned: " + str(measReportConfig))
+			# print("Measurment Report Configuration(s) Assigned: " + str(measReportConfig))
 			node.setMeasReportConfig(measReportConfig)
 
 		global registered_nodes
 		registered_nodes.append(node)
 		node.setRegistrationStatus(True)
 		# TODO Update RX USRP with these params
-		# TODO Do we go right in and start RX?
 # End Registation ------------------------------------------------------------------
 
 # Spectrum Inquiry ----------------------------------------------------------------
@@ -716,10 +751,7 @@ def simSpectrumInquiryReq(requests):
 				_grabPossibleEntry(freqRange, "highFreq")
 			))
 
-		# TOOD: Make MeasReport an Object
-		measReport = _grabPossibleEntry(request, "measReport")
-		# TODO: measReport must be fake if it is getting passed in from the sim.json, or else
-		# there must be a function call to pull real RX data at this point
+		measReport = _compileMeasReport(node)
 		# TODO: measReport is required before a Node makes its first Grant request
 		# Possibly ensure that if this is the first Spectrum Inquiry, that it includes measReport
 		nodes_awaiting_response.append(node)
@@ -1439,9 +1471,8 @@ def spectrumData(cbsdId, clientio):
 	clientio : Socket object
 		SAS Socket connection
 	"""
-	reports = []
-	reports.append(_getSpectrumProbeDataByCbsdId(cbsdId))
-	payload = {"cbsdId":cbsdId, "spectrumData": MeasReport(reports).asdict()}
+	measReport = _compileMeasReport(findRegisteredNodeByCbsdId(cbsdId))
+	payload = {"cbsdId":cbsdId, "spectrumData": measReport.asdict()}
 	clientio.emit("spectrumData", json.dumps(payload))
 
 def updateRxParams(data):

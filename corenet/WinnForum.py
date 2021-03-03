@@ -700,11 +700,11 @@ class MeasReport:
 
 	Attibutes
 	---------
-	measReports : array of object RcvdPowerMeasReport or IndoorLossGNSSMeasReport (unknown)
+	measReports : array of object RcvdPowerMeasReport or IndoorLossGNSSMeasReport
 	 	An array of separate reports measured as Received Power.
 	"""
 	def __init__(self, measReports=None):
-		self.measReports = _ensureIsList(measReports) #?
+		self.measReports = _ensureIsList(measReports)
 
 	def asdict(self):
 		return_dict = {}

@@ -655,9 +655,17 @@ class Node:
     def getSpectrumProbeData(self):
         """
         Uses the probe block to pull spectrum data.
+        Checks to see if spectrum data should be sent.
         """
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
-            return self.__usrp.getRxProbeList()
+            if(("RECEIVED_POWER_WITHOUT_GRANT" in self.__measReportConfig)\
+             and (self.__grant.getGrantStatus() == "IDLE")):
+                return self.__usrp.getRxProbeList()
+            elif(("RECEIVED_POWER_WITH_GRANT" in self.__measReportConfig)\
+             and (self.__grant.getGrantStatus() == "GRANTED" or self.__grant.getGrantStatus() == "AUTHORIZED")):
+                return self.__usrp.getRxProbeList()
+            else:
+                return None
         else:
             print("Invalid function call to getSpectrumProbeData: unsupported current __operationMode '" + str(self.__operationMode) + "'.")
             return None

@@ -208,10 +208,10 @@ def register(sid, data):
             id = radio.id
             allClients.append(radio)
             cbsds.append(radio)
-        if "measReportCapability" in item:#if the registering entity is a radio add it to the array and give it an assignment
+        if "measCapability" in item:#if the registering entity is a radio add it to the array and give it an assignment
             cbsd = SASREM.CBSDSocket(id, sid, False)
             assignmentArr.append(cbsd)
-            response.measReportConfig = item["measReportCapability"]
+            response.measReportConfig = item["measCapability"]
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
         responseArr.append(response.asdict())
     responseDict = {"registrationResponse":responseArr}
