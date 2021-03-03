@@ -211,8 +211,9 @@ def register(sid, data):
         if "measCapability" in item:#if the registering entity is a radio add it to the array and give it an assignment
             cbsd = SASREM.CBSDSocket(id, sid, False)
             assignmentArr.append(cbsd)
-            response.measReportConfig = item["measCapability"]
         response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
+        if "measCapability" in item:
+            response.measReportConfig = item["measCapability"]
         responseArr.append(response.asdict())
     responseDict = {"registrationResponse":responseArr}
     print(responseDict)
@@ -428,7 +429,7 @@ def sendAssignmentToRadio(cbsd):
     freqRange = 3700000000 - 3550000000
     tenMHz = 10000000
     blocks = freqRange/10000000
-    for i in range(blocks):
+    for i in range(int(blocks)):
         low = i * tenMHz
         high = (i + 1) * tenMHz
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
