@@ -401,7 +401,7 @@ class TXRX_USRP(gr.top_block):
 
     def set_rx_fc(self, fc):
         self.__rx_fc = fc
-        self.uhd_usrp_source_1.set_center_freq(self.fc, 0)
+        self.uhd_usrp_source_1.set_center_freq(fc, 0)
 
     def get_rx_bw(self):
         return self.__rx_bw

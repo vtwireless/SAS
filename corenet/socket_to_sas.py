@@ -1075,7 +1075,7 @@ def simHeartbeatReq(requests):
 		if(not (grantId := node.getGrant().getGrantId())):
 			print("No grantId found for the node with cbsdId: '" + cbsdId + "'. Heartbeat Request invalid.")
 			continue
-		operationState = cbsd.getGrant().getGrantStatus()
+		operationState = node.getGrant().getGrantStatus()
 		measReport = None # TODO
 		arr.append(HeartbeatRequest(cbsdId, grantId, operationState=operationState, 
 		measReport=measReport).asdict())
@@ -1102,12 +1102,12 @@ def cmdHeartbeatReq():
 	for node in registered_nodes:
 		print("\t"+node.get_CbsdId())
 	cbsdId = input("Enter CBSD ID of node you want to use for the heartbeat request: ")
-	for node in registered_nodes:
-		if(node.get_CbsdId() == cbsdId):
-			cbsd = node
-	grantId = cbsd.get_GrantId() # TODO: error handle this
+	for cbsd in registered_nodes:
+		if(cbsd.get_CbsdId() == cbsdId):
+			node = cbsd
+	grantId = node.get_GrantId() # TODO: error handle this
 	grantRenew = getSelectorBoolean(input("Would you like to renew the grant? (Y)es or (N)o: "))
-	operationState = cbsd.getGrant().getGrantStatus()
+	operationState = node.getGrant().getGrantStatus()
 	measReport = None
 	provideRcvdPowerMeas = getSelectorBoolean(input("Do you want to provide Received Power Measurments to the SAS? (Y)es or (N)o: "))
 	if(provideRcvdPowerMeas):
@@ -1493,8 +1493,8 @@ def updateRxParams(data):
 	"""
 	cbsdId = _grabPossibleEntry(data, "cbsdId")
 	node = findRegisteredNodeByCbsdId(cbsdId)
-	lowFreq = _grabPossibleEntry(data, "lowFreq")
-	highFreq = _grabPossibleEntry(data, "highFreq")
+	lowFreq = int(_grabPossibleEntry(data, "lowFrequency"))
+	highFreq = int(_grabPossibleEntry(data, "highFrequency"))
 	bw = (highFreq - lowFreq)
 	fc =  highFreq - (bw / 2)
 	node.updateRxParams(fc, bw)
