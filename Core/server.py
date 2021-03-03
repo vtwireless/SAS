@@ -402,7 +402,7 @@ def initiateSensing(lowFreq, highFreq):
             changeParams["highFrequency"] = highFreq
             changeParams["cbsdId"] = radio.cbsdId
             radio.justChangedParams = True
-            radio.emit("changeRadioParams", changeParams)
+            radio.sid.emit("changeRadioParams", changeParams)
             radiosToChangeBack.append(radio)
         if count >= radioCountLimit or count > radio.length/3:
         #don't use more than 1/3 of the radios to check band
