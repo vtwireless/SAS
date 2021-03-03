@@ -404,7 +404,7 @@ def initiateSensing(lowFreq, highFreq):
             radio.justChangedParams = True
             socket.emit("changeRadioParams", changeParams, room=radio.sid)
             radiosToChangeBack.append(radio)
-        if count >= radioCountLimit or count > radio.length/3:
+        if count >= radioCountLimit or count > len(allRadios)/3:
         #don't use more than 1/3 of the radios to check band
             break
     
