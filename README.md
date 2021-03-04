@@ -3,7 +3,9 @@
 This is the code for the SAS. The role of the SAS is to allow for remote and autonomous operation of the USRPs in Kelly Hall. The SAS is to adhere to WinnForum and FCC regulations on SAS operations.
 
 ## File Structure (Needs to be updated as of 01/24/2021)
-rx_usrp.py and tx_usrp.py are USRP Object files that work with the uhd_lib to control real USRPs. These files may be used individually to run Rx and Tx USRPs.
+The Core/ folder contains everything required to launch the SAS Server. 
+
+The corenet/ folder contains everything required to launch the CORENET SAS client. This connects to the SAS server, so ensure the sever is running before attempting to launch this.
 
 WinnForum.py is currently a file with Objects used for SAS-CBSD communications as defined by the WinnFourm (plus a few extra Virginia Tech (VT) Objects for research.   
 
