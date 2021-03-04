@@ -323,6 +323,25 @@ def unpackResponseWithKeys(response, *keys):
 		else:
 			arr.append(_grabPossibleEntry(response, key))
 	return arr	
+
+def safeCast(value, dataType):
+	"""
+	This method handles ValueError exceptions when casting data.
+
+	Example: myInt = safeCast("12", int)
+
+	Parameters
+	----------
+	value : any data type
+		Piece of data that needs to be casted to a different type
+	dataType : Python data type object
+		Data type to cast 'value' to
+	"""
+	try:
+		return dataType(value)
+	except ValueError:
+		print("Cannot cast '"+value+"' to data type '"+dataType+"'.")
+		return None
 # End Helper Functions---------------------------------------------------------------------
 
 # Create Node------------------------------------------------------------------------------
@@ -355,76 +374,77 @@ def simCreateNode(requests):
 				print("IP Address already belongs to a created Node. Node not created.")
 				continue
 		else:
-			print("No address found for simCreateNode. Node not created.")
+			print("SimulationFileError: No address found for simCreateNode. Node not created.")
 			continue
 		
 		if(not (usrpMode := _grabPossibleEntry(request, "mode"))):
-			print("No mode found for simCreateNode. Node not created.")
+			print("SimulationFileError: No usrp mode found for simCreateNode. Node not created.")
 			continue
 		elif(not (usrpMode == "TX" or usrpMode == "RX" or usrpMode == "TXRX")):
-			print("Invalid mode '"+ usrpMode +"' for simCreateNode. Node not created.")
+			print("SimulationFileError: Invalid mode '"+usrpMode+"' for simCreateNode. Node not created.")
 			continue
 
 		if(usrpMode == "TX"):
-			if(not (centerFreq := _grabPossibleEntry(request, "centerFreq"))):
-				print("No centerFreq found for simCreateNode. Node not created.")
+			if(not (centerFreq := safeCast(_grabPossibleEntry(request, "centerFreq"), int))):
+				print("SimulationFileError: No valid integer 'centerFreq' found for simCreateNode. Node not created.")
 				continue
-			if(not (gain := _grabPossibleEntry(request, "gain"))):
-				print("No gain found for simCreateNode. Defaulting to maximum: 31.5.")
-				gain = 31.5
-			if(not (bandwidth := _grabPossibleEntry(request, "bandwidth"))):
-				print("No bandwidth found for simCreateNode. Node not created.")
+			if(not (bandwidth := safeCast(_grabPossibleEntry(request, "bandwidth"), int))):
+				print("SimulationFileError: No valid integer 'bandwidth' found for simCreateNode. Node not created.")
 				continue
 			if(not (waveform := _grabPossibleEntry(request, "waveform"))):
-				print("No waveform found for simCreateNode. Node not created.")
+				print("SimulationFileError: No waveform found for simCreateNode. Node not created.")
 				continue
-			if(not (signalAmp := _grabPossibleEntry(request, "signalAmp"))):
-				print("No signalAmp found for simCreateNode.")
-			
+			if(not (gain := safeCast(_grabPossibleEntry(request, "gain"), float))):
+				print("SimulationFileWarning: No valid float 'gain' found for simCreateNode. Defaulting to 0.")
+				gain = 0
+			if(not (signalAmp := safeCast(_grabPossibleEntry(request, "signalAmp"), float))):
+				print("SimulationFileWarning: No valid float signalAmp found for simCreateNode. Defaulting to 0.")
+				signalAmp = 0
+
 			node = Node(address)
 			node.setOperationMode(usrpMode)
 			node.createTxUsrp(centerFreq, gain, bandwidth, signalAmp, waveform)
 			node.turnOffTx()
 		elif(usrpMode == "RX"):
-			if(not (centerFreq := _grabPossibleEntry(request, "mode"))):
-				print("No centerFreq found for simCreateNode. Node not created.")
+			if(not (centerFreq := safeCast(_grabPossibleEntry(request, "mode"), int))):
+				print("SimulationFileError: No valid integer centerFreq found for simCreateNode. Node not created.")
 				continue
-			if(not (gain := _grabPossibleEntry(request, "gain"))):
-				print("No gain found for simCreateNode. Defaulting to 0.")
+			if(not (gain := safeCast(_grabPossibleEntry(request, "gain"), float))):
+				print("SimulationFileWarning: No valid float gain found for simCreateNode. Defaulting to 0.")
 				gain = 0
-			if(not (bandwidth := _grabPossibleEntry(request, "bandwidth"))):
-				print("No bandwidth found for simCreateNode. Node not created.")
+			if(not (bandwidth := safeCast(_grabPossibleEntry(request, "bandwidth"), int))):
+				print("SimulationFileError: No valid integer bandwidth found for simCreateNode. Node not created.")
 				continue
 
 			node = Node(address)
 			node.setOperationMode(usrpMode)
 			node.createRxUsrp(int(centerFreq), float(gain), int(bandwidth))
 		elif(usrpMode == "TXRX"):
-			if(not (tx_fc := _grabPossibleEntry(request, "tx_fc"))):
-				print("No tx_fc found for simCreateNode. Node not created.")
+			if(not (tx_fc := safeCast(_grabPossibleEntry(request, "tx_fc"), int))):
+				print("SimulationFileError: No valid integer 'tx_fc' found for simCreateNode. Node not created.")
 				continue
-			if(not (tx_gain := _grabPossibleEntry(request, "tx_gain"))):
-				print("No tx_gain found for simCreateNode. Defaulting to 0.")
+			if(not (tx_gain := safeCast(_grabPossibleEntry(request, "tx_gain"), float))):
+				print("SimulationFileWarning: No valid float 'tx_gain' found for simCreateNode. Defaulting to 0.")
 				tx_gain = 0
-			if(not (tx_bw := _grabPossibleEntry(request, "tx_bw"))):
-				print("No tx_bw found for simCreateNode. Node not created.")
+			if(not (tx_bw := safeCast(_grabPossibleEntry(request, "tx_bw"), int))):
+				print("SimulationFileError: No valid integer 'tx_bw' found for simCreateNode. Node not created.")
 				continue
-			if(not (tx_src_amp := _grabPossibleEntry(request, "tx_src_amp"))):
-				print("No tx_src_amp found for simCreateNode. Node not created.")
+			if(not (tx_src_amp := safeCast(_grabPossibleEntry(request, "tx_src_amp"), float))):
+				print("SimulationFileError: No valid float 'tx_src_amp' found for simCreateNode. Node not created.")
 				continue
-			if(not (rx_fc := _grabPossibleEntry(request, "rx_fc"))):
-				print("No rx_fc found for simCreateNode. Node not created.")
+			if(not (rx_fc := safeCast(_grabPossibleEntry(request, "rx_fc"), int))):
+				print("SimulationFileError: No valid integer 'rx_fc' found for simCreateNode. Node not created.")
 				continue
-			if(not (rx_gain := _grabPossibleEntry(request, "rx_gain"))):
-				print("No rx_gain found for simCreateNode. Defaulting to 0.")
+			if(not (rx_gain := safeCast(_grabPossibleEntry(request, "rx_gain"), float))):
+				print("SimulationFileWarning: No valid float 'rx_gain' found for simCreateNode. Defaulting to 0.")
 				rx_gain = 0
-			if(not (rx_bw := _grabPossibleEntry(request, "rx_bw"))):
-				print("No rx_bw found for simCreateNode. Node not created.")
+			if(not (rx_bw := safeCast(_grabPossibleEntry(request, "rx_bw"), int))):
+				print("SimulationFileError: No valid integer 'rx_bw' found for simCreateNode. Node not created.")
 				continue
 			
 			node = Node(address)
 			node.setOperationMode(usrpMode)
-			node.createTxRxUsrp(int(tx_fc), int(tx_bw), float(tx_src_amp), float(tx_gain), int(rx_fc), int(rx_bw), float(rx_gain))
+			node.createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain)
 			node.turnOffTx()
 		node.getUsrp().start()
 		arr.append(node)
@@ -512,7 +532,7 @@ def simRegistrationReq(requests):
 	arr = []
 	iter = 0
 	for request in requests:
-		print("Creating Registration Request [" + str(iter := iter+1) + "]:")
+		print("\nCreating Registration Request [" + str(iter := iter+1) + "]:")
 		print(request)
 		if(not (node := reqAddressToNode(request, False))):
 			print("Registration Request invalid.")
@@ -573,8 +593,11 @@ def simRegistrationReq(requests):
 		# This may be empty ("") if the Node has no RX ability
 		# This is an array, and a Node may be assigned both values (e.g. always RX)
 		if(not measCapability):
-			print("No measCapability provided. Registration Request invalid.")
-			continue
+			if("measCapability" in request): # An empty string ("") mean no RX capability. Do not cause error.
+				measCapability = ""
+			else:
+				print("No measCapability provided. Registration Request invalid.")
+				continue
 		groupingParams = []
 		groupingParam = _grabPossibleEntry(request, "groupingParam")
 		for group in groupingParam:
@@ -741,7 +764,7 @@ def simSpectrumInquiryReq(requests):
 	arr = []
 	iter = 0
 	for request in requests:
-		print("Spectrum Inquiry Request [" + str(iter := iter+1) + "]:")
+		print("\nCreating Spectrum Inquiry Request [" + str(iter := iter+1) + "]:")
 		print(request)
 
 		if(not (node := reqAddressToNode(request))):
@@ -869,7 +892,7 @@ def simGrantReq(requests):
 	arr = []
 	iter = 0
 	for request in requests:
-		print("Grant Request [" + str(iter := iter+1) + "]:")
+		print("\nCreating Grant Request [" + str(iter := iter+1) + "]:")
 		print(request)
 
 		if(not (node := reqAddressToNode(request))):
@@ -1063,7 +1086,7 @@ def simHeartbeatReq(requests):
 	arr = []
 	iter = 0
 	for request in requests:
-		print("Heartbeat Request [" + str(iter := iter+1) + "]:")
+		print("\nCreating Heartbeat Request [" + str(iter := iter+1) + "]:")
 		print(request)
 
 		if(not (node := reqAddressToNode(request))):
@@ -1266,7 +1289,7 @@ def simRelinquishmentReq(requests):
 	nodes_awaiting_response = []
 	iter = 0
 	for request in requests:
-		print("Creating Relinquishment Request [" + str(iter := iter+1) + "]:")
+		print("\nCreating Relinquishment Request [" + str(iter := iter+1) + "]:")
 		node = reqAddressToNode(request)
 		if(not node):
 			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
@@ -1377,7 +1400,7 @@ def simDeregistrationReq(requests):
 	nodes_awaiting_response = []
 	iter = 0
 	for request in requests:
-		print("Creating Deregistration Request [" + str(iter := iter+1) + "]:")
+		print("\nCreating Deregistration Request [" + str(iter := iter+1) + "]:")
 		node = reqAddressToNode(request)
 		if(not node):
 			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
@@ -1491,13 +1514,23 @@ def updateRxParams(data):
 	data : dictonary
 		Keys include cbsdId, lowFreq, and highFreq for RX Node
 	"""
-	cbsdId = _grabPossibleEntry(data, "cbsdId")
-	node = findRegisteredNodeByCbsdId(cbsdId)
-	lowFreq = int(_grabPossibleEntry(data, "lowFrequency"))
-	highFreq = int(_grabPossibleEntry(data, "highFrequency"))
-	bw = (highFreq - lowFreq)
-	fc =  highFreq - (bw / 2)
-	node.updateRxParams(fc, bw)
+	print("SAS Emitted 'changeRadioParams' with data:")
+	print(data)
+	if(cbsdId := _grabPossibleEntry(data, "cbsdId")):
+		if(node := findRegisteredNodeByCbsdId(cbsdId)):
+			if(lowFreq := safeCast(_grabPossibleEntry(data, "lowFrequency"), int)):
+				if(highFreq := safeCast(_grabPossibleEntry(data, "highFrequency"), int)):
+					bw = (highFreq - lowFreq)
+					fc =  highFreq - (bw / 2)
+					node.updateRxParams(fc, bw)
+				else:
+					print("SAS Attempted 'updateRxParams' but no valid integer 'highFrequency' found. Ignoring SAS call.")
+			else:
+				print("SAS Attempted 'updateRxParams' but no valid integer 'lowFrequency' found. Ignoring SAS call.")
+		else:
+			print("SAS Attempted 'updateRxParams' but no registered Node found with cbsdId '" + cbsdId + "'. Ignoring SAS call.")
+	else:
+		print("SAS Attempted 'updateRxParams' but no cbsdId found. Ignoring SAS call.")
 
 def emergencyStop(data):
 	"""
@@ -1544,7 +1577,7 @@ def defineSocketEvents(clientio):
 	"""
 	@clientio.event
 	def connect():
-		print('connection established. Given sid: ' + clientio.sid)
+		print('Socket connection established! Given sid: ' + clientio.sid)
 
 	@clientio.event
 	def identifySource():

@@ -426,7 +426,7 @@ def sendAssignmentToRadio(cbsd):
     if cbsd in allRadios:
         allRadios.remove(cbsd)
     allRadios.append(cbsd)
-    freqRange = 3700000000 - 3550000000
+    freqRange = 150000000 # 3.5 GHz CBRS Band is 150 MHz wide
     tenMHz = 10000000
     blocks = freqRange/10000000
     for i in range(int(blocks)):
@@ -438,7 +438,7 @@ def sendAssignmentToRadio(cbsd):
             changeParams = dict()
             changeParams["lowFrequency"] = tenMHz * i
             changeParams["highFrequency"] = tenMHz * (i+ 1)
-            changeParams["cbsd"] = cbsd.id
+            changeParams["cbsd"] = cbsd.cbsdId
             cbsd.justChangedParams = True
             socket.emit("changeRadioParams", changeParams)
             break
