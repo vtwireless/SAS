@@ -65,7 +65,7 @@ class SASAlgorithms:
         if heartbeat["grantRenew"] == True:
             response.transmitExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
         response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
-        response.heartbeatInterval = self.getHeartbeatIntervalForGrantId(grant.id) | self.getHeartbeatInterval()
+        response.heartbeatInterval = self.getHeartbeatIntervalForGrantId(grant.id) or self.getHeartbeatInterval()
         lowFreq = self.getLowFreqFromOP(grant.operationParam)
         highFreq = self.getHighFreqFromOP(grant.operationParam)
         fr = WinnForum.FrequencyRange(lowFreq, highFreq)
