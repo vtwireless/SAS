@@ -1,6 +1,6 @@
 import WinnForum
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import threading
 
 class SASAlgorithms:
@@ -62,14 +62,15 @@ class SASAlgorithms:
             return response
         response.cbsdId = grant.cbsdId
         response.grantId = grant.id
-        if heartbeat["grantRenew"] == True:
-            response.transmitExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
+        if "grantRenew" in heartbeat:
+            if heartbeat["grantRenew"] == True:
+                response.transmitExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
         response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
         response.heartbeatInterval = self.getHeartbeatIntervalForGrantId(grant.id) or self.getHeartbeatInterval()
         lowFreq = self.getLowFreqFromOP(grant.operationParam)
         highFreq = self.getHighFreqFromOP(grant.operationParam)
         fr = WinnForum.FrequencyRange(lowFreq, highFreq)
-        response.operationParam = WinnForum.OperationParam(self.getMaxEIRP, fr)
+        response.operationParam = WinnForum.OperationParam(self.getMaxEIRP(), fr)
         longitude = None
         latitude = None
         radius = None
@@ -80,7 +81,7 @@ class SASAlgorithms:
             radius = 1000
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
         if present == 1 and not self.ignoringREM:
-            response.transmitExpireTime = datetime.now().strftime("%Y%m%dT%H:%M:%S%Z")
+            response.transmitExpireTime = datetime.now(timezone.utc).strftime("%Y%m%dT%H:%M:%S%Z")
             response.response = self.generateResponse(501)#Suspended Grant
         else:
             response.response = self.generateResponse(0)
@@ -88,9 +89,9 @@ class SASAlgorithms:
                 freqRange = 3700000000 - 3550000000
                 tenMHz = 10000000
                 blocks = freqRange/10000000
-                for i in range(blocks):
-                    low = i * tenMHz
-                    high = (i + 1) * tenMHz
+                for i in range(int(blocks)):
+                    low = (i * tenMHz) + 3500000000
+                    high = ((i + 1) * tenMHz) + 3500000000
                     result = self.isPUPresentREM(REM, low, high, latitude, longitude, radius)
                     if result == 0:
                         op = WinnForum.OperationParam(self.getMaxEIRP(), WinnForum.FrequencyRange(low, high))
@@ -168,7 +169,7 @@ class SASAlgorithms:
 
     def calculateGrantExpireTime(self, grants, REM, grant):
         grantCount = len(grants)
-        t = datetime.now()
+        t = datetime.now(timezone.utc)
         if grantCount <= 1:
             t = t + timedelta(seconds = self.maxGrantTime)
             return t.strftime("%Y%m%dT%H:%M:%S%Z")

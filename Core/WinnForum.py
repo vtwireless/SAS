@@ -595,7 +595,7 @@ class RegistrationResponse:
 		return_dict = {}
 		if(self.cbsdId):
 			return_dict["cbsdId"] = self.cbsdId
-		if(self.measReportConfig):
+		if(self.measReportConfig[0]):
 			return_dict["measReportConfig"] = self.measReportConfig
 		if(self.response):
 			return_dict["response"] = self.response.asdict()
@@ -1039,7 +1039,7 @@ class GrantResponse:
 			return_dict["grantExpireTime"] = self.grantExpireTime 
 		if(self.heartbeatInterval):
 			return_dict["heartbeatInterval"] = self.heartbeatInterval 
-		if(self.measReportConfig):
+		if(self.measReportConfig[0]):
 			return_dict["measReportConfig"] = self.measReportConfig 
 		if(self.operationParam):
 			return_dict["operationParam"] = self.operationParam.asdict()
@@ -1158,7 +1158,7 @@ class HeartbeatResponse:
 			return_dict["heartbeatInterval"] = self.heartbeatInterval
 		if(self.operationParam):
 			return_dict["operationParam"] = self.operationParam.asdict()
-		if(self.measReportConfig):
+		if(self.measReportConfig[0]):
 			return_dict["measReportConfig"] = self.measReportConfig
 		if(self.response):
 			return_dict["response"] = self.response.asdict()
