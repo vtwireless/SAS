@@ -244,10 +244,10 @@ class TX_USRP(gr.top_block):
     def set_waveform(self, waveform):
         self.__waveform = self._convert_waveform(waveform)
     
-    def turnOffTx(self):
+    def disableTx(self):
         self.interest_signal.set_amplitude(0)
     
-    def turnOnTx(self):
+    def enableTx(self):
         self.interest_signal.set_amplitude(self.__signal_amp)
 
 class RX_USRP():
@@ -393,10 +393,10 @@ class TXRX_USRP(gr.top_block):
         self.src_amp = src_amp
         self.analog_noise_source_x_0.set_amplitude(self.src_amp)
 
-    def turnOffTx(self):
+    def disableTx(self):
         self.analog_noise_source_x_0.set_amplitude(0)
     
-    def turnOnTx(self):
+    def enableTx(self):
         self.analog_noise_source_x_0.set_amplitude(self.src_amp)
 
     def get_rx_fc(self):
@@ -440,23 +440,90 @@ class TXRX_USRP(gr.top_block):
 
 class Node:
     """
-    Highest level Node class. This containts 3 possible flowgraphs for 1 USRP, Grant, and other node/cbsd data.
+    An instance of a Node has a 1-to-1 relationship with a USRP. I.e.,  Node object corresponds exclusivly with 1 USRP.
+    A Node object wraps a GNURadio Flowgraph script with SAS relevant data and operations to enhance functionality.
 
-    Attributes
+    Instance Attributes
     ----------
-    __operationMode : string
-        This will be 'TX', 'RX', or 'TXRX'
-    __usrp : TX_USRP Object
-        Object associated with 1 of 3 possible USRP Flowgraphs
-    __isSasRegistered : boolean
-        Registration Status of Node (True if SAS Registered, else False)
+    ipAddress : string (required)
+        IP Address of the USRP that is linked to this Node Object. E.g. "192.168.40.205"
+    serialNum : string
+        Serial Number of the USRP. This is obtained through the uhd-library
+    model : string
+        Type / Product of USRP. E.g. "B200"
+    operationMode : string
+        String representing one of three operation modes for a Node. These are "TX", "RX", "TXRX".
+    usrp : 1 of 3 USRP objects
+        This holds the GNURadio Flowgraph for the USRP the Node represents. This can be 1 of 3 objects: TX_USRP, RX_USRP, or TXRX_USRP.
+    isSasRegistered : boolean
+        'True' if Node is officially registered with the SAS, otherwise 'False'.
     grant : Grant object
-        All nodes will have 1 Grant that includes all grant related data
+        All nodes have 1 Grant that includes all grant related data, regardless of Grant status
     cbsdId : string
-        ID of the node as given by the SAS upon registration
+        SAS-given CBSD ID 
+    measReportConfig : array of string
+        List of strings that indicate the Measurment Reporting capabilities / expections from this Node
+    heartbeatTimer : threading.Timer object
+        This timer begins once a heartbeat request is sent. If no response comes in once this expires, Node turns off.
 
     Methods
     -------
+    getIpAddress()
+        Returns ipAddress
+    setIpAddress(ip)
+        Assigns ipAddress to ip
+    getSerialNumber()
+        Returns serialNumber
+    setSerialNumber(num)
+        Assigns serialNumber to num
+    getModel()
+        Returns model
+    setModel(model)
+        Assigns model to model
+    getOperationMode()
+        Returns operationMode
+    setOperationMode(mode)
+        Assigns operationMode to mode
+    createTxUsrp(centerFreq, gain, bandwidth, signalAmp, waveform)
+        Assigns usrp to a newly created TX_USRP object
+    createRxUsrp(centerFreq, gain, bandwidth)
+            Assigns usrp to a newly created RX_USRP object
+    createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain, rx_bins=1024)
+                Assigns usrp to a newly created TXRX_USRP object
+    getUsrp()
+        Returns usrp
+    getRegistrationStatus()
+        Returns regisrationStatus
+    setRegistrationStatus(status)
+        Assigns isSasRegistered to status
+    getGrant()
+        Returns Grant object
+    setGrant(grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType)
+        Assigns grant to newly created Grant object
+    getCbsdId()
+        Returns cbsdId
+    setCbsdId(id)
+        Assigns cbsdId to id
+    getMeasReportConfig()
+        Returns measReportConfig
+    setMeasReportConfig(config)
+        Assigns measReportConfig to config
+    changeGrantStatus(status)
+        Assigns grantStatus to status ("IDLE", "GRANTED", or "AUTHORIZED")
+    disableTx()
+        Turns off USRP transmitter (keeps Flowgraph running)
+    enableTx()
+        Turns n USRP transmitter
+    updateRxParams(fc=None, bw=None, gain=None):
+        Changes USRP RX parameters during runtime to enable adaptive spectrum sensing
+    getSpectrumProbeData()
+        Retuns GNURadio flowgraph Probe block contents
+    startHbTimer(timeTilHearbeatExpires)
+        Assigns heartbeatTimer to a timer that voids a Grant if timeTilHearbeatExpires is reached
+    stopHbTimer()
+        Cancels the timer that heartbeatTime references
+    info()
+        Returns information about the Node 
     """
     def __init__(self, ipAddress):
         """
@@ -617,32 +684,32 @@ class Node:
         """
         self.getGrant().setGrantStatus(status)
         if(status == "AUTHORIZED"):
-            self.turnOnTx()
+            self.enableTx()
         else:
-            self.turnOffTx() # Ensure Node isnt TX if it is not "AUTH"
+            self.disableTx() # Ensure Node isnt TX if it is not "AUTH"
         if(status == "IDLE"):
             self.__grant = Grant() # TODO: Is this the best way of resetting an object?
 
-    def turnOffTx(self):
+    def disableTx(self):
         """
-        This makes the TX Signal Amplitude 0 which effectivly turns of Transmission.
+        This makes the TX Signal Amplitude 0 which effectivly turns off Transmission.
         This does not assign the Object instance variable "signal amplitude" to 0 however.
         """
         if(self.__operationMode == "TX" or self.__operationMode == "TXRX"):
-            self.__usrp.turnOffTx()
+            self.__usrp.disableTx()
         else:
-            print("Invalid Node / operationMode for turnOffTx. No changes made.")
+            print("Invalid Node / operationMode for disableTx. No changes made.")
 
-    def turnOnTx(self):
+    def enableTx(self):
         """
-        This makes the TX Signal Amplitude 0 which effectivly turns of Transmission
+        This reassigns the USRP Signal Amplitude to what it eas before TX was toggled off
         """
         if(self.__operationMode == "TX"):
             self.__usrp.set_signal_amp(self.__usrp.get_signal_amp())
         elif(self.__operationMode == "TXRX"):
             self.__usrp.set_tx_src_amp(self.__usrp.get_tx_src_amp())
         else:
-            print("Invalid Node/__operationMode for turnOffTx. No changes made.")
+            print("Invalid Node/__operationMode for disableTx. No changes made.")
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
@@ -653,7 +720,7 @@ class Node:
             if(gain):
                 self.__usrp.set_rx_gain(gain) 
         else:
-            print("Invalid Node __operationMode for setRxParams command. No Node updated.")       
+            print("Invalid Node operationMode for setRxParams command. No Node updated.")       
 
     def getSpectrumProbeData(self):
         """
@@ -670,7 +737,7 @@ class Node:
             else:
                 return None
         else:
-            print("Invalid function call to getSpectrumProbeData: unsupported current __operationMode '" + str(self.__operationMode) + "'.")
+            print("Invalid function call to getSpectrumProbeData: unsupported current operationMode '" + str(self.__operationMode) + "'.")
             return None
 
     def startHbTimer(self, timeTilHearbeatExpires):
@@ -679,7 +746,7 @@ class Node:
 
         If the repsonse does not come in time (once the heartbeat expires), then ensure TX is OFF.
         """
-        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.turnOffTx())
+        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.disableTx())
         self.__heartbeatTimer.start()
     
     def stopHbTimer(self):
@@ -689,11 +756,11 @@ class Node:
         else:
             print("No active Heartbeat Timer running to cancel.")
 
-    def printInfo(self):
+    def info(self):
         """
-        This function will neatly print all Node information to the terminal
+        This function will neatly return all Node information in a dictonary
         """
-        print("node data")
+        return "node data"
 
 # Helper Functions------------------------------
     def _ipToSerialAndModel(self, ip, __available_radios):

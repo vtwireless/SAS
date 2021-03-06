@@ -44,7 +44,7 @@ registered_nodes = []
 nodes_awaiting_response = []
 
 # Parser extracts command line flags/parameters  
-parser = ArgumentParser(description='SAS USRP RX Interface Script - Provide a server address and port in order to connect to the SAS.')
+parser = ArgumentParser(description='CORNET-to-SAS Client Script - Provide a server address and port in order to connect to the SAS.')
 
 # Socket Params----------------------------------------------------------------------------
 parser.add_argument('-a','--address',\
@@ -85,7 +85,7 @@ def printNodeArray(whichArray):
 		return
 
 	for node in nodeArray:
-		node.printInfo()
+		node.info()
 
 def _grabPossibleEntry(entry, key):
 	"""
@@ -205,7 +205,7 @@ def reqAddressToNode(request, mustBeRegistered=True):
 
 def _hasResponseCode(data):
 	"""
-	This checks a dictonary input for a key of "response" and a subkey of "responseCode".
+	This checks a dictonary for a key of "response" and a subkey of "responseCode".
 	It returns the responseCode if it is found.
 
 	Parameters
@@ -218,13 +218,15 @@ def _hasResponseCode(data):
 	responseCode : string
 		Will return responseCode if it is there, otherwise 'None'
 	"""
-	if(not (response := _grabPossibleEntry(data, "response"))):
-		print("SAS Error: No reponse object found.")
+	if(response := _grabPossibleEntry(data, "response")):
+		if(responseCode := _grabPossibleEntry(response, "responseCode")):
+				return responseCode
+		else:
+			print("SASError: No response code provided.")
+			return None
+	else:
+		print("SASError: No reponse object found.")
 		return None
-	if(not (responseCode := _grabPossibleEntry(response, "responseCode"))):
-		print("SAS Error: No response code provided.")
-		return None
-	return responseCode
 
 def _compileMeasReport(node, reportingAlgorithm="every64Bins"):
 	"""
@@ -401,7 +403,7 @@ def simCreateNode(requests):
 			node = Node(address)
 			node.setOperationMode(usrpMode)
 			node.createTxUsrp(centerFreq, gain, bandwidth, signalAmp, waveform)
-			node.turnOffTx()
+			node.disableTx()
 		elif(usrpMode == "RX"):
 			if(not (centerFreq := safeCast(_grabPossibleEntry(request, "mode"), int))):
 				print("SimulationFileError: No valid integer centerFreq found for simCreateNode. Node not created.")
@@ -442,7 +444,7 @@ def simCreateNode(requests):
 			node = Node(address)
 			node.setOperationMode(usrpMode)
 			node.createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain)
-			node.turnOffTx()
+			node.disableTx()
 		node.getUsrp().start()
 		arr.append(node)
 	return arr
@@ -469,7 +471,7 @@ def cmdCreateNode():
 		rx_gain = promptUsrpGain()
 		rx_bw = promptUsrpBandwidth()
 		node.createTxRxUsrp(tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain)
-		node.turnOffTx()
+		node.disableTx()
 	elif(usrpMode == 'TX'):
 		cFreq = promptUsrpCenterFreq()
 		usrpGain = promptUsrpGain()
@@ -477,7 +479,7 @@ def cmdCreateNode():
 		signalAmp = promptUsrpSignalAmp()
 		waveform = promptUsrpWaveform()
 		node.createTxUsrp(cFreq, usrpGain, bandwidth, signalAmp, waveform) # Create instance of Tx with given params
-		node.turnOffTx()
+		node.disableTx()
 	elif(usrpMode == 'RX'):
 		# cFreq = promptUsrpCenterFreq()
 		# bandwidth = promptUsrpBandwidth()
@@ -720,7 +722,7 @@ def handleRegistrationResponse(clientio, data):
 	json_data = json.loads(data)
 	iter = 0
 	if(not (regResponses := _grabPossibleEntry(json_data, "registrationResponse"))):
-		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
+		print("SASError: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
 	print("Registration Response(s) Received")
 	for regResponse in regResponses:
@@ -729,7 +731,7 @@ def handleRegistrationResponse(clientio, data):
 
 		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
 		if(not cbsdId):
-			print("SAS Error: No cbsdId provided. Registration Response invalid.")
+			print("SASError: No cbsdId provided. Registration Response invalid.")
 			continue
 		
 		# SAS Should send responses in order, so popping from index[0] every time will give the proper Node
@@ -1006,7 +1008,7 @@ def handleGrantResponse(clientio, data):
 
 		# Step 1: Check to see what Node this response belongs to
 		if(not (cbsdId := _grabPossibleEntry(grantResponse, "cbsdId"))):
-			print("SAS Error: No cbsdId provided. Grant Response invalid.")
+			print("SASError: No cbsdId provided. Grant Response invalid.")
 			continue
 		if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
 			print("No Node awaiting a response has the cbsdId '" + cbsdId + "'. Grant Response invalid.")
@@ -1026,7 +1028,7 @@ def handleGrantResponse(clientio, data):
 					print("Response Code does not indicate successful grant request. Grant Response invalid.")
 					continue
 			else:
-				print("SAS Error: responseCode is not a valid integer data type. Grant Response invalid.")
+				print("SASError: responseCode is not a valid integer data type. Grant Response invalid.")
 				continue
 		else:
 			print("Grant Response invalid.")
@@ -1034,24 +1036,24 @@ def handleGrantResponse(clientio, data):
 
 		# Step 4: Get rest of data
 		if(not (channelType := _grabPossibleEntry(grantResponse, "channelType"))):
-			print("SAS Error: No channelType provided. Grant invalid.")
+			print("SASError: No channelType provided. Grant invalid.")
 			continue
 		if(not (grantId := _grabPossibleEntry(grantResponse, "grantId"))):
-			print("SAS Error: No grantId provided. Grant invalid")
+			print("SASError: No grantId provided. Grant invalid")
 			continue			
 		if((grantExpireTime := _grabPossibleEntry(grantResponse, "grantExpireTime"))):
 			timeFormat = "%Y%m%dT%H:%M:%S%Z"
 			try:
 				expireDateTime = datetime.strptime(grantExpireTime, timeFormat)
 			except ValueError:
-				print("SAS Error: SAS sent grantExpireTime as '"+grantExpireTime+"' which is not in " + timeFormat + " format. Grant invalid.")
+				print("SASError: SAS sent grantExpireTime as '"+grantExpireTime+"' which is not in " + timeFormat + " format. Grant invalid.")
 				continue
 		else:
-			print("SAS Error: No grantExpireTime provided. Grant invalid.")
+			print("SASError: No grantExpireTime provided. Grant invalid.")
 			continue
 		
 		if(not (heartbeatInterval := _grabPossibleEntry(grantResponse, "heartbeatInterval"))):
-			print("SAS Error: No heartbeatInterval provided. Grant invalid.")
+			print("SASError: No heartbeatInterval provided. Grant invalid.")
 			continue
 
 		# TODO: Ensure the measReportConfigs are valid strings as per the WinnForum specs
@@ -1216,7 +1218,7 @@ def handleHeartbeatResponse(clientio, data):
 	"""
 	jsonData = json.loads(data)
 	if(not (hbResponses := _grabPossibleEntry(jsonData, "heartbeatResponse"))):
-		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
+		print("SASError: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
 		return
 	print("Heartbeat Response(s) Received")
 	iter = 0
@@ -1258,7 +1260,7 @@ def handleHeartbeatResponse(clientio, data):
 			# Take transmitExpireTime and subtract current time from it
 			# txExpiration = transmitExpireTime - currentTime
 			# With the time difference, start a delayed thread that turns off tx
-			# threading.Timer(txExpiration, node.turnOffTx())
+			# threading.Timer(txExpiration, node.disableTx())
 		else:
 			print("Missing required parameter: transmitExpireTime.")
 			isIncompleteResponse = True
@@ -1565,7 +1567,7 @@ def emergencyStop(data):
 	else:
 		for node in created_nodes: # TODO: Use registered_nodes
 			if(grantId == node.getGrant().getGrantId()):
-				node.turnOffTx()
+				node.disableTx()
 				break
 # End SAS Socket Events (Not WinnForum Specified) ----------------------------------
 
