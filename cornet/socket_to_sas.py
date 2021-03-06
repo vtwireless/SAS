@@ -1091,7 +1091,7 @@ def repeatHeartbeatRequest(node):
 	grantId = node.getGrant().getGrantId()
 	grantRenew = False # TODO: Properly implement this feature
 	operationState = node.getGrant().getGrantStatus()
-	measReport = None #node.getSpectrumProbeData() # TODO
+	measReport = _compileMeasReport(node)
 	return [HeartbeatRequest(cbsdId, grantId, grantRenew, operationState, measReport).asdict()]
 
 def simHeartbeatReq(requests):
@@ -1117,7 +1117,7 @@ def simHeartbeatReq(requests):
 			print("No grantId found for the node with cbsdId: '" + cbsdId + "'. Heartbeat Request invalid.")
 			continue
 		operationState = node.getGrant().getGrantStatus()
-		measReport = None # TODO
+		measReport = _compileMeasReport(node)
 		arr.append(HeartbeatRequest(cbsdId, grantId, operationState=operationState, 
 		measReport=measReport).asdict())
 	return arr
@@ -1195,7 +1195,8 @@ def heartbeatRequest(clientio, node=None, payload=None):
 	payload = {"heartbeatRequest": arrOfRequest}
 	clientio.emit("heartbeatRequest", json.dumps(payload))
 
-	# Start timer to track how long it takes for each response to come in 
+	# Start timer to track how long it takes for each response to come in
+	# This is specificially done here since this is after the socket emits the request(s).
 	timeTilHearbeatExpires = 240 # seconds
 	for hbReq in arrOfRequest:
 		for node in registered_nodes:
@@ -1230,7 +1231,7 @@ def handleHeartbeatResponse(clientio, data):
 		# Check for a Node with the cbsdId+grantId the SAS sent in the response
 		if(cbsdId): 
 			if((node := findNodeAwaitingResponseByCbsdId(cbsdId))): # Find the Node with the given CBSD ID
-				node.stopHbTimer() # TODO: Should this be stopped when the grantId is matched or just the Node?
+				node.stopHbTimer() # TODO: For MultipleGrants - Should this be stopped when the grantId is matched or just the Node?
 				nodes_awaiting_response.remove(node)
 				if(grantId):
 					if(not (node.getGrant().getGrantId() == grantId)):  # Find if the Node has a Grant with the given Grant ID
@@ -1238,7 +1239,7 @@ def handleHeartbeatResponse(clientio, data):
 						isIncompleteResponse = True
 				else:
 					if(responseCode == "0"):
-						print("Missing required parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
+						print("SASError: Missing required parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
 					else:
 						print("Missing conditional parameter: grantId. Cannot match this response to a Grant without a Grant ID.")
 					isIncompleteResponse = True
@@ -1256,7 +1257,7 @@ def handleHeartbeatResponse(clientio, data):
 			# With the time difference, start a delayed thread that turns off tx
 			# threading.Timer(txExpiration, node.disableTx())
 		else:
-			print("Missing required parameter: transmitExpireTime.")
+			print("SASError: Missing required parameter: transmitExpireTime.")
 			isIncompleteResponse = True
 
 		# TODO: grantExpireTime is required when (responseCode is 0 or 501) and (the heartbeat request asked to renew the Grant)
