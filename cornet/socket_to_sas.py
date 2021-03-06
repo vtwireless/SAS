@@ -1196,7 +1196,7 @@ def heartbeatRequest(clientio, node=None, payload=None):
 	clientio.emit("heartbeatRequest", json.dumps(payload))
 
 	# Start timer to track how long it takes for each response to come in 
-	timeTilHearbeatExpires = 240 # seconds
+	timeTilHearbeatExpires = 240 # seconds #TODO Should be heartbeatInterval
 	for hbReq in arrOfRequest:
 		for node in registered_nodes:
 			if(node.getCbsdId() == hbReq["cbsdId"]):
