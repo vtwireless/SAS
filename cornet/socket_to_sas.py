@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 
-# GNU Radio Python Flow Graph
-# Title: SAS USRP Transmitter
-# Author: Cam Makin
+# Title: CORNET-to-SAS Client
+# Author: Cameron Makin
 # For Research Efforts: Wireless@VT
-# Description: Implementiation of an SDR Tx for SAS control. This flowgraph is the base of the TX Python script that will be further modified to include sockets and other SAS API requirements.
-# GNU Radio version: 3.8.1.0
-# Generated October 7, 2020
-# Last Updated: 02/13/2021
+# Description: This is the main script to execute in order to create a client connection to a SAS.
+# Last Updated: 03/04/2021
 
 # TODO: Check all isntances of _hasResponseCode
 # TODO: Dynamic Socket Addressing (Want to be able to switch address/port of socket on the fly)
@@ -17,13 +14,13 @@
 # TODO: Maybe add menu option to view all history to see what has been done and their responses
 #./socket_tx.py -p 5000 -a "127.0.0.1"
 
-
 import sys
 import json
 import time
 import socketio
 import threading
 from argparse import ArgumentParser
+from datetime import datetime, timedelta
 from gnuradio import uhd
 from usrps import Node
 from WinnForum import *		# File containing object definitions used
@@ -623,6 +620,14 @@ def simRegistrationReq(requests):
 			measCapability, groupingParams, cpiSignatureData, vtParams).asdict())
 	return arr		
 
+def configRegistrationReq():
+	"""
+	TODO - Craete a method that allows a user to pull a predefined JSON request from a file.
+
+	Motivaition for this is to allow the hands on command line interface without the tedious form filling.
+	"""
+	return [None]
+
 def cmdRegistrationReq():
 	"""
 	Provides Command Line Prompts for a user to create Registration Request(s)
@@ -787,6 +792,12 @@ def simSpectrumInquiryReq(requests):
 		nodes_awaiting_response.append(node)
 		arr.append(SpectrumInquiryRequest(cbsdId, inquiredSpectrum, measReport).asdict())
 	return arr
+
+def configSpectrumInquiryReq():
+	"""
+	TODO
+	"""
+	return [None]
 
 def cmdSpectrumInquiryReq():
 	"""
@@ -984,52 +995,63 @@ def handleGrantResponse(clientio, data):
 	Maybe a grant is for next year, so there is no need for a heartbeat now, hence why this is as it is.
 	"""
 	jsonData = json.loads(data)
-	iter = -1
+	iter = 0
 	if(not (grantResponses := _grabPossibleEntry(jsonData, "grantResponse"))):
 		print("Unreadable data. Expecting JSON formatted payload. Grant(s) invalid.")
 		return
 	print("Grant Response(s) Received")
 	for grantResponse in grantResponses:
-		iter = iter + 1
 		print("Grant Response [" + str(iter := iter+1) +"]:")
 		print(grantResponse)
 
 		# Step 1: Check to see what Node this response belongs to
 		if(not (cbsdId := _grabPossibleEntry(grantResponse, "cbsdId"))):
-			print("SAS Error: No cbsdId provided. Grant invalid.")
+			print("SAS Error: No cbsdId provided. Grant Response invalid.")
 			continue
 		if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
-			print("No Node awaiting a response has the cbsdId '" + cbsdId + "'.")
-			print("Grant Response invalid.")
+			print("No Node awaiting a response has the cbsdId '" + cbsdId + "'. Grant Response invalid.")
 			continue
 		
 		# Step 2: Remove the Node from the waiting list
 		nodes_awaiting_response.remove(node)
 		
 		# Step 3: Get the Response Code
-		if(not (responseCode := _hasResponseCode(grantResponse))):
+		if((responseCode := _hasResponseCode(grantResponse))):
+			if(responseCode := safeCast(responseCode, int)):
+				if(responseCode != 0):
+					# TODO: If SAS provides Operation Parameters, decided if the Node
+					# should re-send a new Grant request with the parameters or not
+					# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
+					# 	pass
+					print("Response Code does not indicate successful grant request. Grant Response invalid.")
+					continue
+			else:
+				print("SAS Error: responseCode is not a valid integer data type. Grant Response invalid.")
+				continue
+		else:
 			print("Grant Response invalid.")
-			continue
-		if(responseCode != "0"):
-			# TODO: If SAS provides Operation Parameters, decided if the Node
-			# should re-send a new Grant request with the parameters or not
-			# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
-			# 	pass
-			print("Response Code does not indicate successful grant request. Grant Response invalid.")
 			continue
 
 		# Step 4: Get rest of data
 		if(not (channelType := _grabPossibleEntry(grantResponse, "channelType"))):
-			print("No channelType provided. Grant invalid.")
+			print("SAS Error: No channelType provided. Grant invalid.")
 			continue
 		if(not (grantId := _grabPossibleEntry(grantResponse, "grantId"))):
-			print("No grantId provided. Grant invalid")
+			print("SAS Error: No grantId provided. Grant invalid")
 			continue			
-		if(not (grantExpireTime := _grabPossibleEntry(grantResponse, "grantExpireTime"))):
-			print("No grantExpireTime provided. Grant invalid.")
+		if((grantExpireTime := _grabPossibleEntry(grantResponse, "grantExpireTime"))):
+			timeFormat = "%Y%m%dT%H:%M:%S%Z"
+			try:
+				expireDateTime = datetime.strptime(grantExpireTime, timeFormat)
+			except ValueError:
+				print("SAS Error: SAS sent grantExpireTime as '"+grantExpireTime+"' which is not in " + timeFormat + " format. Grant invalid.")
+				continue
+		else:
+			print("SAS Error: No grantExpireTime provided. Grant invalid.")
 			continue
+		
 		if(not (heartbeatInterval := _grabPossibleEntry(grantResponse, "heartbeatInterval"))):
-			print("No heartbeatInterval provided. Grant invalid.")
+			print("SAS Error: No heartbeatInterval provided. Grant invalid.")
 			continue
 
 		# TODO: Ensure the measReportConfigs are valid strings as per the WinnForum specs
@@ -1039,7 +1061,7 @@ def handleGrantResponse(clientio, data):
 			node.setMeasReportConfig(measReportConfig)
 
 		# Step 5: Create Grant object for Node
-		node.setGrant(grantId, "GRANTED", grantExpireTime, heartbeatInterval, channelType)
+		node.setGrant(grantId, "GRANTED", expireDateTime, heartbeatInterval, channelType)
 # End Grant ------------------------------------------------------------------------
 
 # Heartbeat ------------------------------------------------------------------------
@@ -1197,10 +1219,9 @@ def handleHeartbeatResponse(clientio, data):
 		print("SAS Error: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
 		return
 	print("Heartbeat Response(s) Received")
-	iter = -1 # Starts at -1 in case of need to use indexing
+	iter = 0
 	for hbResponse in hbResponses:
 		isIncompleteResponse = False
-		iter = iter + 1
 		print("Heartbeat Response [" + str(iter := iter+1) +"]:")
 		print(hbResponse)
 	
@@ -1672,6 +1693,17 @@ def defineSocketEvents(clientio):
 		"""
 		print('SAS requested for connection to be terminated')
 
+def endClientExecution():
+	"""
+	Gracefully ends client execution by turning off all USRPs and exiting the program
+	"""
+	for node in created_nodes:
+		if(radio := node.getUsrp()):
+			radio.stop()
+			radio.wait()
+	print("Exiting System...")
+	sys.exit()
+
 def init(args):
 	"""
 	Create radio object and connects to server
@@ -1703,10 +1735,10 @@ def init(args):
 		except:
 			sys.exit("Fatal Error: No valid simulation file found at " + path + "\nExiting program...")
 		lastTime = 0
-		for timeToExecute in data: 		# Sim file may have multiple instances of time to trigger events
+		for timeToExecute in data: 				# Sim file may have multiple instances of time to trigger events
 			lastTime = delayUntilTime(lastTime, timeToExecute)
 			for action in data[timeToExecute]: 	# Each time may have multiple actions (requests)
-				for func in action:		# Each requests may have multiple payloads
+				for func in action:				# Each requests may have multiple payloads
 					funcStarted = False
 					while(True):
 						if(not __blocked):
@@ -1735,9 +1767,8 @@ def init(args):
 								__blocked = True
 								deregistrationRequest(clientio, payload)
 							funcStarted = True
-							#send payload to appropiate function	
 	else:
-		# Main Menu
+		# Commandline (CMD) Interface Main Menu
 		# CMD is blocking sockets from printing until user enters another value
 		# To remedy this, I may add a boolean that is True when the socket is busy 
 		# Once the socket is done completeing the action the user entered, the bool
@@ -1785,8 +1816,7 @@ def init(args):
 					__blocked = True
 					deregistrationRequest(clientio)
 		
-	print("Exiting System...")
-	sys.exit()
+	endClientExecution()
 
 if __name__ == '__main__':
 	args = vars(parser.parse_args())	# Get command line arguments

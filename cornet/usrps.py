@@ -10,6 +10,7 @@ from gnuradio.eng_arg import eng_float, intx
 from gnuradio import eng_notation
 from gnuradio import uhd
 import threading
+from datetime import datetime, timedelta
 
 
 class Grant:
@@ -23,7 +24,7 @@ class Grant:
         grantId assigned by the SAS upon sucessful Grant request
     grantStatus : string
         One of three possile states for a Grant (IDLE, GRANTED, AUTHORIZED)
-    grantExpireTime : string
+    grantExpireTime : datetime
         Time at which the grant is no longer valid
     heartbeatInterval : string (integer)
         Maximum number of seconds allowed between Heartbeats
@@ -95,7 +96,7 @@ class Grant:
         """
         Assigns grantExpireTime to passed parameter status
         """
-        self.__grantExpireTime = expireTime
+        self.__grantExpireTime = expireDateTime
     
     def getHeartbeatInterval(self):
         """
@@ -118,6 +119,8 @@ class Grant:
 class TX_USRP(gr.top_block):
     """
     Class representing a USRP Transmitter Flowgraph
+    # GNU Radio version: 3.8.1.0
+    # Generated October 7, 2020
 
     Attributes
     ----------
