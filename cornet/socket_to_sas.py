@@ -1536,8 +1536,11 @@ def updateRxParams(data):
 	print(data)
 	if(cbsdId := _grabPossibleEntry(data, "cbsdId")):
 		if(node := findRegisteredNodeByCbsdId(cbsdId)):
-			if(lowFreq := safeCast(_grabPossibleEntry(data, "lowFrequency"), int)):
-				if(highFreq := safeCast(_grabPossibleEntry(data, "highFrequency"), int)):
+			if(lowFreq := safeCast(_grabPossibleEntry(data,
+                            "lowFrequency"), int) != None):
+				if(highFreq :=
+                                        safeCast(_grabPossibleEntry(data,
+                                            "highFrequency"), int) != None):
 					bw = (highFreq - lowFreq)
 					fc =  highFreq - (bw / 2)
 					node.updateRxParams(fc, bw)
@@ -1629,16 +1632,16 @@ def defineSocketEvents(clientio):
 			global __blocked
 			__blocked = False
 		else:
-			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
+			print("No Nodes are awaiting a SAS response. Ignoring Grant Response from SAS.")
 
 	@clientio.event
-	def heartbeatResponse(clientio, data):
+	def heartbeatResponse( data):
 		if(nodes_awaiting_response):
 			handleHeartbeatResponse(clientio, data)
 			global __blocked
 			__blocked = False
 		else:
-			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
+			print("No Nodes are awaiting a SAS response. Ignoring Heartbeat Response from SAS.")
 
 	@clientio.event
 	def relinquishmentResponse(data):
@@ -1647,7 +1650,7 @@ def defineSocketEvents(clientio):
 			global __blocked
 			__blocked = False
 		else:
-			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
+			print("No Nodes are awaiting a SAS response. Ignoring Relinquishment  Response from SAS.")
 
 	@clientio.event
 	def deregistrationResponse(data):
@@ -1665,7 +1668,7 @@ def defineSocketEvents(clientio):
 			global __blocked
 			__blocked = False
 		else:
-			print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
+			print("No Nodes are awaiting a SAS response. Ignoring Deregistration Response from SAS.")
 	# end official WinnForum functions
 
 	@clientio.event

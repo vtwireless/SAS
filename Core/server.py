@@ -5,7 +5,7 @@ import json
 import SASAlgorithms
 import SASREM
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import WinnForum
 import CBSD
 import threading
@@ -140,9 +140,9 @@ def loadCBSDFromJSON(json):
 def measReportObjectFromJSON(json):
     return WinnForum.RcvdPowerMeasReport(json["measFrequency"], json["measBandwidth"], json["measRcvdPower"] or 0)
 
-def removeGrant(grant, cbsdId):
+def removeGrant(grantId, cbsdId):
     for g in grants:
-        if str(g.id) == str(grant.id) and str(g.cbsdId) == str(cbsdId):
+        if str(g.id) == str(grantId) and str(g.cbsdId) == str(cbsdId):
             grants.remove(g)
             return True
     return False
@@ -286,7 +286,7 @@ def grantRequest(sid, data):
             sendPostRequest(item)#Database log
         else:
             grantResponse.grantId = generateId()
-        if grantResponse.response.responseCode == 0:
+        if grantResponse.response.responseCode == "0":
             g = WinnForum.Grant(grantResponse.grantId, item["cbsdId"], grantResponse.operationParam, vtgp, grantResponse.grantExpireTime)
             grants.append(g)
         responseArr.append(grantResponse.asdict())
@@ -297,9 +297,11 @@ def grantRequest(sid, data):
 def heartbeat(sid, data):
     jsonData = json.loads(data)
     hbrArray = []
+    grantArray = []
     for hb in jsonData["heartbeatRequest"]:
         cbsd = getCBSDWithId(hb["cbsdId"])
         grant = getGrantWithID(hb["grantId"])
+        grantArray.append(grant)
         try:
             if hb["measReport"]:
                 for rpmr in hb["measReport"]["rcvdPowerMeasReports"]:
@@ -308,13 +310,14 @@ def heartbeat(sid, data):
         except KeyError:
             print("no measure report")
         response = SASAlgorithms.runHeartbeatAlgorithm(grants, REM, hb, grant)
-        grant.heartbeatTime = datetime.now()
+        grant.heartbeatTime = datetime.now(timezone.utc)
         grant.heartbeatInterval = response.heartbeatInterval
-        threading.Timer(response.heartbeatInterval*1.1, cancelGrant, grant).start()
-
         hbrArray.append(response.asdict())
     responseDict = {"heartbeatResponse":hbrArray}
     socket.emit('heartbeatResponse', json.dumps(responseDict))
+
+    for g in grantArray:
+        threading.Timer((response.heartbeatInterval*1.1)+2, cancelGrant, [g]).start()
 
 @socket.on('relinquishmentRequest')
 def relinquishment(sid, data):
@@ -408,15 +411,15 @@ def initiateSensing(lowFreq, highFreq):
         #don't use more than 1/3 of the radios to check band
             break
     
-    threading.Timer(3.0, resetRadioStatuses, radiosToChangeBack).start()
+    threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
 
 def resetRadioStatuses(radios):
     for radio in radios:
         radio.justChangedParams = False
 
 def cancelGrant(grant):
-    now = datetime.now()
-    if grant.heartbeatTime + datetime.timedelta(0, grant.heartbeatInterval) < now:
+    now = datetime.now(timezone.utc)
+    if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now:
         removeGrant(grant.id, grant.cbsdId)
         print('grant ' + grant.id + ' canceled')
 
@@ -436,22 +439,22 @@ def sendAssignmentToRadio(cbsd):
         if result == 2:
             #if there is no spectrum data available for that frequency range assign radio to it
             changeParams = dict()
-            changeParams["lowFrequency"] = tenMHz * i
-            changeParams["highFrequency"] = tenMHz * (i+ 1)
-            changeParams["cbsd"] = cbsd.cbsdId
+            changeParams["lowFrequency"] = str((tenMHz * i) + 3500000000)
+            changeParams["highFrequency"] =str((tenMHz * (i+ 1)) + 3500000000)
+            changeParams["cbsdId"] = cbsd.cbsdId
             cbsd.justChangedParams = True
             socket.emit("changeRadioParams", changeParams)
             break
     
-    threading.Timer(3.0, resetRadioStatuses, [cbsd]).start()
+    threading.Timer(3.0, resetRadioStatuses, [[cbsd]]).start()
 
 def checkPUAlert():
     freqRange = 3700000000 - 3550000000
     tenMHz = 10000000
     blocks = freqRange/10000000
     for i in range(int(blocks)):
-        low = i * tenMHz
-        high = (i + 1) * tenMHz
+        low = (i * tenMHz) + 3500000000
+        high = ((i + 1) * tenMHz) + 3500000000
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
         if result == 1:
             for grant in grants:
