@@ -6,7 +6,6 @@
 # Description: This is the main script to execute in order to create a client connection to a SAS.
 # Last Updated: 03/04/2021
 
-# TODO: Check all isntances of _hasResponseCode
 # TODO: Dynamic Socket Addressing (Want to be able to switch address/port of socket on the fly)
 # TODO: Decide how SAS assigned info (i.e. cbsdId) is stored
 # TODO: Create some command line keyword that works at all instances to exit from the prompt...
@@ -339,7 +338,7 @@ def safeCast(value, dataType):
 	try:
 		return dataType(value)
 	except ValueError:
-		print("Cannot cast '"+value+"' to data type '"+dataType+"'.")
+		print("Cannot cast '"+str(value)+"' to data type '"+str(dataType)+"'.")
 		return None
 # End Helper Functions---------------------------------------------------------------------
 
@@ -720,27 +719,26 @@ def handleRegistrationResponse(clientio, data):
 		Registration response data
 	"""
 	json_data = json.loads(data)
-	iter = 0
 	if(not (regResponses := _grabPossibleEntry(json_data, "registrationResponse"))):
 		print("SASError: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
 	print("Registration Response(s) Received")
+	iter = 0
 	for regResponse in regResponses:
 		print("Registration Response [" + str(iter := iter+1) + "]:")
 		print(regResponse)
 
-		cbsdId = _grabPossibleEntry(regResponse, "cbsdId")
-		if(not cbsdId):
+		if(not (cbsdId := _grabPossibleEntry(regResponse, "cbsdId"))):
 			print("SASError: No cbsdId provided. Registration Response invalid.")
 			continue
 		
-		# SAS Should send responses in order, so popping from index[0] every time will give the proper Node
-		node = nodes_awaiting_response.pop(0) 
-		if(not node):
+		# SAS should send responses in order, so popping from index[0] every time will give the proper Node
+		if(node := nodes_awaiting_response.pop(0)):
+			node.setCbsdId(cbsdId)
+			print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
+		else:
 			print("No Node awaiting a response. Registration Response invalid.")
 			continue
-		node.setCbsdId(cbsdId)
-		print("Node with IP Address: '" + node.getIpAddress() +"' is given CBSD ID# : '" + cbsdId +"'.")
 			
 		if(not _hasResponseCode(regResponse)):
 			print("No valid Response object found. Registration invalid.")
@@ -749,10 +747,9 @@ def handleRegistrationResponse(clientio, data):
 		if(measReportConfig := _grabPossibleEntry(regResponse, "measReportConfig")):
 			if(not isinstance(measReportConfig, list)):
 				measReportConfig = [measReportConfig]
-			# print("Measurment Report Configuration(s) Assigned: " + str(measReportConfig))
 			node.setMeasReportConfig(measReportConfig)
 
-		global registered_nodes
+		# global registered_nodes #TODO This may not be required since I am using .append()
 		registered_nodes.append(node)
 		node.setRegistrationStatus(True)
 		# TODO Update RX USRP with these params
@@ -992,43 +989,40 @@ def grantRequest(clientio, payload=None):
 def handleGrantResponse(clientio, data):
 	"""
 	Handles Grant Response message from SAS to CBSD.
-	TODO: No heartbeatRequest is automatically launched, so the user must manually do so.
+	TODO: No 1st heartbeatRequest is automatically launched, so the user must manually do so.
 	This is for flexiblity in when a grant is requested and when the heartbeats begin.
 	Maybe a grant is for next year, so there is no need for a heartbeat now, hence why this is as it is.
 	"""
 	jsonData = json.loads(data)
-	iter = 0
 	if(not (grantResponses := _grabPossibleEntry(jsonData, "grantResponse"))):
 		print("Unreadable data. Expecting JSON formatted payload. Grant(s) invalid.")
 		return
 	print("Grant Response(s) Received")
+	iter = 0
 	for grantResponse in grantResponses:
 		print("Grant Response [" + str(iter := iter+1) +"]:")
 		print(grantResponse)
 
 		# Step 1: Check to see what Node this response belongs to
-		if(not (cbsdId := _grabPossibleEntry(grantResponse, "cbsdId"))):
+		if(cbsdId := _grabPossibleEntry(grantResponse, "cbsdId")):
+			if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
+				print("No Node awaiting a response has the cbsdId '" + cbsdId + "'. Grant Response invalid.")
+				continue
+		else:
 			print("SASError: No cbsdId provided. Grant Response invalid.")
 			continue
-		if(not (node := findNodeAwaitingResponseByCbsdId(cbsdId))):
-			print("No Node awaiting a response has the cbsdId '" + cbsdId + "'. Grant Response invalid.")
-			continue
-		
+	
 		# Step 2: Remove the Node from the waiting list
 		nodes_awaiting_response.remove(node)
 		
 		# Step 3: Get the Response Code
 		if((responseCode := _hasResponseCode(grantResponse))):
-			if(responseCode := safeCast(responseCode, int)):
-				if(responseCode != 0):
-					# TODO: If SAS provides Operation Parameters, decided if the Node
-					# should re-send a new Grant request with the parameters or not
-					# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
-					# 	pass
-					print("Response Code does not indicate successful grant request. Grant Response invalid.")
-					continue
-			else:
-				print("SASError: responseCode is not a valid integer data type. Grant Response invalid.")
+			if(responseCode != "0"):
+				# TODO: If SAS provides Operation Parameters, decided if the Node
+				# should re-send a new Grant request with the parameters or not
+				# if(operationParam := _grabPossibleEntry(grantResponse, "operationParam")):
+				# 	pass
+				print("Response Code does not indicate successful grant request. Grant Response invalid.")
 				continue
 		else:
 			print("Grant Response invalid.")
@@ -1046,7 +1040,7 @@ def handleGrantResponse(clientio, data):
 			try:
 				expireDateTime = datetime.strptime(grantExpireTime, timeFormat)
 			except ValueError:
-				print("SASError: SAS sent grantExpireTime as '"+grantExpireTime+"' which is not in " + timeFormat + " format. Grant invalid.")
+				print("SASError: SAS sent grantExpireTime as '"+str(grantExpireTime)+"' which is not in "+timeFormat+" format. Grant invalid.")
 				continue
 		else:
 			print("SASError: No grantExpireTime provided. Grant invalid.")
