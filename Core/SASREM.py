@@ -45,7 +45,7 @@ class SASREM:
                 objectsToSend.append(object)
             elif self.isWithinRegion(longitude, latitude, radius, object.longitude, object.latitude):
                 objectsToSend.append(object)
-            if object.timeStamp < (datetime.now() - datetime.timedelta(seconds = self.secondsAgo)):
+            if object.timeStamp < (datetime.now() - timedelta(seconds = self.secondsAgo)):
                 self.objects.remove(object)
 
         return objectsToSend

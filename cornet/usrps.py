@@ -96,7 +96,7 @@ class Grant:
         """
         Assigns grantExpireTime to passed parameter status
         """
-        self.__grantExpireTime = expireDateTime
+        self.__grantExpireTime = expireTime
     
     def getHeartbeatInterval(self):
         """

@@ -1075,7 +1075,7 @@ def scheduleNextHeartbeat(clientio, node):
 	delayTilNextHeartbeat = float(node.getGrant().getHeartbeatInterval()) * 0.9 # Send heartbeats a little sooner than the interval
 	if(delayTilNextHeartbeat < 1):
 		delayTilNextHeartbeat = 1
-	threading.Timer(delayTilNextHeartbeat, heartbeatRequest(clientio, node=node)).start()
+	threading.Timer(delayTilNextHeartbeat, heartbeatRequest(), [clientio, node]).start()
 
 def repeatHeartbeatRequest(node):
 	"""
