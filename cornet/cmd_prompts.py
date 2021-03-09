@@ -76,13 +76,16 @@ def promptNumOfRequests(prompt):
 			return num
 # End Helper Functions -------------------------------------------------------------
 
+# Disconnect from SAS
+def promptSASDisconnect():
+	return getSelectorBoolean("This action will void all grants and turn off all USRPs. Are you sure you want to disconnect from the SAS?")
+
 # Create Node
 def promptUsrpMode():
 	"""
 	Prompts User for USRP Mode (Either TX or RX)
 	"""
-	while True:
-		user_input = input("What kind of USRP would you like to create? (T)x or (R)x?: ")
+	while(user_input := input("What kind of USRP would you like to create? (T)x or (R)x?: ")):
 		if(user_input == 'T' or user_input == 't'):
 			return "TX"
 		elif(user_input == 'R' or user_input == 'r'):
@@ -98,8 +101,7 @@ def promptUsrpIpAddr():
 
 	TODO: Maybe refresh usrps list after each attempt? In case a node becomes available.
 	"""
-	while(True):
-		ip = input("Enter the IP Address of the node (Ex. 192.168.40.110): ")
+	while(ip := input("Enter the IP Address of the node (Ex. 192.168.40.110): ")):
 		for node in list(uhd.find_devices()):
 			if(ip == node['addr']):
 				print("UHD Lib has found a node matching the IP you entered!")
@@ -112,8 +114,7 @@ def promptUsrpGain(min_gain=0, max_gain=31.5):
 		"""
 		Prompt user to enter Usrp Gain
 		"""
-		while(True):
-			gain = _getValidFloat("Enter USRP gain (in dB): ")
+		while(gain := _getValidFloat("Enter USRP gain (in dB): ")):
 			if(gain < min_gain):
 				print("Gain of '" + gain + "' is below the minimum of '" + min_gain + "'.")
 			elif(gain > max_gain):
@@ -132,8 +133,7 @@ def promptUsrpBandwidth(min_bw=0, max_bw=10000000):
 	max_bw : int (optional)
 		Maximum bandwidth. Defualt 10000000 (10MHz).
 	"""
-	while(True):
-		bandwidth = _getValidInt("Enter bandwidth (in Hz): ")
+	while(bandwidth := _getValidInt("Enter bandwidth (in Hz): ")):
 		if(bandwidth < min_bw):
 			print("Bandwidth must be greater than "+ str(min_bw) +".")
 		elif(bandwidth > max_bw):
@@ -141,26 +141,23 @@ def promptUsrpBandwidth(min_bw=0, max_bw=10000000):
 		else:
 			return bandwidth
 
-
-	return bandwidth
-
-def promptUsrpCenterFreq():
+def promptUsrpCenterFreq(max_fc=3700000000):
 	"""
 	Prompt user to enter Center Frequency
 	"""
-	while(True):
-		cfreq = input("Enter the Center Frequency (in Hz): ")
-		if(int(cfreq) < 0):
+	while(cfreq := _getValidInt("Enter the Center Frequency (in Hz): ")):
+		if(cfreq < 0):
 			print("Please enter a positive integer for frequency...")
+		elif(cfreq > max_fc):
+			print("Invalid Value: Maximum allowed Center Frequency is "+str(max_fc)+"...")
 		else:
-			return int(cfreq)
+			return cfreq
 
 def promptUsrpSignalAmp():
 	"""
 	Prompts user to enter a vaild signal amplitude [0,1]
 	"""
-	while(True):
-		sigamp = input("Enter the Signal Amplitude (0 to 1): ")
+	while(sigamp := input("Enter the Signal Amplitude (0 to 1): ")):
 		if(float(sigamp) < 0 or float(sigamp) > 1):
 			print("Amplitude must be a vaule between 0 and 1...")
 		else:
@@ -170,9 +167,8 @@ def promptUsrpWaveform():
 	"""
 	Prompts user to enter a valid waveform
 	"""
-	while(True):
-		waveforms = ["CONSTANT", "SINE", "COSINE", "SQUARE", "TRIANGLE", "SAWTOOTH"]
-		wf = input('Enter waveform type (Valid Inputs: CONSTANT, SINE, COSINE, SQUARE, TRIANGLE, SAWTOOTH): ')
+	waveforms = ["CONSTANT", "SINE", "COSINE", "SQUARE", "TRIANGLE", "SAWTOOTH"]
+	while(wf := input('Enter waveform type (Valid Inputs: CONSTANT, SINE, COSINE, SQUARE, TRIANGLE, SAWTOOTH): ')):
 		if(wf.upper() not in waveforms):
 			print(wf + " is not a vaild waveform option...")
 		else:
@@ -180,13 +176,45 @@ def promptUsrpWaveform():
 
 
 # Registration Request
+def promptCbsdIpAddress(created_nodes):
+	"""
+	Prompts user for a vaild CBSD IP Address and cross references with uhd_find_devices
+
+	Parameters
+	----------
+	created_nodes : list of Node objects
+		Node objects that have been created
+
+	Returns
+	-------
+	cbsdSerialNumber : string
+	"""
+	print("Available Node IP Addresses:")
+	iter = 0
+	for node in created_nodes:
+		print(str(iter := iter+1) +" - "+ node.get_SDR_Address())
+	while(cbsdIp := input("Select Node to Register (1 - "+str(iter)+"): ")):
+		if(cbsdIp == "exit"):
+			return None
+		else:
+			try:
+				selection = int(cbsdIp)
+			except ValueError:
+				print("UserInputError: Input must be an integer from 1 to "+str(iter)+".")
+			else:
+				for node in list(uhd.find_devices()):
+					if(created_nodes[selection+1].getIpAddress() == node['addr']):
+						return node['serial']
+		print("No vaild USRP found with serial: " + str(cbsdSerialNumber))
+
 def promptCbsdSerial(usrps):
 	"""
 	Prompts user for a vaild CBSD Serial Number and cross references with uhd_find_devices
 
 	Parameters
 	----------
-		
+	usrps : list of Node objects
+		Node objects that have been created
 
 	Returns
 	-------
@@ -194,12 +222,14 @@ def promptCbsdSerial(usrps):
 	"""
 	for node in usrps:
 		print(node.get_SDR_Address())
-	while(True): # TODO This will get stuck if there isnt a vaild Serial...
-		cbsdSerialNumber = input("Enter CBSD Serial Number: ")
-		for node in usrps:
-			if(cbsdSerialNumber == node['serial']):
-				return cbsdSerialNumber
-		print("No vaild USRP found with serial: " + cbsdSerialNumber)
+	while(cbsdSerialNumber := input("Enter CBSD Serial Number: ")): # TODO This will get stuck if there isnt a vaild Serial...
+		if(cbsdSerialNumber == "exit"):
+			return None
+		else:
+			for node in list(uhd.find_devices()):
+				if(cbsdSerialNumber == node['serial']):
+					return cbsdSerialNumber
+		print("No vaild USRP found with serial: " + str(cbsdSerialNumber))
 
 def promptCbsdCategory():
 	"""
@@ -210,13 +240,12 @@ def promptCbsdCategory():
 	cbsdCategory : char
 		CBAS Category 'A' or 'B' (or None if user presses 'Enter')
 	"""
-	while True:
-		cbsdCategory = input("Enter CBSD Category ('A' or 'B'): ")
+	while(cbsdCategory := input("Enter CBSD Category ('A' or 'B'): ")):
 		if(cbsdCategory == 'a' or cbsdCategory == 'A'):
 			return 'A'
 		elif(cbsdCategory == 'b' or cbsdCategory == 'B'):
 			return 'B'
-		elif(cbsdCategory == ""):
+		elif(cbsdCategory == "exit"):
 			return None
 		else:
 			print("Invlaid CBSD Category...")

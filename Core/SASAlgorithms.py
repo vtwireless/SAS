@@ -67,8 +67,10 @@ class SASAlgorithms:
         response.grantId = grant.id
         if "grantRenew" in heartbeat:
             if heartbeat["grantRenew"] == True:
-                response.transmitExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
-        response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant)
+                response.grantExpireTime= self.calculateGrantExpireTime(grants, REM, grant, True)
+            else:
+                response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant, False)
+        response.transmitExpireTime = self.calculateGrantExpireTime(grants, REM, grant, False)
         response.heartbeatInterval = self.getHeartbeatIntervalForGrantId(grant.id) or self.getHeartbeatInterval()
         lowFreq = self.getLowFreqFromOP(grant.operationParam)
         highFreq = self.getHighFreqFromOP(grant.operationParam)
@@ -111,7 +113,7 @@ class SASAlgorithms:
         gr = WinnForum.GrantResponse()
         gr.grantId = None
         gr.cbsdId = request.cbsdId
-        gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None)
+        gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None, True)
         gr.heartbeatInterval = self.getHeartbeatIntervalForGrantId(gr.grantId)
         gr.measReportConfig = ["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"]
         conflict = False
@@ -169,14 +171,14 @@ class SASAlgorithms:
         else:
             return 3
 
-    def calculateGrantExpireTime(self, grants, REM, grant):
+    def calculateGrantExpireTime(self, grants, REM, grant, renew):
         grantCount = len(grants)
         t = datetime.now(timezone.utc)
         if grantCount <= 1:
             t = t + timedelta(seconds = self.maxGrantTime)
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
         else:
-            t = t + timedelta(seconds = self.defaultHeartbeatInterval * 2)
+            t = t + timedelta(seconds = (self.defaultHeartbeatInterval * 2))
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
 
     def getHighFreqFromOP(self, params):

@@ -89,10 +89,6 @@ def printNodeArray(whichArray):
 def _grabPossibleEntry(entry, key):
 	"""
 	Takes a dictionary entry and checks to see if it exists (e.g. check for entry[key]).
-	
-	TODO: this can also be done in 1 line as followed:
-		cbsdId = request["cbsdId"] if "cbsdId" is in request else None
-	Decide which is more readable
 
 	Parameters
 	----------
@@ -454,7 +450,7 @@ def cmdCreateNode():
 	Appends a node to the global created_nodes list
 
 	TODO: "How many nodes do you wanna create?"
-	TODO: Pass values to the prompt to heck for boundaries
+	TODO: Pass values to the prompt to check for boundaries
 	"""
 	sdrAddr = promptUsrpIpAddr()
 	node = Node(sdrAddr)
@@ -477,7 +473,7 @@ def cmdCreateNode():
 		bandwidth = promptUsrpBandwidth()
 		signalAmp = promptUsrpSignalAmp()
 		waveform = promptUsrpWaveform()
-		node.createTxUsrp(cFreq, usrpGain, bandwidth, signalAmp, waveform) # Create instance of Tx with given params
+		node.createTxUsrp(cFreq, usrpGain, bandwidth, signalAmp, waveform)
 		node.disableTx()
 	elif(usrpMode == 'RX'):
 		# cFreq = promptUsrpCenterFreq()
@@ -536,7 +532,7 @@ def simRegistrationReq(requests):
 			print("Registration Request invalid.")
 			continue
 		if(not (cbsdSerialNumber := node.getSerialNumber())):
-			print("No cbsdSerialNumber found for the node with IP Address: '" + node.getIpaAddress + "'. Registration Request invalid.")
+			print("No cbsdSerialNumber found for the node with IP Address: '"+str(node.getIpAddress())+"'. Registration Request invalid.")
 			continue
 		if(not (userId := _grabPossibleEntry(request, "userId"))):
 			print("No userId found for simRegistrationReq. Registration Request invalid.")
@@ -546,7 +542,6 @@ def simRegistrationReq(requests):
 			continue
 		callSign = _grabPossibleEntry(request, "callSign")
 		cbsdCategory = _grabPossibleEntry(request, "cbsdCategory")
-		# TODO: Determine the proper cbsdCategories
 		# if(not cbsdCategory):
 		# 	print("No cbsdCategory provided. Registration Request invalid.")
 		# 	continue
@@ -557,7 +552,7 @@ def simRegistrationReq(requests):
 				_grabPossibleEntry(cbsdInfo, "softwareVersion"),
 				_grabPossibleEntry(cbsdInfo, "hardwareVersion"),
 				_grabPossibleEntry(cbsdInfo, "firmwareVersion")
-				)
+			)
 		airInterface = _grabPossibleEntry(request, "airInterface")
 		airInterface = AirInterface(_grabPossibleEntry(airInterface, "radioTechnology"))
 		# TODO: Determine the proper airInterfaces for the USRPs
@@ -1565,7 +1560,7 @@ def emergencyStop(data):
 	if(not (grantId :=_grabPossibleEntry(jsonData, "grantId"))):
 		print("No grantId '" + grantId + "' found in emergency.")
 	else:
-		for node in created_nodes: # TODO: Use registered_nodes
+		for node in registered_nodes:
 			if(grantId == node.getGrant().getGrantId()):
 				node.disableTx()
 				break
@@ -1602,11 +1597,9 @@ def defineSocketEvents(clientio):
 	def connect():
 		print('Socket connection established! Given sid: ' + clientio.sid)
 
-	@clientio.event
-	def identifySource():
-		clientio.emit("identifySource", ("I am CRTS"))
-		# send_params(clientio, txUsrp)
-		# registrationReq(clientio)
+	# @clientio.event
+	# def identifySource():
+	# 	clientio.emit("identifySource", ("I am CRTS"))
 
 	# Official WinnForum Predefined Functionality
 	@clientio.event
@@ -1656,15 +1649,6 @@ def defineSocketEvents(clientio):
 
 	@clientio.event
 	def deregistrationResponse(data):
-		"""
-		SAS response to a deregistrationRequest
-		Calls 'handleDeregistrationResponse(data)'
-
-		Parameters
-		----------
-		data : dictonary
-			Expected keys are cbsdId, highFreq, and lowFreq
-		"""
 		if(nodes_awaiting_response):
 			handleDeregistrationResponse(clientio, data)
 			global __blocked
@@ -1690,10 +1674,9 @@ def defineSocketEvents(clientio):
 	def disconnect():
 		"""
 		SAS Command to tell the socket connection to close
-
-		TODO: determine how to properly/gracefully disconnect from a socket
 		"""
 		print('SAS requested for connection to be terminated')
+		endClientExecution()
 
 def endClientExecution():
 	"""
@@ -1735,7 +1718,7 @@ def init(args):
 			with open(path) as config:
 				data = json.load(config)
 		except:
-			sys.exit("Fatal Error: No valid simulation file found at " + path + "\nExiting program...")
+			sys.exit("Fatal Error: No valid simulation file found at "+str(path)+"\nExiting program...")
 		lastTime = 0
 		for timeToExecute in data: 				# Sim file may have multiple instances of time to trigger events
 			lastTime = delayUntilTime(lastTime, timeToExecute)
@@ -1783,8 +1766,8 @@ def init(args):
 				if(userInput == 'h'):
 					print("""Commands Include:
 						0 - Exit SAS Interface
-						1 - Create USRP Node
-						2 - View Created Nodes
+						1 - View Created Nodes
+						2 - Create USRP Node
 						3 - Create Registration Request
 						4 - Create Spectrum Inquiry Request
 						5 - Create Grant Request
@@ -1793,12 +1776,12 @@ def init(args):
 						8 - Create Deregistration Request
 						""")
 				elif(userInput == '0'):
-					print("Exiting System...")
-					sys.exit()
+					if(promptSASDisconnect()):
+						endClientExecution()
 				elif(userInput == '1'):
-					createNode()
-				elif(userInput == '2'):
 					printNodeArray("created")
+				elif(userInput == '2'):
+					createNode()
 				elif(userInput == '3'):
 					__blocked = True
 					registrationRequest(clientio)
@@ -1818,8 +1801,6 @@ def init(args):
 					__blocked = True
 					deregistrationRequest(clientio)
 		
-	endClientExecution()
-
 if __name__ == '__main__':
 	args = vars(parser.parse_args())	# Get command line arguments
 	init(args)							
