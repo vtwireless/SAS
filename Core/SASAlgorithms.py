@@ -4,6 +4,9 @@ from datetime import datetime, timedelta, timezone
 import threading
 
 class SASAlgorithms:
+    MINCBRSFREQ = 3550000000
+    MAXCBRSFREQ = 3700000000
+    TENMHZ = 100000000
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT' #DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
@@ -86,12 +89,11 @@ class SASAlgorithms:
         else:
             response.response = self.generateResponse(0)
             if self.offerNewParams:
-                freqRange = 3700000000 - 3550000000
-                tenMHz = 10000000
-                blocks = freqRange/10000000
+                freqRange = self.MAXCBRSFREQ - self.MINCBRSFREQ
+                blocks = freqRange/self.TENMHZ
                 for i in range(int(blocks)):
-                    low = (i * tenMHz) + 3500000000
-                    high = ((i + 1) * tenMHz) + 3500000000
+                    low = (i * self.TENMHZ) + self.MINCBRSFREQ
+                    high = ((i + 1) * self.TENMHZ) + self.MINCBRSFREQ
                     result = self.isPUPresentREM(REM, low, high, latitude, longitude, radius)
                     if result == 0:
                         op = WinnForum.OperationParam(self.getMaxEIRP(), WinnForum.FrequencyRange(low, high))
@@ -235,7 +237,7 @@ class SASAlgorithms:
 
 
     def acceptableRange(self, lowFreq, highFreq):
-        if lowFreq < highFreq and lowFreq >= 3550000000 and highFreq <= 3700000000:
+        if lowFreq < highFreq and lowFreq >= self.MINCBRSFREQ and highFreq <= self.MAXCBRSFREQ:
             return True
         else:
             return False

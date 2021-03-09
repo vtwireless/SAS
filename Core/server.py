@@ -16,11 +16,12 @@ POSTURL = "http://localhost/SASAPI/SAS_API.php"
 SASKEY = "qowpe029348fuqw9eufhalksdjfpq3948fy0q98ghefqi"
 
 allClients = []
-allRadios = []
+allRadios = [] #CBSDSocket
 allWebApps = []
 allSASs = []
 grants = []
-cbsds = []
+cbsds = [] #cbsd references
+
 
 databaseLogging = False
 
@@ -175,18 +176,13 @@ def disconnect(sid):
             allRadios.remove(radio)
 
 
-#@socket.on('isSensingRadio')
-#def isSensingRadio(sid, data):
-#    sendAssignmentToRadio(sid)
-
-
-
 @socket.on('registrationRequest')
 def register(sid, data):
     jsonData = json.loads(data)
     responseArr = []
     assignmentArr = []
     for item in jsonData["registrationRequest"]:
+        radio = CBSD.CBSD('0', 5, item["fccId"])
         if "vtParams" in item:
             item["nodeType"] = item["vtParams"]["nodeType"]
             item["minFrequency"] = item["vtParams"]["minFrequency"]
@@ -194,24 +190,31 @@ def register(sid, data):
             item["minSampleRate"] = item["vtParams"]["minSampleRate"]
             item["maxSampleRate"] = item["vtParams"]["maxSampleRate"]
             item["mobility"] = item["vtParams"]["isMobile"]
+
+            radio.nodeType = item["vtParams"]["nodeType"]
+            radio.minFrequency = item["vtParams"]["minFrequency"]
+            radio.maxFrequency = item["vtParams"]["maxFrequency"]
+            radio.minSampleRate = item["vtParams"]["minSampleRate"]
+            radio.maxSampleRate = item["vtParams"]["maxSampleRate"]
+            radio.mobility = item["vtParams"]["isMobile"]
         if "installationParam" in item:
             if "latitude" in item["installationParam"] and "longitude" in item["installationParam"]:
                 item["location"] = str(item["installationParam"]["latitude"]) + ',' + str(item["installationParam"]["longitude"])
+                radio.latitude = item["installationParam"]["latitude"]
+                radio.longitude = item["installationParam"]["longitude"]
         item["IPAddress"] = 'TODO IP'
         item["action"] = "createNode"
-        id = ''
         if databaseLogging:
             print(sendPostRequest(item))
-            id = 'TODO'
+            radio.id = 'TODO'
         else:
-            radio = CBSD.CBSD(generateId(), 5, item["fccId"])
-            id = radio.id
+            radio.id = generateId()
             allClients.append(radio)
             cbsds.append(radio)
         if "measCapability" in item:#if the registering entity is a radio add it to the array and give it an assignment
-            cbsd = SASREM.CBSDSocket(id, sid, False)
+            cbsd = SASREM.CBSDSocket(radio.id, sid, False)
             assignmentArr.append(cbsd)
-        response = WinnForum.RegistrationResponse(id, None, SASAlgorithms.generateResponse(0))
+        response = WinnForum.RegistrationResponse(radio.id, None, SASAlgorithms.generateResponse(0))
         if "measCapability" in item:
             response.measReportConfig = item["measCapability"]
         responseArr.append(response.asdict())
@@ -407,6 +410,7 @@ def initiateSensing(lowFreq, highFreq):
             radio.justChangedParams = True
             socket.emit("changeRadioParams", changeParams, room=radio.sid)
             radiosToChangeBack.append(radio)
+            count = count + 1
         if count >= radioCountLimit or count > len(allRadios)/3:
         #don't use more than 1/3 of the radios to check band
             break
@@ -429,18 +433,17 @@ def sendAssignmentToRadio(cbsd):
     if cbsd in allRadios:
         allRadios.remove(cbsd)
     allRadios.append(cbsd)
-    freqRange = 150000000 # 3.5 GHz CBRS Band is 150 MHz wide
-    tenMHz = 10000000
-    blocks = freqRange/10000000
+    freqRange = SASAlgorithms.MAXCBRSFREQ = SASAlgorithms.MINCBRSFREQ # 3.5 GHz CBRS Band is 150 MHz wide
+    blocks = freqRange/SASAlgorithms.TENMHZ
     for i in range(int(blocks)):
-        low = i * tenMHz
-        high = (i + 1) * tenMHz
+        low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
+        high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
         if result == 2:
             #if there is no spectrum data available for that frequency range assign radio to it
             changeParams = dict()
-            changeParams["lowFrequency"] = str((tenMHz * i) + 3500000000)
-            changeParams["highFrequency"] =str((tenMHz * (i+ 1)) + 3500000000)
+            changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
+            changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
             changeParams["cbsdId"] = cbsd.cbsdId
             cbsd.justChangedParams = True
             socket.emit("changeRadioParams", changeParams)
@@ -448,13 +451,57 @@ def sendAssignmentToRadio(cbsd):
     
     threading.Timer(3.0, resetRadioStatuses, [[cbsd]]).start()
 
+def obstructChannel(lowFreq, highFreq, latitude, longitude):
+    print("NGGYU")
+    result = SASAlgorithms.isPUPresentREM(REM, lowFreq, highFreq, latitude, longitude, None)
+    if result == 0:
+        count = 0
+        latLongThresh = 2
+        radioCountLimit = 3
+        radiosToChangeBack = []
+        if not latitude and not longitude:    
+            #loop through radios, set 3 as the limit
+            for radio in allRadios:  
+                if not radio.justChangedParams:
+                    sendObstructionToRadio(radio, lowFreq, highFreq)
+                    radiosToChangeBack.append(radio)
+                    count = count + 1
+                if count >= radioCountLimit or count > len(allRadios)/3:
+                #don't use more than 1/3 of the radios to check band
+                    break
+        else:
+            for cbsd in cbsds:
+                if cbsd.latitude and cbsd.longitude:
+                    if abs(cbsd.latitude - latitude) < latLongThresh and abs(cbsd.longitude - longitude):
+                        for radio in allRadios:  
+                            if not radio.justChangedParams and cbsd.id == radio.id:
+                                sendObstructionToRadio(radio, lowFreq, highFreq)
+                                radiosToChangeBack.append(radio)
+                                count = count + 1
+                            if count >= radioCountLimit or count > len(allRadios)/3:
+                            #don't use more than 1/3 of the radios to check band
+                                break 
+        threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
+
+
+
+def sendObstructionToRadio(cbsd, lowFreq, highFreq):
+    changeParams = dict()
+    changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
+    changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
+    changeParams["cbsdId"] = cbsd.cbsdId
+    cbsd.justChangedParams = True
+    socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
+
+
+
+
 def checkPUAlert():
-    freqRange = 3700000000 - 3550000000
-    tenMHz = 10000000
-    blocks = freqRange/10000000
+    freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
+    blocks = freqRange/SASAlgorithms.TENMHZ
     for i in range(int(blocks)):
-        low = (i * tenMHz) + 3500000000
-        high = ((i + 1) * tenMHz) + 3500000000
+        low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
+        high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
         if result == 1:
             for grant in grants:
