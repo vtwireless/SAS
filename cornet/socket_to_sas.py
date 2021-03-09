@@ -722,7 +722,7 @@ def handleRegistrationResponse(clientio, data):
 	if(not (regResponses := _grabPossibleEntry(json_data, "registrationResponse"))):
 		print("SASError: Unreadable data. Expecting JSON formatted payload. Registration invalid.")
 		return
-	print("Registration Response(s) Received")
+	print("\nRegistration Response(s) Received")
 	iter = 0
 	for regResponse in regResponses:
 		print("Registration Response [" + str(iter := iter+1) + "]:")
@@ -997,7 +997,7 @@ def handleGrantResponse(clientio, data):
 	if(not (grantResponses := _grabPossibleEntry(jsonData, "grantResponse"))):
 		print("Unreadable data. Expecting JSON formatted payload. Grant(s) invalid.")
 		return
-	print("Grant Response(s) Received")
+	print("\nGrant Response(s) Received")
 	iter = 0
 	for grantResponse in grantResponses:
 		print("Grant Response [" + str(iter := iter+1) +"]:")
@@ -1075,7 +1075,7 @@ def scheduleNextHeartbeat(clientio, node):
 	delayTilNextHeartbeat = float(node.getGrant().getHeartbeatInterval()) * 0.9 # Send heartbeats a little sooner than the interval
 	if(delayTilNextHeartbeat < 1):
 		delayTilNextHeartbeat = 1
-	threading.Timer(delayTilNextHeartbeat, heartbeatRequest(), [clientio, node]).start()
+	threading.Timer(delayTilNextHeartbeat, heartbeatRequest, [clientio, node]).start()
 
 def repeatHeartbeatRequest(node):
 	"""
@@ -1217,7 +1217,7 @@ def handleHeartbeatResponse(clientio, data):
 	if(not (hbResponses := _grabPossibleEntry(jsonData, "heartbeatResponse"))):
 		print("SASError: Unreadable data. Expecting JSON formatted payload. Heartbeat(s) invalid.")
 		return
-	print("Heartbeat Response(s) Received")
+	print("\nHeartbeat Response(s) Received")
 	iter = 0
 	for hbResponse in hbResponses:
 		isIncompleteResponse = False
@@ -1376,7 +1376,7 @@ def handleRelinquishmentResponse(clientio, data):
 	if(not (relinquishResponses := _grabPossibleEntry(jsonData, "relinquishmentResponse"))):
 		print("Unreadable data. Expecting JSON formatted payload with key 'relinquishmentResponse'. Relinquishment(s) invalid.")
 		return
-	print("Relinquishment Response(s) Received")
+	print("\nRelinquishment Response(s) Received")
 	iter = 0
 	for relinquishment in relinquishResponses:
 		print("Relinquishment Response [" + str(iter := iter+1) +"]:")
@@ -1485,7 +1485,7 @@ def handleDeregistrationResponse(clientio, data):
 		print("Unreadable data. Expecting JSON formatted payload with key 'deregistrationResponse'. Deregistration(s) invalid.")
 		return
 	iter = 0
-	print("Deregistration Response(s) Received")
+	print("\nDeregistration Response(s) Received")
 	for dereg in deregistrationResponses:
 		print("Deregistration Response [" + str(iter := iter+1) +"]:")
 		print(dereg)

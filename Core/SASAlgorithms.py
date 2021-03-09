@@ -6,7 +6,7 @@ import threading
 class SASAlgorithms:
     MINCBRSFREQ = 3550000000
     MAXCBRSFREQ = 3700000000
-    TENMHZ = 100000000
+    TENMHZ = 10000000
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT' #DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
@@ -237,7 +237,7 @@ class SASAlgorithms:
 
 
     def acceptableRange(self, lowFreq, highFreq):
-        if lowFreq < highFreq and lowFreq >= self.MINCBRSFREQ and highFreq <= self.MAXCBRSFREQ:
+        if((lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ)):
             return True
         else:
             return False

@@ -746,7 +746,7 @@ class Node:
 
         If the repsonse does not come in time (once the heartbeat expires), then ensure TX is OFF.
         """
-        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.disableTx())
+        self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.disableTx)
         self.__heartbeatTimer.start()
     
     def stopHbTimer(self):

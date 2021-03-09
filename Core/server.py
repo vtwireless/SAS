@@ -433,7 +433,7 @@ def sendAssignmentToRadio(cbsd):
     if cbsd in allRadios:
         allRadios.remove(cbsd)
     allRadios.append(cbsd)
-    freqRange = SASAlgorithms.MAXCBRSFREQ = SASAlgorithms.MINCBRSFREQ # 3.5 GHz CBRS Band is 150 MHz wide
+    freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ # 3.5 GHz CBRS Band is 150 MHz wide
     blocks = freqRange/SASAlgorithms.TENMHZ
     for i in range(int(blocks)):
         low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
