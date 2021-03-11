@@ -6,9 +6,9 @@
 					"mode":"TXRX",
 					"tx_fc":"3565000000",
 					"tx_gain":"31.5",
-					"tx_bw":"8000000",
+					"tx_bw":"2000000",
 					"tx_src_amp":"1",
-					"rx_fc":"3555000000",
+					"rx_fc":"3570000000",
                     "rx_gain":"0",
                     "rx_bw":"10000000"
 				}]
@@ -75,8 +75,8 @@
 					"operationParam":{
 						"maxEirp":"0",
 						"operationFrequencyRange":{
-							"lowFrequency":"3560000000",
-							"highFrequency":"3570000000"
+							"lowFrequency":"3564000000",
+							"highFrequency":"3566000000"
 						}
 					},
 					"vtGrantParams":""
@@ -90,14 +90,14 @@
 				}]
 			}
 	],
-    "30":[
+    "50":[
         {
             "relinquishmentRequest":[{
                     "nodeIp":"192.168.40.101"
                 }]
         }
     ],
-    "35":[
+    "55":[
     	{
     		"deregistrationRequest":[{
                     "nodeIp":"192.168.40.101"

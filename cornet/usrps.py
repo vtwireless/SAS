@@ -397,7 +397,7 @@ class TXRX_USRP(gr.top_block):
         self.analog_noise_source_x_0.set_amplitude(0)
     
     def enableTx(self):
-        self.analog_noise_source_x_0.set_amplitude(self.src_amp)
+        self.analog_noise_source_x_0.set_amplitude(self.__tx_src_amp)
 
     def get_rx_fc(self):
         return self.__rx_fc
@@ -437,6 +437,7 @@ class TXRX_USRP(gr.top_block):
             List of `bins` length with spectrum data. 
         """
         return list(self.rx_probe.level())
+
 
 class Node:
     """
@@ -704,12 +705,10 @@ class Node:
         """
         This reassigns the USRP Signal Amplitude to what it eas before TX was toggled off
         """
-        if(self.__operationMode == "TX"):
-            self.__usrp.set_signal_amp(self.__usrp.get_signal_amp())
-        elif(self.__operationMode == "TXRX"):
-            self.__usrp.set_tx_src_amp(self.__usrp.get_tx_src_amp())
+        if(self.__operationMode == "TX" or self.__operationMode == "TXRX"):
+            self.__usrp.enableTx()
         else:
-            print("Invalid Node/__operationMode for disableTx. No changes made.")
+            print("Invalid Node/__operationMode for enableTx. No changes made.")
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
