@@ -205,7 +205,7 @@ def promptCbsdIpAddress(created_nodes):
 				for node in list(uhd.find_devices()):
 					if(created_nodes[selection+1].getIpAddress() == node['addr']):
 						return node['serial']
-		print("No vaild USRP found with serial: " + str(cbsdSerialNumber))
+		print("UHDError: No vaild USRP serial found for Node")
 
 def promptCbsdSerial(usrps):
 	"""
@@ -269,7 +269,7 @@ def promptCbsdInfo(cbsdSerialNumber, usrps):
 	if(cbsdInfoSelector):
 		print("All Device info is optional - press enter to skip any field...")
 		vendor = input("Enter Device Vendor (Ex. NI): ")
-		nodeFound = False
+		# nodeFound = False
 		# ** usrps is my own list of objects. Have to be wiser...
 		# for node in usrps:
 		# 	if(not nodeFound)

@@ -966,8 +966,7 @@ def grantRequest(clientio, payload=None):
 	if(__sim_mode):
 		arrOfRequest = simGrantReq(payload)
 	else:
-		while(True):
-			dataSource = input("Would you like to manually enter the Grant Request info or load from a file? (E)nter or (L)oad: ")
+		while(dataSource := input("Would you like to manually enter the Grant Request info or load from a file? (E)nter or (L)oad: ")):
 			if(dataSource == 'E' or dataSource == 'e'):
 				arrOfRequest = cmdGrantReq()
 				break
@@ -1300,14 +1299,12 @@ def simRelinquishmentReq(requests):
 	Read sim file for Relinquishment Request(s)
 	"""
 	arr = []
-	global nodes_awaiting_response
-	nodes_awaiting_response = []
 	iter = 0
 	for request in requests:
 		print("\nCreating Relinquishment Request [" + str(iter := iter+1) + "]:")
 		node = reqAddressToNode(request)
 		if(not node):
-			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
+			print("No Registered Node was found with the IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
 			continue
 		cbsdId = node.getCbsdId()
 		if(not cbsdId):
@@ -1346,18 +1343,21 @@ def relinquishmentRequest(clientio, payload=None):
 	"""
 	Creates Relinishment Request to send to the SAS
 	"""
-	while(True):
-		dataSource = input("Would you like to manually enter the Relinquishment Request info or load from a file? (E)nter or (L)oad: ")
-		if(dataSource == 'E' or dataSource == 'e'):
-			arrOfRequest = cmdRelinquishmentReq()
-			break
-		elif(dataSource == 'L' or dataSource == 'l'):
-			arrOfRequest = configRelinquishmentReq()
-			break
-		elif(dataSource == 'exit'):
-			return
-		else:
-			print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
+	arrOfRequest = None
+	if(__sim_mode):
+		arrOfRequest = simRelinquishmentReq(payload)
+	else:
+		while(dataSource := input("Would you like to manually enter the Relinquishment Request info or load from a file? (E)nter or (L)oad: ")):
+			if(dataSource == 'E' or dataSource == 'e'):
+				arrOfRequest = cmdRelinquishmentReq()
+				break
+			elif(dataSource == 'L' or dataSource == 'l'):
+				arrOfRequest = configRelinquishmentReq()
+				break
+			elif(dataSource == 'exit'):
+				return
+			else:
+				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 	payload = {"relinquishmentRequest": arrOfRequest}
 	clientio.emit("relinquishmentRequest", json.dumps(payload))
 
@@ -1401,7 +1401,7 @@ def handleRelinquishmentResponse(clientio, data):
 		if(isIncompleteResponse): 
 			print("SAS Relinquishment Response Invalid. Grant Remains Active.")
 		elif(responseCode == "0"):
-			node.setGrant()
+			node.setGrantStatus("IDLE")
 			print("Grant Relinquished.")
 # End Relinquishment ---------------------------------------------------------------
 
