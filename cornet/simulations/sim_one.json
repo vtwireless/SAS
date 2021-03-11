@@ -90,11 +90,18 @@
 				}]
 			}
 	],
-    "40":[
+    "30":[
         {
             "relinquishmentRequest":[{
                     "nodeIp":"192.168.40.101"
                 }]
         }
+    ],
+    "35":[
+    	{
+    		"deregistrationRequest":[{
+                    "nodeIp":"192.168.40.101"
+    		}]
+    	}
     ]
 }

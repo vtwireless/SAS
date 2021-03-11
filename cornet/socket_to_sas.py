@@ -1081,6 +1081,9 @@ def repeatHeartbeatRequest(node):
 	node : Node object
 		Node that is making a heartbeat request
 	"""
+	grantStatus = node.getGrant().getGrantStatus()
+	if(grantStatus == "IDLE"):
+		return None
 	cbsdId = node.getCbsdId()
 	grantId = node.getGrant().getGrantId()
 	grantRenew = False # TODO: Properly implement this feature
@@ -1176,8 +1179,7 @@ def heartbeatRequest(clientio, node=None, payload=None):
 	elif(node):
 		arrOfRequest = repeatHeartbeatRequest(node)
 	else:
-		while(True):
-			dataSource = input("Would you like to manually enter the Heartbeat Request info or load from a file? (E)nter or (L)oad: ")
+		while(dataSource := input("Would you like to manually enter the Heartbeat Request info or load from a file? (E)nter or (L)oad: ")):
 			if(dataSource == 'E' or dataSource == 'e'):
 				arrOfRequest = cmdHeartbeatReq()
 				break
@@ -1189,16 +1191,17 @@ def heartbeatRequest(clientio, node=None, payload=None):
 			else:
 				print("Invalid Entry... Please enter 'E' for Manual Entry or 'L' to load from a config file...")
 
-	payload = {"heartbeatRequest": arrOfRequest}
-	clientio.emit("heartbeatRequest", json.dumps(payload))
+	if(arrOfRequest):
+		payload = {"heartbeatRequest": arrOfRequest}
+		clientio.emit("heartbeatRequest", json.dumps(payload))
 
-	# Start timer to track how long it takes for each response to come in 
-	timeTilHearbeatExpires = 240 # seconds #TODO Should be heartbeatInterval
-	for hbReq in arrOfRequest:
-		for node in registered_nodes:
-			if(node.getCbsdId() == hbReq["cbsdId"]):
-				node.startHbTimer(timeTilHearbeatExpires)
-				break
+		# Start timer to track how long it takes for each response to come in 
+		timeTilHearbeatExpires = 240 # seconds #TODO Should be heartbeatInterval
+		for hbReq in arrOfRequest:
+			for node in registered_nodes:
+				if(node.getCbsdId() == hbReq["cbsdId"]):
+					node.startHbTimer(timeTilHearbeatExpires)
+					break
 
 def handleHeartbeatResponse(clientio, data):
 	"""
@@ -1302,6 +1305,7 @@ def simRelinquishmentReq(requests):
 	iter = 0
 	for request in requests:
 		print("\nCreating Relinquishment Request [" + str(iter := iter+1) + "]:")
+		print(request)
 		node = reqAddressToNode(request)
 		if(not node):
 			print("No Registered Node was found with the IP Address: '" + node.getIpAddress() + "'. Relinquishment Request invalid.")
@@ -1312,7 +1316,7 @@ def simRelinquishmentReq(requests):
 			continue
 		grantId = node.getGrant().getGrantId()
 		nodes_awaiting_response.append(node)
-		arr.append(RelinquishmentRequest(cbsdId, grantId))
+		arr.append(RelinquishmentRequest(cbsdId, grantId).asdict())
 	return arr
 
 def configRelinquishmentReq():
@@ -1378,7 +1382,7 @@ def handleRelinquishmentResponse(clientio, data):
 		print(relinquishment)
 
 		(cbsdId, grantId, responseCode) = unpackResponseWithKeys(relinquishment, "cbsdId", "grantId", "responseCode")
-
+		isIncompleteResponse = False
 		if(cbsdId):
 			if(node := findNodeAwaitingResponseByCbsdId(cbsdId)):
 				if(grantId):
@@ -1401,7 +1405,7 @@ def handleRelinquishmentResponse(clientio, data):
 		if(isIncompleteResponse): 
 			print("SAS Relinquishment Response Invalid. Grant Remains Active.")
 		elif(responseCode == "0"):
-			node.setGrantStatus("IDLE")
+			node.changeGrantStatus("IDLE")
 			print("Grant Relinquished.")
 # End Relinquishment ---------------------------------------------------------------
 
@@ -1416,6 +1420,7 @@ def simDeregistrationReq(requests):
 	iter = 0
 	for request in requests:
 		print("\nCreating Deregistration Request [" + str(iter := iter+1) + "]:")
+		print(request)
 		node = reqAddressToNode(request)
 		if(not node):
 			print("No Created Node was found with the IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
@@ -1425,7 +1430,7 @@ def simDeregistrationReq(requests):
 			print("No cbsdId found for the node with IP Address: '" + node.getIpAddress() + "'. Deregistration Request invalid.")
 			continue
 		nodes_awaiting_response.append(node)
-		arr.append(DeregistrationRequest(cbsdId))
+		arr.append(DeregistrationRequest(cbsdId).asdict())
 	return arr
 
 def configDeregistrationReq():
@@ -1455,8 +1460,7 @@ def deregistrationRequest(clientio, payload=None):
 	if(__sim_mode):
 		arrOfRequest = simDeregistrationReq(payload)
 	else:
-		while(True):
-			dataSource = input("Would you like to manually enter the Deregistration Request info or load from a file? (E)nter or (L)oad: ")
+		while(dataSource := input("Would you like to manually enter the Deregistration Request info or load from a file? (E)nter or (L)oad: ")):
 			if(dataSource == 'E' or dataSource == 'e'):
 				arrOfRequest = cmdDeregistrationReq()
 				break
