@@ -41,7 +41,7 @@ def sendGetRequest(parameters):
 
 def generateResponse(responseCode):
     response = {}
-    response["responseCode"] = str(esponseCode)
+    response["responseCode"] = str(responseCode)
     response["message"] = WinnForum.responseDecode(responseCode)
     return response
 
@@ -236,15 +236,18 @@ def deregister(sid, data):
             response = {}
             response["cbsdId"] = item["cbsdId"]
             response["response"] = generateResponse(0)
-            responseArr.append(response)
+            responseArr.append(response) #TODO
         success = removeCBSD(item["cbsdId"])
         response = WinnForum.DeregistrationResponse()
         if success:
             response.cbsdId = item["cbsdId"]
             response.response = generateResponse(0)
+            print("ALPHA\n\n\n\n")
         else:
             response.cbsdId = item["cbsdId"]
             response.response = generateResponse(103)
+            print("BRAVO\n\n\n\n")
+        print(response.response)
         responseArr.append(response.asdict())
     responseDict = {"deregistrationResponse":responseArr}
     socket.emit('deregistrationResponse', json.dumps(responseDict))   
@@ -333,7 +336,7 @@ def relinquishment(sid, data):
         params["action"] = "relinquishGrant"
         if databaseLogging:
             sendPostRequest(params)
-        success = removeGrant(getGrantWithID(relinquishmentRequest["grantId"]), relinquishmentRequest["cbsdId"])
+        success = removeGrant(getGrantWithID(relinquishmentRequest["grantId"]).id, relinquishmentRequest["cbsdId"])
         response = {}
         response["cbsdId"] = relinquishmentRequest["cbsdId"]
         response["grantId"] = relinquishmentRequest["grantId"]
