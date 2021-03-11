@@ -241,13 +241,10 @@ def deregister(sid, data):
         response = WinnForum.DeregistrationResponse()
         if success:
             response.cbsdId = item["cbsdId"]
-            response.response = generateResponse(0)
-            print("ALPHA\n\n\n\n")
+            response.response = SASAlgorithms.generateResponse(0)
         else:
             response.cbsdId = item["cbsdId"]
-            response.response = generateResponse(103)
-            print("BRAVO\n\n\n\n")
-        print(response.response)
+            response.response = SASAlgorithms.generateResponse(103)
         responseArr.append(response.asdict())
     responseDict = {"deregistrationResponse":responseArr}
     socket.emit('deregistrationResponse', json.dumps(responseDict))   
