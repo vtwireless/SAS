@@ -14,7 +14,7 @@
 				}]
 			}
 		],
-	"5":[
+	"2":[
 			{
 				"registrationRequest":[{
 					"nodeIp":"192.168.40.101",
@@ -57,7 +57,7 @@
 				}]
 			}
 		],
-	"10":[
+	"5":[
 			{
 				"spectrumInquiryRequest":[{
 					"nodeIp":"192.168.40.101",
@@ -68,7 +68,7 @@
 				}]
 			}
 		],
-	"15":[
+	"8":[
 			{
 				"grantRequest":[{
 					"nodeIp":"192.168.40.101",
@@ -83,25 +83,30 @@
 				}]
 			}
 		],
-	"20":[
+	"12":[
 			{
 			"heartbeatRequest":[{
 					"nodeIp":"192.168.40.101"
 				}]
 			}
 	],
-    "50":[
+    "23":[
         {
             "relinquishmentRequest":[{
                     "nodeIp":"192.168.40.101"
                 }]
         }
     ],
-    "55":[
+    "25":[
     	{
     		"deregistrationRequest":[{
                     "nodeIp":"192.168.40.101"
     		}]
     	}
-    ]
+    ],
+	"28":[
+		{
+			"endSimulation":""
+		}
+	]
 }
