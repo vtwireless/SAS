@@ -449,7 +449,7 @@ def cmdCreateNode():
 	Walks a user through the command line to configure a USRP node.
 	Appends a node to the global created_nodes list
 
-	TODO: "How many nodes do you wanna create?"
+	TODO: Ask user how many nodes they want to create and loop through N times
 	TODO: Pass values to the prompt to check for boundaries
 	"""
 	sdrAddr = promptUsrpIpAddr()
@@ -505,7 +505,6 @@ def createNode(requests=None):
 	else:
 		nodes = cmdCreateNode()
 
-	global created_nodes
 	for node in nodes:
 		created_nodes.append(node)
 # End Create Node--------------------------------------------------------------------------
@@ -1755,6 +1754,9 @@ def init(args):
 							elif(func == "deregistrationRequest"):
 								__blocked = True
 								deregistrationRequest(clientio, payload)
+							elif(func == "endSimulation"):
+								print("Ending Simulation...")
+								endClientExecution()
 							funcStarted = True
 	else:
 		# Commandline (CMD) Interface Main Menu
