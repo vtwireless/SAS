@@ -1678,10 +1678,12 @@ def defineSocketEvents(clientio):
 		"""
 		SAS Command to tell the socket connection to close
 		"""
-		print('SAS requested for connection to be terminated')
-		endClientExecution()
+		print('Connection to SAS terminating')
+		print("Exiting System...")
+		sys.exit()
 
-def endClientExecution():
+
+def endClientExecution(clientio):
 	"""
 	Gracefully ends client execution by turning off all USRPs and exiting the program
 	"""
@@ -1689,8 +1691,7 @@ def endClientExecution():
 		if(radio := node.getUsrp()):
 			radio.stop()
 			radio.wait()
-	print("Exiting System...")
-	sys.exit()
+	clientio.disconnect()
 
 def init(args):
 	"""
@@ -1756,7 +1757,7 @@ def init(args):
 								deregistrationRequest(clientio, payload)
 							elif(func == "endSimulation"):
 								print("Ending Simulation...")
-								endClientExecution()
+								endClientExecution(clientio)
 							funcStarted = True
 	else:
 		# Commandline (CMD) Interface Main Menu
@@ -1783,7 +1784,7 @@ def init(args):
 						""")
 				elif(userInput == '0'):
 					if(promptSASDisconnect()):
-						endClientExecution()
+						endClientExecution(clientio)
 				elif(userInput == '1'):
 					printNodeArray("created")
 				elif(userInput == '2'):

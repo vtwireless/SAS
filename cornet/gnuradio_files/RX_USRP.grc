@@ -32,7 +32,7 @@ options:
     state: enabled
 
 blocks:
-- name: SDR_A_Address
+- name: SDR_Address
   id: variable
   parameters:
     comment: ''
@@ -42,6 +42,27 @@ blocks:
     bus_source: false
     bus_structure: null
     coordinate: [16, 140.0]
+    rotation: 0
+    state: true
+- name: bandwidth
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: Bandwidth
+    min_len: ''
+    orient: Qt.Horizontal
+    rangeType: float
+    start: '0'
+    step: 0.1e6
+    stop: 10e6
+    value: 10e6
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [392, 12.0]
     rotation: 0
     state: true
 - name: bins
@@ -56,18 +77,27 @@ blocks:
     coordinate: [296, 12.0]
     rotation: 0
     state: enabled
-- name: bw
-  id: variable
+- name: freq
+  id: variable_qtgui_range
   parameters:
     comment: ''
-    value: 12e6
+    gui_hint: ''
+    label: Center Frequency
+    min_len: ''
+    orient: Qt.Horizontal
+    rangeType: float
+    start: 3.55e9
+    step: 1e6
+    stop: 3.7e9
+    value: 3.6e9
+    widget: counter_slider
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [392, 12.0]
+    coordinate: [520, 12.0]
     rotation: 0
-    state: enabled
+    state: true
 - name: gain
   id: variable_qtgui_range
   parameters:
@@ -102,7 +132,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [640, 148.0]
+    coordinate: [640, 164.0]
     rotation: 0
     state: enabled
 - name: blocks_nlog10_ff_0
@@ -120,7 +150,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [664, 212.0]
+    coordinate: [664, 228.0]
     rotation: 0
     state: enabled
 - name: blocks_stream_to_vector_0
@@ -138,7 +168,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [432, 120.0]
+    coordinate: [432, 136.0]
     rotation: 0
     state: enabled
 - name: fft_vxx_0
@@ -159,7 +189,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [424, 196.0]
+    coordinate: [424, 212.0]
     rotation: 0
     state: enabled
 - name: rx_probe
@@ -174,7 +204,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [824, 220.0]
+    coordinate: [824, 236.0]
     rotation: 0
     state: enabled
 - name: uhd_usrp_source_0
@@ -214,7 +244,7 @@ blocks:
     ant7: RX2
     ant8: RX2
     ant9: RX2
-    bw0: bw
+    bw0: bandwidth
     bw1: '0'
     bw10: '0'
     bw11: '0'
@@ -246,7 +276,7 @@ blocks:
     bw7: '0'
     bw8: '0'
     bw9: '0'
-    center_freq0: '915000000'
+    center_freq0: freq
     center_freq1: '0'
     center_freq10: '0'
     center_freq11: '0'
@@ -320,7 +350,7 @@ blocks:
     dc_offs_enb7: '""'
     dc_offs_enb8: '""'
     dc_offs_enb9: '""'
-    dev_addr: '"addr="+SDR_A_Address'
+    dev_addr: '"addr="+SDR_Address'
     dev_args: '""'
     gain0: gain
     gain1: '0'
@@ -519,7 +549,7 @@ blocks:
     rx_agc7: Default
     rx_agc8: Default
     rx_agc9: Default
-    samp_rate: bw
+    samp_rate: bandwidth
     sd_spec0: ''
     sd_spec1: ''
     sd_spec2: ''
@@ -545,7 +575,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [208, 124.0]
+    coordinate: [208, 148.0]
     rotation: 0
     state: true
 
