@@ -1,16 +1,18 @@
 # Spectrum Access System (SAS)
 ## What is this?
-This is the code for the SAS. The role of the SAS is to allow for remote and autonomous operation of the USRPs in Kelly Hall. The SAS is to adhere to WinnForum and FCC regulations on SAS operations.
+This is the code for the SAS and a client. The role of the SAS is to allow for remote and autonomous operation of the USRPs in Kelly Hall. The SAS is to adhere to WinnForum and FCC regulations on SAS operations.
 
 ## File Structure (Needs to be updated as of 01/24/2021)
-The Core/ folder contains everything required to launch the SAS Server. 
+The Core/ folder contains everything required to launch the SAS Core Server. This is the true SAS. It may have connections to N number of clients. Regardess of your institution, this contians the code that is of primary interet for SAS researchers.
 
-The corenet/ folder contains everything required to launch the CORENET SAS client. This connects to the SAS server, so ensure the sever is running before attempting to launch this.
+An example of starting up the SAS server server.py:
+```python3 server.py```
 
-WinnForum.py is currently a file with Objects used for SAS-CBSD communications as defined by the WinnFourm (plus a few extra Virginia Tech (VT) Objects for research.   
+The cornet/ folder contains everything required to launch the CORNET SAS client. This connects to the SAS server, so ensure the sever is running before attempting to launch this. If you are a Wireless@VT user with CORNET access, this is how you can connect a Kelly Hall (or any other network attached USRP) to the SAS.
 
-All three of the above files are included in socket_rx.py and socket_tx.py. These two files are the ones you want to execute. And example of executing socket_tx.py: 
-  ```./socket_tx.py -p 5000 -a "127.0.0.1" --device "192.168.40.206" --freq 915 --gain 0 --samplerate 1 --waveform "SINE" --sigamp 1```
+An example of executing the CORNET SAS client socket_to_sas.py: 
+  ```python3 socket_to_sas.py -p 5000 -a "127.0.0.1" --sim "simulations/sim_one.json"```
+*Note: On CORNET there may be environment issues with Python. Please use ```grrun python3 socket_to_sas.py -p ... -a ... --sim ...```
 
 ## Contacts
 Contact Cameron Makin at cammakin8@vt.edu for questions
