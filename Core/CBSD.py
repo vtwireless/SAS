@@ -14,14 +14,13 @@ class CBSD:
 	cbsdId : string (conditional)
 		This parameter is included if and only if the cbsdId parameter in the DeregistrationRequestobject contains a valid CBSD identity.
 		If included, the SAS shall set this parameterto the value of the cbsdIdparameter in the corresponding DeregistrationRequest object.
-
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14: ResponseObject Definition
 	"""
 	def __init__(self, id, trustLevel, fccId, name=None, longitude=None, latitude=None, IPAddress=None, \
 		minFreq=None, maxFreq=None, minSR=None, maxSR=None, type=None, mobility=False, status=None, \
 			 comment=None, cbsdSerialNumber=None, callSign=None, cbsdCategory="A", cbsdInfo="", airInterface=None, \
-				installationParam=None, measCapability=None, groupingParam=None):
+				installationParam=None, measCapability=None, groupingParam=None, fullyTrusted=False):
 		self.id = id
 		self.name = name
 		self.latitude = latitude
@@ -48,6 +47,7 @@ class CBSD:
 		self.installationParam = installationParam
 		self.measCapability = measCapability
 		self.groupingParam = groupingParam
+		self.fullyTrusted = fullyTrusted
 
 	def asdict(self):
 		return_dict = {}
@@ -103,4 +103,6 @@ class CBSD:
 			return_dict["measCapability"] = self.measCapability
 		if(self.groupingParam):
 			return_dict["groupingParam"] = self.groupingParam
+		if(self.fullyTrusted):
+			return_dict["fullyTrusted"] = self.fullyTrusted
 		return return_dict

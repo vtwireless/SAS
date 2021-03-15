@@ -308,6 +308,7 @@ def heartbeat(sid, data):
         try:
             if hb["measReport"]:
                 for rpmr in hb["measReport"]["rcvdPowerMeasReports"]:
+                    #Future TODO: check to see if frequency range already exists as a submission from specific CBSD to prevent spamming
                     mr = measReportObjectFromJSON(rpmr)#this should be an array
                     REM.measReportToSASREMObject(mr, cbsd)
         except KeyError:
