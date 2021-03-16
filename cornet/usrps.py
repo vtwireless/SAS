@@ -209,32 +209,32 @@ class TX_USRP(gr.top_block):
         """I do not believe that changing SDR_Address will cause any effect at this time"""
         self.__SDR_Address = SDR_Address
 
-    def get_freq(self):
+    def get_tx_fc(self):
         return self.__freq
 
-    def set_freq(self, freq):
+    def set_tx_fc(self, freq):
         self.__freq = freq
         self.TX_SDR.set_center_freq(self.__freq, 0)
 
-    def get_gain(self):
+    def get_tx_gain(self):
         return self.__gain
 
-    def set_gain(self, gain):
+    def set_tx_gain(self, gain):
         self.__gain = gain
         self.TX_SDR.set_gain(self.__gain, 0)
 
-    def get_bandwidth(self):
+    def get_tx_bw(self):
         return self.sample_rate
 
-    def set_bandwidth(self, bandwidth):
+    def set_tx_bw(self, bandwidth):
         self.__bandwidth = bandwidth
         self.TX_SDR.set_bandwidth(self.__bandwidth)
         self.interest_signal.set_sampling_freq(self.__bandwidth)
 
-    def get_signal_amp(self):
+    def get_tx_src_amp(self):
         return self.__signal_amp
 
-    def set_signal_amp(self, signal_amp):
+    def set_tx_src_amp(self, signal_amp):
         self.__signal_amp = signal_amp
         self.interest_signal.set_amplitude(self.__signal_amp)
 
@@ -622,16 +622,16 @@ class Node:
         # TODO: Should not have to validate these at this point
         
         if(tx_gain > 31.5):
-            print("TX Gain of '" + tx_gain + "' exceeds limit of 31.5. Setting TX Gain to maximum of 31.5")
+            print("TX Gain of '" + str(tx_gain) + "' exceeds limit of 31.5. Setting TX Gain to maximum of 31.5")
             tx_gain = 31.5
         elif(tx_gain < 0):
-            print("TX Gain of '" + tx_gain + "' is below minimum of 0. Setting TX Gain to 0 (off)")
+            print("TX Gain of '" + str(tx_gain) + "' is below minimum of 0. Setting TX Gain to 0 (off)")
             tx_gain = 0
         if(tx_src_amp > 1):
-            print("TX Signal Source Amplitude of '" + tx_src_amp + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1.")
+            print("TX Signal Source Amplitude of '" + str(tx_src_amp) + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1.")
             tx_src_amp = 1
         elif(tx_src_amp < 0):
-            print("TX Signal Source Amplitude of '" + tx_src_amp + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
+            print("TX Signal Source Amplitude of '" + str(tx_src_amp) + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
             tx_src_amp = 0 # TX OFF
 
         self.__usrp = TXRX_USRP(self.__ipAddress, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins)
@@ -709,6 +709,21 @@ class Node:
             self.__usrp.enableTx()
         else:
             print("Invalid Node/__operationMode for enableTx. No changes made.")
+
+    def updateTxParams(self, fc=None, bw=None, gain=None, signalAmp=None, waveform=None):
+        if(self.__operationMode == "TXRX" or self.__operationMode == "TX"):
+            if(fc):
+                self.__usrp.set_tx_fc(fc)
+            if(bw):
+                self.__usrp.set_tx_bw(bw)
+            if(gain):
+                self.__usrp.set_tx_gain(gain) 
+            if(signalAmp):
+                self.__usrp.set_tx_src_amp(signalAmp)
+            if(waveform and self.__operationMode == "TX"):
+                self.__usrp.set_waveform(waveform)
+        else:
+            print("Invalid Node operationMode for setRxParams command. No Node updated.")    
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
