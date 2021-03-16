@@ -916,11 +916,15 @@ def simGrantReq(requests):
 		operationParam = OperationParam(
 				_grabPossibleEntry(operationParam, "maxEirp"),
 				 FrequencyRange(
-				 		_grabPossibleEntry(freqRange, "lowFrequency"),
-				 		_grabPossibleEntry(freqRange, "highFrequency")
+				 		lowFreq := _grabPossibleEntry(freqRange, "lowFrequency"),
+				 		highFreq := _grabPossibleEntry(freqRange, "highFrequency")
 				 	)
 			)
 
+		bandwidth = int(highFrequency) - int(lowFreq)
+		cFreq = int(lowFreq) + (bandwidth/2)
+		node.updateTxParams(fc=cFreq, bw=bandwidth)
+		
 		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
 		# TODO: Further Check for vtGrantParams data
 
