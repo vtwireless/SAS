@@ -80,7 +80,7 @@ class SASAlgorithms:
         latitude = None
         radius = None
         if grant.vtGrantParams:
-            longLat = grant.vtGrantParams.location.spit(",")
+            longLat = grant.vtGrantParams.location.split(",")
             longitude = longLat[0]
             latitude = longLat[1]
             radius = 1000

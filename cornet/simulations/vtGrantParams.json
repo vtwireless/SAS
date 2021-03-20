@@ -92,7 +92,7 @@
 						"approximateByteSize" : "1024", 
 						"dataType" : "binary", 
 						"powerLevel" : "-43", 
-						"location" : "37.22630593712039, -80.43399998691122", 
+						"location" : "37.22630593712039,-80.43399998691122", 
 						"mobility" : "false",
 						"maxVelocity" : "0"
 					}
