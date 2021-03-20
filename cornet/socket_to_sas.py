@@ -921,14 +921,28 @@ def simGrantReq(requests):
 				 	)
 			)
 
+		# Update the USRP with the proposed Operation Parameters in anticiaption of a sucessful grant request
 		bandwidth = int(highFreq) - int(lowFreq)
 		cFreq = int(lowFreq) + (bandwidth/2)
+		# TODO: Update output power
 		node.updateTxParams(fc=cFreq, bw=bandwidth)
 		
+		# Read VTGrantParams from JSON and create object
 		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
-		# TODO: Further Check for vtGrantParams data
-
-		nodes_awaiting_response.append(node)
+		(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, 
+		minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
+		endTime, approximateByteSize, dataType, powerLevel, 
+		location, mobility, maxVelocity) = unpackResponseWithKeys(
+			vtGrantParams, "maxFrequency", "preferredFrequency", "frequencyAbsolute", 
+			"minBandwidth", "maxBandwidth", "preferredBandwidth", "startTime", 
+			"endTime", "approximateByteSize", "dataType", "powerLevel", 
+			"location", "mobility", "maxVelocity")
+		vtGrantParams = VTGrantParams(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, 
+		minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
+		endTime, approximateByteSize, dataType, powerLevel, 
+		location, mobility, maxVelocity)
+		
+		nodes_awaiting_response.append(node) # Add Node to list of Nodes waiting for SAS Acknowledgment 
 		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
 	return arr
 
