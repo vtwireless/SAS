@@ -80,21 +80,21 @@
 						}
 					},
 					"vtGrantParams":{
-						"minFrequency" : "temp", 
-						"maxFrequency" : "temp", 
-						"preferredFrequency" : "temp", 
-						"frequencyAbsolute" : "temp", 
-						"minBandwidth" : "temp",
-						"maxBandwidth" : "temp", 
-						"preferredBandwidth" : "temp", 
-						"startTime" : "temp", 
-						"endTime" : "temp", 
-						"approximateByteSize" : "temp", 
-						"dataType" : "temp", 
-						"powerLevel" : "temp", 
-						"location" : "temp", 
-						"mobility" : "temp",
-						"maxVelocity" : "temp"
+						"minFrequency" : "3565000000", 
+						"maxFrequency" : "3585000000", 
+						"preferredFrequency" : "3575000000", 
+						"frequencyAbsolute" : "3565000000", 
+						"minBandwidth" : "1000000",
+						"maxBandwidth" : "10000000", 
+						"preferredBandwidth" : "10000000", 
+						"startTime" : "20210420T14:15:14UTC", 
+						"endTime" : "20210420T15:15:14UTC", 
+						"approximateByteSize" : "1024", 
+						"dataType" : "binary", 
+						"powerLevel" : "-43", 
+						"location" : "37.22630593712039, -80.43399998691122", 
+						"mobility" : "false",
+						"maxVelocity" : "0"
 					}
 				}]
 			}

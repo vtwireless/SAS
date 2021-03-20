@@ -921,7 +921,7 @@ def simGrantReq(requests):
 				 	)
 			)
 
-		bandwidth = int(highFrequency) - int(lowFreq)
+		bandwidth = int(highFreq) - int(lowFreq)
 		cFreq = int(lowFreq) + (bandwidth/2)
 		node.updateTxParams(fc=cFreq, bw=bandwidth)
 		
