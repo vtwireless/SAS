@@ -369,15 +369,15 @@ class TXRX_USRP(gr.top_block):
 
     def set_tx_fc(self, fc):
         self.__tx_fc = fc
-        self.uhd_usrp_sink_0.set_center_freq(self.fc, 0)
+        self.uhd_usrp_sink_0.set_center_freq(fc, 0)
 
     def get_tx_bw(self):
         return self.bw
 
     def set_tx_bw(self, tx_bw):
         self.__tx_bw = tx_bw
-        self.uhd_usrp_sink_0.set_samp_rate(self.__tx_bw)
-        self.uhd_usrp_sink_0.set_bandwidth(self.__tx_bw, 0)
+        self.uhd_usrp_sink_0.set_samp_rate(tx_bw)
+        self.uhd_usrp_sink_0.set_bandwidth(tx_bw, 0)
 
     def get_tx_gain(self):
         return self.__tx_gain
