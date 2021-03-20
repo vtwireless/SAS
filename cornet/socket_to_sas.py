@@ -933,7 +933,7 @@ def simGrantReq(requests):
 		minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
 		endTime, approximateByteSize, dataType, powerLevel, 
 		location, mobility, maxVelocity) = unpackResponseWithKeys(
-			vtGrantParams, "maxFrequency", "preferredFrequency", "frequencyAbsolute", 
+			vtGrantParams, "minFrequency", "maxFrequency", "preferredFrequency", "frequencyAbsolute", 
 			"minBandwidth", "maxBandwidth", "preferredBandwidth", "startTime", 
 			"endTime", "approximateByteSize", "dataType", "powerLevel", 
 			"location", "mobility", "maxVelocity")
