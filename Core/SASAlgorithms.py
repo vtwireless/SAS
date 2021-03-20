@@ -81,8 +81,8 @@ class SASAlgorithms:
         radius = None
         if grant.vtGrantParams:
             longLat = grant.vtGrantParams.location.split(",")
-            longitude = longLat[0]
-            latitude = longLat[1]
+            longitude = float(longLat[0])
+            latitude = float(longLat[1])
             radius = 1000
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
         if present == 1 and not self.ignoringREM:
