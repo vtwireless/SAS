@@ -2,7 +2,7 @@
 	"0":[
 			{
 				"createNode":[{
-					"address":"192.168.40.101",
+					"address":"192.168.40.205",
 					"mode":"TXRX",
 					"tx_fc":"3565000000",
 					"tx_gain":"31.5",
@@ -17,7 +17,7 @@
 	"2":[
 			{
 				"registrationRequest":[{
-					"nodeIp":"192.168.40.101",
+					"nodeIp":"192.168.40.205",
 					"userId":"CamUserId",
 					"fccId":"FCCIDEXAMPLE123",
 					"callSign":"RANDOMCS",
@@ -60,7 +60,7 @@
 	"5":[
 			{
 				"spectrumInquiryRequest":[{
-					"nodeIp":"192.168.40.101",
+					"nodeIp":"192.168.40.205",
 					"inquiredSpectrum":[{
 						"lowFreq":"3560000000",
 						"highFreq":"3570000000"
@@ -71,36 +71,35 @@
 	"8":[
 			{
 				"grantRequest":[{
-					"nodeIp":"192.168.40.101",
+					"nodeIp":"192.168.40.205",
 					"operationParam":{
 						"maxEirp":"0",
 						"operationFrequencyRange":{
 							"lowFrequency":"3564000000",
 							"highFrequency":"3566000000"
 						}
-					},
-					"vtGrantParams":""
+					}
 				}]
 			}
 		],
 	"12":[
 			{
 			"heartbeatRequest":[{
-					"nodeIp":"192.168.40.101"
+					"nodeIp":"192.168.40.205"
 				}]
 			}
 	],
     "23":[
         {
             "relinquishmentRequest":[{
-                    "nodeIp":"192.168.40.101"
+                    "nodeIp":"192.168.40.205"
                 }]
         }
     ],
     "25":[
     	{
     		"deregistrationRequest":[{
-                    "nodeIp":"192.168.40.101"
+                    "nodeIp":"192.168.40.205"
     		}]
     	}
     ],

@@ -3,11 +3,11 @@
 			{
 				"createNode":[{
 					"mode":"TX",
-					"address":"192.168.40.101",
-					"centerFreq":"915000000",
-					"gain":"0",
-					"bandwidth":"0",
-					"signalAmp":"1",
+					"address":"192.168.40.111",
+					"tx_fc":"3900000000",
+					"tx_gain":"0",
+					"tx_bw":"0",
+					"tx_src_amp":"1",
 					"waveform":"SINE"
 				},
 				{

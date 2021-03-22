@@ -106,6 +106,8 @@ def _grabPossibleEntry(entry, key):
 		return entry[key]
 	except KeyError:
 		return None
+	except TypeError:
+		return None
 
 def findNodeAwaitingResponseByCbsdId(cbsdId):
 	"""
