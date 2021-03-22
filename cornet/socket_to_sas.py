@@ -1706,6 +1706,7 @@ def defineSocketEvents(clientio):
 def endClientExecution(clientio):
 	"""
 	Gracefully ends client execution by turning off all USRPs and exiting the program
+	TODO: Ensure to end all Timed/Running threads as well
 	"""
 	for node in created_nodes:
 		if(radio := node.getUsrp()):
