@@ -220,7 +220,7 @@ def register(sid, data):
         responseArr.append(response.asdict())
     responseDict = {"registrationResponse":responseArr}
     print(responseDict)
-    socket.emit('registrationResponse', json.dumps(responseDict))
+    socket.emit('registrationResponse', to=sid, data=json.dumps(responseDict))
     #if the radio does not get the assignment out of the meas config
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
@@ -247,7 +247,7 @@ def deregister(sid, data):
             response.response = SASAlgorithms.generateResponse(103)
         responseArr.append(response.asdict())
     responseDict = {"deregistrationResponse":responseArr}
-    socket.emit('deregistrationResponse', json.dumps(responseDict))   
+    socket.emit('deregistrationResponse', to=sid, data=json.dumps(responseDict))   
 
 @socket.on('grantRequest')
 def grantRequest(sid, data):
@@ -294,7 +294,7 @@ def grantRequest(sid, data):
             grants.append(g)
         responseArr.append(grantResponse.asdict())
     responseDict = {"grantResponse":responseArr}
-    socket.emit('grantResponse', json.dumps(responseDict))
+    socket.emit('grantResponse', to=sid, data=json.dumps(responseDict))
 
 @socket.on('heartbeatRequest')
 def heartbeat(sid, data):
@@ -346,7 +346,7 @@ def relinquishment(sid, data):
             response["response"] = generateResponse(103) 
         relinquishArr.append(response)
     responseDict = {"relinquishmentResponse":relinquishArr}
-    socket.emit('relinquishmentResponse', json.dumps(responseDict))
+    socket.emit('relinquishmentResponse', to=sid, data=json.dumps(responseDict))
 
 @socket.on('spectrumInquiryRequest')
 def spectrumInquiryRequest(sid, data):
@@ -374,7 +374,7 @@ def spectrumInquiryRequest(sid, data):
 
         inquiryArr.append(response.asdict())
     responseDict = {"spectrumInquiryResponse":inquiryArr}
-    socket.emit('spectrumInquiryResponse', json.dumps(responseDict))
+    socket.emit('spectrumInquiryResponse', to=sid, data=json.dumps(responseDict))
 
 @socket.on('changeSettings')
 def changeAlgorithm(sid, data):
@@ -409,7 +409,7 @@ def initiateSensing(lowFreq, highFreq):
             changeParams["highFrequency"] = highFreq
             changeParams["cbsdId"] = radio.cbsdId
             radio.justChangedParams = True
-            socket.emit("changeRadioParams", changeParams, room=radio.sid)
+            socket.emit("changeRadioParams", data=changeParams, room=radio.sid)
             radiosToChangeBack.append(radio)
             count = count + 1
         if count >= radioCountLimit or count > len(allRadios)/3:
@@ -517,3 +517,4 @@ if __name__ == '__main__':
     getSettings()
     threading.Timer(3.0, checkPUAlert).start()
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
+
