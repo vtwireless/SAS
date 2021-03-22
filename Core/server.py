@@ -318,7 +318,7 @@ def heartbeat(sid, data):
         grant.heartbeatInterval = response.heartbeatInterval
         hbrArray.append(response.asdict())
     responseDict = {"heartbeatResponse":hbrArray}
-    socket.emit('heartbeatResponse', json.dumps(responseDict))
+    socket.emit('heartbeatResponse', to=sid, data=json.dumps(responseDict))
 
     for g in grantArray:
         threading.Timer((response.heartbeatInterval*1.1)+2, cancelGrant, [g]).start()
@@ -447,7 +447,7 @@ def sendAssignmentToRadio(cbsd):
             changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
             changeParams["cbsdId"] = cbsd.cbsdId
             cbsd.justChangedParams = True
-            socket.emit("changeRadioParams", changeParams)
+            socket.emit("changeRadioParams", to=sid, data=changeParams)
             break
     
     threading.Timer(3.0, resetRadioStatuses, [[cbsd]]).start()
