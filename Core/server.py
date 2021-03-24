@@ -65,7 +65,7 @@ def getSettings() :
     print('GRANT: ' + SASAlgorithms.getGrantAlgorithm() + ' HB: ' + str(SASAlgorithms.getHeartbeatInterval()) + ' REM: ' + SASAlgorithms.getREMAlgorithm())
 
 def sendBroadcast(broadcastName, data):
-    socket.broadcast.emit(broadcastName, data)
+    socket.emit(broadcastName, data)
 
 #def addObjectToREM(spectrumData):
 #     obj = SASREM.SASREMObject(5, 50, "obj", 5, 3500000, 3550000, time.time() )
