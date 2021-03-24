@@ -108,6 +108,7 @@ class Simulator:
                     self.createUser("", False, 0, self.generateLat(), self.generateLon(), False, mobile)
         
     def exit(self):
+        self.socket.disconnect()
         sys.exit("Exiting Simulation")
         
     def run(self):
@@ -293,8 +294,8 @@ def defineSocketEvents(clientio):
         SAS Command to tell the socket connection to close
         """
         print('Connection to SAS terminating')
-        print("Exiting System...")
-        sys.exit()
+        # print("Exiting System...")
+        # sys.exit()
 
 def main(args):
 
