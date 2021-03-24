@@ -1,5 +1,5 @@
-import eventlet
-import socketio
+import eventlet #pip install eventlet
+import socketio #pip install socketio
 import requests
 import json
 import SASAlgorithms
@@ -383,14 +383,15 @@ def changeAlgorithm(sid, data):
 @socket.on('spectrumData')
 def spectrumData(sid, data):
     jsonData = json.loads(data)
+    print(jsonData) #TODO Remove
     cbsd = None
     try:
-        cbsd = getCBSDWithId(jsonData["cbsdId"])
+        cbsd = getCBSDWithId(jsonData["spectrumData"]["cbsdId"])
     except KeyError:
         pass
     try:
-        if jsonData["spectrumData"]:
-            for rpmr in jsonData["spectrumData"]["rcvdPowerMeasReports"]:
+        if jsonData["spectrumData"]["spectrumData"]:
+            for rpmr in jsonData["spectrumData"]["spectrumData"]["rcvdPowerMeasReports"]:
                 mr = measReportObjectFromJSON(rpmr)
                 REM.measReportToSASREMObject(mr, cbsd)
     except KeyError:
@@ -447,7 +448,7 @@ def sendAssignmentToRadio(cbsd):
             changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
             changeParams["cbsdId"] = cbsd.cbsdId
             cbsd.justChangedParams = True
-            socket.emit("changeRadioParams", to=sid, data=changeParams)
+            socket.emit("changeRadioParams", to=cbsd.sid, data=changeParams)
             break
     
     threading.Timer(3.0, resetRadioStatuses, [[cbsd]]).start()

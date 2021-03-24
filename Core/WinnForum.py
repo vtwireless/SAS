@@ -164,7 +164,7 @@ class RegistrationRequest:
 			return_dict["installationParam"] = self.installationParam.asdict()
 		if(self.measCapability):
 			return_dict["measCapability"] = self.measCapability
-		if(self.groupingParam):
+		if(self.groupingParam[0]):
 			return_dict["groupingParam"] = _toJsonDictArray(self.groupingParam)
 		if(self.cpiSignatureData):
 			return_dict["cpiSignatureData"] = self.cpiSignatureData.asdict()
