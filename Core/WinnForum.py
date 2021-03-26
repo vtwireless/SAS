@@ -640,10 +640,14 @@ class MeasReport:
 
 	def asdict(self):
 		return_dict = {}
-		if(self.measReports[0].measFrequency):
-			return_dict["rcvdPowerMeasReports"] = _toJsonDictArray(self.measReports)
-		elif(self.measReports[0].indoorLoss):
-			return_dict["indoorLossGNSSMeasReports"] = _toJsonDictArray(self.measReports)
+		try:
+			if(self.measReports[0].measFrequency):
+				return_dict["rcvdPowerMeasReports"] = _toJsonDictArray(self.measReports)
+			elif(self.measReports[0].indoorLoss):
+				return_dict["indoorLossGNSSMeasReports"] = _toJsonDictArray(self.measReports)
+		except:
+			pass
+
 		return return_dict
 
 class RcvdPowerMeasReport:

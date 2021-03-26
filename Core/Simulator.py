@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from datetime import datetime, timedelta
 from math import radians, cos, sin, asin, sqrt
 import random
@@ -5,6 +6,7 @@ import socketio
 import json
 import sys
 import time
+import threading
 from WinnForum import RegistrationRequest, InstallationParam, RcvdPowerMeasReport, MeasReport
 from argparse import ArgumentParser # If we want command line args
 
@@ -34,12 +36,14 @@ parser.add_argument('-s', '--simulation')
 sim_one = None
 
 # Helper Functions -------------------------------------------------------------------------
-def delayUntilTime(lastTime, currentTime):
+def delayUntilTime(lastTime, currentTime, socket):
 	try:
 		currentTime = int(currentTime)
 	except:
 		print("Could not convert 'time' key into an integer.")
 		return None
+    # while(True):
+    #     nowTime = time.now()
 	time.sleep(currentTime - lastTime)
 	return currentTime
 #------------------------------------------------------------------------------------------
@@ -65,7 +69,6 @@ class User:
     def handleRegistrationResponse(self, data):
         self.id = data["cbsdId"]
         
-
 class Simulator:
     def __init__(self, numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, socketObj, sim_steps):
         """
@@ -112,23 +115,26 @@ class Simulator:
         sys.exit("Exiting Simulation")
         
     def run(self):
-        lastTime = 0
+        # lastTime = 0
         for timeToExecute in self.sim_steps:
-            lastTime = delayUntilTime(lastTime, timeToExecute)
+            # lastTime = delayUntilTime(lastTime, timeToExecute, self.socket)
             for action in self.sim_steps[timeToExecute]:
-                pass # call appropoiate function
                 if(action == "createPu"):
-                    self.createPU()
+                    threading.Timer(float(timeToExecute), self.createPU).start()
+                    # self.createPU()
                 elif(action == "normalSpectrum"):
-                    self.normalSpectrum()
-        time.sleep(3)
-        self.exit()
+                    threading.Timer(float(timeToExecute), self.normalSpectrum).start()
+                    # self.normalSpectrum()
+                elif(action == "pause"):
+                    threading.Timer(float(timeToExecute), time.sleep, args=10).start()
+                    # time.sleep(10)
+                elif(action == "exit"):
+                    threading.Timer(float(timeToExecute), self.exit).start()
 
     def createUser(self, id, isMU, percentageMU, latitude, longitude, secure, isMobile):
         newUser = User("", isMU, percentageMU, latitude, longitude, secure, isMobile)
         self.users.append(newUser)
         self.socket.emit("registrationRequest", newUser.registrationRequest())
-
 
     def generateLat(self):
         lat = random.randrange(3722000,3723000)
@@ -148,7 +154,7 @@ class Simulator:
     def makeData(self, low, high):
         val = random.randrange(low*10000, high*10000)
         mult = random.randrange(8, 12)
-        return val*(mult/10)
+        return (val*(mult/10))/10000
 
     def makePUData(self):
         arr = []
@@ -157,7 +163,7 @@ class Simulator:
         return arr
 
     def createPU(self):
-        print("PU active")
+        print("PU active", flush=True)
         for user in self.users:
             if not user.isMU:
                 self.sendData(user, self.makePUData())
@@ -169,7 +175,7 @@ class Simulator:
                     self.sendData(user, self.makePUData())
 
     def normalSpectrum(self):
-        print("Normal environment")
+        print("Normal environment", flush=True)
         for user in self.users:
             if not user.isMU:
                 self.sendData(user, self.makeGoodData())
@@ -183,8 +189,10 @@ class Simulator:
     def sendData(self, user, data):
         payload = []
         freqPerReport = 10000000/self.arraySize # 625000 for arraySize=16
+        iter = 0
         for data_point in data:
-            payload.append(RcvdPowerMeasReport(measFrequency=data_point*625000,measBandwidth=freqPerReport,measRcvdPower=data_point))
+            payload.append(RcvdPowerMeasReport(measFrequency=str((iter*625000)+3550000000),measBandwidth=freqPerReport,measRcvdPower=data_point))
+            iter = iter + 1
         self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"spectrumData": MeasReport(payload).asdict()}}))
 
     def move(self):
@@ -227,6 +235,11 @@ def defineSocketEvents(clientio):
             # __blocked = False
         # else:
             # print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
+
+
+    @clientio.event
+    def puStatus(data):
+        print(data, flush=True)
 
     @clientio.event
     def spectrumInquiryResponse(data):

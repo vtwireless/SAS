@@ -10,7 +10,7 @@ class SASREM:
 
     def addREMObject(self, object):
         self.objects.append(object)
-        print(self.objects)
+        # print(self.objects)
     
     def removeREMObject(self, object):
         self.objects.remove(object)
@@ -76,7 +76,7 @@ class SASREM:
             freq = measReport.measFrequency
             band = measReport.measBandwidth
             power = measReport.measRcvdPower
-            obj = SASREMObject(cbsd.longitude, cbsd.latitude, cbsd, power, freq+band, freq, datetime.now())
+            obj = SASREMObject(cbsd.longitude, cbsd.latitude, cbsd, power, str(float(freq)+float(band)), freq, datetime.now())
             self.addREMObject(obj)
 
     def getDistance(self, centerLatitude, centerLongitude, pointLatitude, pointLongitude):

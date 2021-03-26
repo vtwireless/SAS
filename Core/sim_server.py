@@ -24,6 +24,7 @@ cbsds = [] #cbsd references
 
 
 databaseLogging = False
+isSimulating = True
 
 socket = socketio.Server()
 app = socketio.WSGIApp(socket, static_files={
@@ -139,7 +140,7 @@ def loadCBSDFromJSON(json):
     return cbsd
 
 def measReportObjectFromJSON(json):
-    return WinnForum.RcvdPowerMeasReport(json["measFrequency"], json["measBandwidth"], json["measRcvdPower"] or 0)
+    return WinnForum.RcvdPowerMeasReport(float(json["measFrequency"]), json["measBandwidth"], json["measRcvdPower"] or 0)
 
 def removeGrant(grantId, cbsdId):
     for g in grants:
@@ -164,6 +165,7 @@ def connect(sid, environ):
 @socket.event
 def my_message(sid, data):
     print('message ', data)
+    socket.emit("pong")
 
 @socket.event
 def disconnect(sid):
@@ -174,7 +176,6 @@ def disconnect(sid):
     for radio in allRadios:
         if radio.sid == sid:
             allRadios.remove(radio)
-
 
 @socket.on('registrationRequest')
 def register(sid, data):
@@ -383,7 +384,6 @@ def changeAlgorithm(sid, data):
 @socket.on('spectrumData')
 def spectrumData(sid, data):
     jsonData = json.loads(data)
-    print(jsonData) #TODO Remove
     cbsd = None
     try:
         cbsd = getCBSDWithId(jsonData["spectrumData"]["cbsdId"])
@@ -485,32 +485,47 @@ def obstructChannel(lowFreq, highFreq, latitude, longitude):
                                 break 
         threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
 
-
-
 def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams = dict()
-    changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
-    changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
+    changeParams["lowFrequency"] = lowFreq
+    changeParams["highFrequency"] = highFreq
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
     socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
 
 
-
-
 def checkPUAlert():
+    report = []
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
     blocks = freqRange/SASAlgorithms.TENMHZ
     for i in range(int(blocks)):
         low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
-        if result == 1:
-            for grant in grants:
-                if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
-                    cbsd = getCBSDWithId(grant.cbsdId)
-                    cbsd.sid.emit('pauseGrant', { 'grantId' : grant.id })
+        if(result == 1):
+            if(isSimulating):
+                # socket.emit("puStatus", data="PU FOUND")
+                report.append("PU FOUND")
+            else:
+                for grant in grants:
+                    if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
+                        cbsd = getCBSDWithId(grant.cbsdId)
+                        cbsd.sid.emit('pauseGrant', { 'grantId' : grant.id })
+        elif result == 0:
+            if(isSimulating):
+                report.append("PU NOT FOUND")
+                # socket.emit("puStatus", data="PU NOT FOUND")
+        elif(result == 2):
+            if(isSimulating):
+                report.append("NO SPECTRUM DATA")
+                # socket.emit("puStatus", data="NO SPECTRUM DATA")
     
+    
+    print(report)
+    # try:
+    #     socket.emit("puStatus", to=allClients[0],  data="report")
+    # except:
+    #     pass
     threading.Timer(1.5, checkPUAlert).start()
    
 
