@@ -397,6 +397,10 @@ def spectrumData(sid, data):
     except KeyError:
         print("rcvd power meas error")
 
+@socket.on('incumbentInformation')
+def incumbentInformation(sid, data):
+    """Funciton for PUs to send their operating data"""
+    pass # TODO
 
 def initiateSensing(lowFreq, highFreq):
     count = 0
@@ -484,7 +488,6 @@ def obstructChannel(lowFreq, highFreq, latitude, longitude):
                             #don't use more than 1/3 of the radios to check band
                                 break 
         threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
-
 
 
 def sendObstructionToRadio(cbsd, lowFreq, highFreq):

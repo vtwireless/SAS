@@ -11,7 +11,7 @@ class SASAlgorithms:
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT' #DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
         self.defaultHeartbeatInterval = 5
-        self.threshold = -30.0 #POWER THRESHOLD
+        self.threshold = 10.0 #POWER THRESHOLD
         self.longitude = -80.4 #Blacksburg location
         self.latitude = 37.2
         self.radius = 1000#Kilometers
@@ -203,8 +203,8 @@ class SASAlgorithms:
     def defaultREMAlgorith(self, remData):
         total = 0.0
         #Equal weight with threshold parameter, no location, all parameters
-        for object in remData:
-            total = total + float(object.powerLevel)
+        for data_point in remData:
+            total = total + float(data_point.powerLevel)
             
         if (total*1.0/len(remData)) > self.threshold:
             return True
@@ -215,9 +215,9 @@ class SASAlgorithms:
         #Trust scores with threshold parameter, no location, all parameters
         total = 0.0
         trustScoreThreshold = 5.0
-        for object in remData:
-            if float(object.powerLevel) > self.threshold:#if the individual power level sensed is geater than threshold
-                total = total + object.cbsd.trustScore
+        for data_point in remData:
+            if float(data_point.powerLevel) > self.threshold:#if the individual power level sensed is geater than threshold
+                total = total + data_point.cbsd.trustScore
         if (total*1.0/len(remData)) > trustScoreThreshold:
             return True
         else:
@@ -228,9 +228,9 @@ class SASAlgorithms:
         count = 0
         total = 0.0
         trustCutoff = 7.0 #don't count if less than score
-        for object in remData:
-            if object.cbsd.trustScore > trustCutoff:
-                total = total + float(object.powerLevel)
+        for data_point in remData:
+            if data_point.cbsd.trustScore > trustCutoff:
+                total = total + float(data_point.powerLevel)
                 count = count + 1
         if (total*1.0/count) > self.threshold:
             return True
