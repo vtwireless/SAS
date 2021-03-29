@@ -11,7 +11,7 @@ from WinnForum import RegistrationRequest, InstallationParam, RcvdPowerMeasRepor
 from argparse import ArgumentParser # If we want command line args
 
 
-# Parser extracts command line flags/parameters  
+# Parser extracts command line flags/parameters
 parser = ArgumentParser(description='Testbench-to-SAS Client Script - Provide a server address and port in order to connect to the SAS.')
 
 # Socket Params----------------------------------------------------------------------------
@@ -68,13 +68,13 @@ class User:
 
     def handleRegistrationResponse(self, data):
         self.id = data["cbsdId"]
-        
+
 class Simulator:
     def __init__(self, numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, socketObj, sim_steps):
         """
         numberOfUsers (int) - how many users will be connecting to the SAS
         percentageMU (int [0,100]) - what percent chance of a user will be malicious
-        varianceOfData - 
+        varianceOfData -
         percentageMobile - (does this include MUs?)
         secureCount - 
         """
@@ -109,30 +109,30 @@ class Simulator:
                     sc = sc + 1 # Right?
                 else:#regular node
                     self.createUser("", False, 0, self.generateLat(), self.generateLon(), False, mobile)
-        
+
     def exit(self):
+        """Exits Simulation"""
         self.socket.disconnect()
         sys.exit("Exiting Simulation")
-        
+
     def run(self):
-        # lastTime = 0
+        """Queues up each simulation step in a delayed thread"""
         for timeToExecute in self.sim_steps:
-            # lastTime = delayUntilTime(lastTime, timeToExecute, self.socket)
             for action in self.sim_steps[timeToExecute]:
                 if(action == "createPu"):
-                    threading.Timer(float(timeToExecute), self.createPU).start()
+                    threading.Timer(float(timeToExecute)+0.01, self.createPU).start()
                     # self.createPU()
                 elif(action == "normalSpectrum"):
-                    threading.Timer(float(timeToExecute), self.normalSpectrum).start()
+                    threading.Timer(float(timeToExecute)+0.1, self.normalSpectrum).start()
                     # self.normalSpectrum()
-                elif(action == "pause"):
-                    threading.Timer(float(timeToExecute), time.sleep, args=10).start()
-                    # time.sleep(10)
+                # elif(action == "pause"):
+                #     threading.Timer(float(timeToExecute), time.sleep, args=[10]).start()
+                #     # time.sleep(10)
                 elif(action == "exit"):
-                    threading.Timer(float(timeToExecute), self.exit).start()
+                    threading.Timer(float(timeToExecute)+0.001, self.exit).start()
 
     def createUser(self, id, isMU, percentageMU, latitude, longitude, secure, isMobile):
-        newUser = User("", isMU, percentageMU, latitude, longitude, secure, isMobile)
+        newUser = User(id, isMU, percentageMU, latitude, longitude, secure, isMobile)
         self.users.append(newUser)
         self.socket.emit("registrationRequest", newUser.registrationRequest())
 
@@ -163,7 +163,7 @@ class Simulator:
         return arr
 
     def createPU(self):
-        print("PU active", flush=True)
+        print("PU active")
         for user in self.users:
             if not user.isMU:
                 self.sendData(user, self.makePUData())
@@ -175,7 +175,7 @@ class Simulator:
                     self.sendData(user, self.makePUData())
 
     def normalSpectrum(self):
-        print("Normal environment", flush=True)
+        print("Normal environment")
         for user in self.users:
             if not user.isMU:
                 self.sendData(user, self.makeGoodData())
@@ -235,7 +235,6 @@ def defineSocketEvents(clientio):
             # __blocked = False
         # else:
             # print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
-
 
     @clientio.event
     def puStatus(data):
