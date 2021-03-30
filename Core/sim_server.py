@@ -163,11 +163,6 @@ def connect(sid, environ):
     allClients.append(sid)
 
 @socket.event
-def my_message(sid, data):
-    print('message ', data)
-    socket.emit("pong")
-
-@socket.event
 def disconnect(sid):
     print('disconnect ', sid)
     allClients.remove(sid)

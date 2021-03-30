@@ -8,11 +8,14 @@ import random
 import socketio
 import json
 import sys
+import csv
 import time
 import threading
 from WinnForum import RegistrationRequest, InstallationParam, RcvdPowerMeasReport, MeasReport
 from argparse import ArgumentParser # If we want command line args
 
+#global flags
+printToCSV = False
 
 # Parser extracts command line flags/parameters
 parser = ArgumentParser(description='Testbench-to-SAS Client Script - Provide a server address and port in order to connect to the SAS.')
@@ -27,12 +30,15 @@ parser.add_argument('-p','--port',\
 #------------------------------------------------------------------------------------------
 
 # Simulation Args --------------------------------------------------------------------------
-parser.add_argument('--numberOfUsers',default=10)
-parser.add_argument('--percentageMU',default=15)
+parser.add_argument('--numberOfUsers',default=1)
+parser.add_argument('--percentageMU',default=0)
 parser.add_argument('--varianceOfData',default=5)
-parser.add_argument('--percentageMobile',default=10)
-parser.add_argument('--secureCount',default=1)
-parser.add_argument('-s', '--simulation')
+parser.add_argument('--percentageMobile',default=0)
+parser.add_argument('--secureCount',default=0)
+parser.add_argument('-s', '--simulation', default=None)
+parser.add_argument('-l', '--looping_path', default=None)
+parser.add_argument('--printToCSV', action='store_true')
+
 #------------------------------------------------------------------------------------------
 
 # Create a Global accessor for each Simulation
@@ -191,12 +197,23 @@ class Simulator:
 
     def sendData(self, user, data):
         payload = []
+        report = {}
         freqPerReport = 10000000/self.arraySize # 625000 for arraySize=16
         iter = 0
         for data_point in data:
             payload.append(RcvdPowerMeasReport(measFrequency=str((iter*625000)+3550000000),measBandwidth=freqPerReport,measRcvdPower=data_point))
+            if(printToCSV):
+                report[str((iter*625000)+3550000000)] = data_point
             iter = iter + 1
         self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"spectrumData": MeasReport(payload).asdict()}}))
+
+       # Global flag to print emitted data to a CSV 
+        if(printToCSV):
+            with open('reports/output.csv', 'w') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                for data in report:
+                    csvwriter.writerow([data, report[data]])
+
 
     def move(self):
         for user in self.users:
@@ -314,30 +331,58 @@ def defineSocketEvents(clientio):
 
 def main(args):
 
-    # Load Simulation steps from file
-    path = args['simulation']
-    try:
-        with open(path) as config:
-            sim_steps = json.load(config)
-    except:
-        sys.exit("Fatal Error: No valid simulation file found at "+str(path)+"\nExiting program...")
+    # Connect to SAS Server
+    # clientio = socketio.Client()  # Create Client Socket
+    # defineSocketEvents(clientio)  # Define handlers for events the SAS may emit
+    # socket_addr = 'http://' + args['address'] +':' + args['port']
+    # clientio.connect(socket_addr) # Connect to SAS
 
-    clientio = socketio.Client()  # Create Client Socket
-    defineSocketEvents(clientio)  # Define handlers for events the SAS may emit
-    socket_addr = 'http://' + args['address'] +':' + args['port']
-    clientio.connect(socket_addr) # Connect to SAS
 
-    # Pulls values for Simulation from commandline
-    # Top of this script allows you to set default values for these
-    numberOfUsers = int(args['numberOfUsers'])
-    percentageMU = float(args['percentageMU'])
-    varianceOfData = float(args['varianceOfData'])
-    percentageMobile = float(args['percentageMobile'])
-    secureCount = float(args['secureCount']) # or int?
-
+    looping_path        = args['looping_path']  # Load looping steps
+    path                = args['simulation']    # Load Simulation steps from file
+    if(path and looping_path):
+        sys.exit("ERROR: Cannot load Simulation and Looping file at same time...")
+    
     global sim_one
-    sim_one = Simulator(numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
-    sim_one.run()
+    if(path):   # If path is provided, that means to run 1 simulation
+        try:
+            with open(path) as config:
+                sim_steps = json.load(config)
+        except:
+            sys.exit("Fatal Error: No valid simulation file found at "+str(path)+"\nExiting program...")
+        
+        # Pull any commandline args
+        numberOfUsers       = int(args['numberOfUsers'])
+        percentageMU        = float(args['percentageMU'])
+        varianceOfData      = float(args['varianceOfData'])
+        percentageMobile    = float(args['percentageMobile'])
+        secureCount         = float(args['secureCount'])
+        printToCSV          = bool(args['printToCSV'])
+
+        sim_one = Simulator(numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
+        sim_one.run()
+
+    elif(looping_path): # If looping path is provided, then run multiple simulations
+        try:
+            with open(looping_path) as looping_file:
+                looping_data = json.load(looping_file)
+        except:
+            sys.exit("Fatal Error: No valid file found at "+str(looping_path)+"\nExiting program...")
+        for entry in looping_data[""]:
+            numberOfUsers    = float(entry["numberOfUsers"])
+            percentageMU     = float(entry["percentageMU"])
+            varianceOfData   = float(entry["varianceOfData"])
+            percentageMobile = float(entry["percentageMobile"])
+            secureCount      = float(entry["secureCount"])
+            sim_path         = (entry["sim_steps"])
+            try:
+                with open(sim_path) as config:
+                    sim_steps = json.load(config)
+            except:
+                sys.exit("Fatal Error: No valid simulation file found at "+str(sim_path)+"\nExiting program...")
+            sim_one = Simulator(numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
+            for x in range(int(entry["loop_count"])):
+                sim_one.run()
 
     # Insert graceful exit implementation
     return 0

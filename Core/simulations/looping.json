@@ -1,0 +1,22 @@
+{
+    "": [
+            {
+                "loop_count": 2,
+                "numberOfUsers": 10,
+                "percentageMU": 0,
+                "varianceOfData": 0,
+                "percentageMobile": 0,
+                "secureCount": 0,
+                "sim_steps": "simulations/sim_one.json"
+            },
+            {
+                "loop_count": 1,
+                "numberOfUsers": 10,
+                "percentageMU": 100,
+                "varianceOfData": 0,
+                "percentageMobile": 0,
+                "secureCount": 0,
+                "sim_steps": "simulations/sim_one.json"
+            }
+    ]
+}
