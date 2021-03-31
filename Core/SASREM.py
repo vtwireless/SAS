@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from math import radians, cos, sin, asin, sqrt
 
 class SASREM:
+    """SASREM"""
     def __init__(self):
         self.nodes = []
         self.objects = []
@@ -41,14 +42,29 @@ class SASREM:
     def getSpectrumDataWithParameters(self, longitude, latitude, highFrequency, lowFrequency, radius):
         objectsToSend = []
         for object in self.objects:
-            if not object.longitude and not object.longitude:
+            overlapping = self.frequencyOverlap(float(object.lowFrequency), float(object.highFrequency), float(lowFrequency), float(highFrequency))
+            if not object.longitude and not object.longitude and overlapping:
                 objectsToSend.append(object)
-            elif self.isWithinRegion(latitude, longitude, radius, object.latitude, object.longitude):
+            elif self.isWithinRegion(latitude, longitude, radius, object.latitude, object.longitude) and overlapping:
                 objectsToSend.append(object)
             if object.timeStamp < (datetime.now() - timedelta(seconds = self.secondsAgo)):
                 self.objects.remove(object)
 
         return objectsToSend
+
+
+    def frequencyOverlap(self, freqa, freqb, rangea, rangeb):
+        """Checks to see if freq is within range"""
+        if (freqa <= rangea and freqb >= rangea):
+            return True
+        elif (freqa >= rangea and freqb <= rangeb):
+            return True
+        elif (freqa <= rangeb and freqb >= rangeb):
+            return True
+        elif (freqa <= rangea and freqb >= rangeb):
+            return True
+        else:
+            return False
 
 
 
@@ -103,10 +119,6 @@ class SASREM:
                         cbsdToReturn = cbsd
                         minDist = dist
         return cbsdToReturn
-
-
-
-
 
 
 class SASREMObject:

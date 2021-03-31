@@ -30,19 +30,14 @@ parser.add_argument('-p','--port',\
 #------------------------------------------------------------------------------------------
 
 # Simulation Args --------------------------------------------------------------------------
-parser.add_argument('--numberOfUsers',default=1)
-parser.add_argument('--percentageMU',default=0)
-parser.add_argument('--varianceOfData',default=5)
-parser.add_argument('--percentageMobile',default=0)
-parser.add_argument('--secureCount',default=0)
-parser.add_argument('-s', '--simulation', default=None)
-parser.add_argument('-l', '--looping_path', default=None)
+parser.add_argument('-s', '--simulation', help="Relative path to simulation file", default=None)
 parser.add_argument('--printToCSV', action='store_true')
 
 #------------------------------------------------------------------------------------------
 
 # Create a Global accessor for each Simulation
 sim_one = None
+timeDifferenceBetweenServerAndSimClient = 0
 
 # Helper Functions -------------------------------------------------------------------------
 def delayUntilTime(lastTime, currentTime, socket):
@@ -100,6 +95,7 @@ class Simulator:
         self.secureCount = secureCount
         self.socket = socketObj
         self.sim_steps = sim_steps
+        self.activePUCount = 0
 
         #assumes this is for one channel
 
@@ -126,7 +122,10 @@ class Simulator:
 
     def run(self):
         """Queues up each simulation step in a delayed thread"""
+        waitForSim = 0
+        print("STARTING A SIM")
         for timeToExecute in self.sim_steps:
+            waitForSim = int(timeToExecute)
             for action in self.sim_steps[timeToExecute]:
                 if(action == "createPu"):
                     threading.Timer(float(timeToExecute)+0.01, self.createPU).start()
@@ -139,6 +138,8 @@ class Simulator:
                 #     # time.sleep(10)
                 elif(action == "exit"):
                     threading.Timer(float(timeToExecute)+0.001, self.exit).start()
+        time.sleep(waitForSim)
+        self.socket.emit("printPuDetections") # At end of test run, print server findings
 
     def createUser(self, id, isMU, percentageMU, latitude, longitude, secure, isMobile):
         newUser = User(id, isMU, percentageMU, latitude, longitude, secure, isMobile)
@@ -173,15 +174,17 @@ class Simulator:
 
     def createPU(self):
         print("PU active")
+        self.activePUCount = self.activePUCount + 1
         for user in self.users:
             if not user.isMU:
-                self.sendData(user, self.makePUData())
+                self.sendData(user, self.makePUData(), isPuData=True)
             else:
                 x = random.randrange(0,100)
                 if x < user.percentageMU:#if user is malicious send malicious
-                    self.sendData(user, self.makeGoodData())
+                    self.sendData(user, self.makeGoodData(), isPuData=True)
                 else:
-                    self.sendData(user, self.makePUData())
+                    self.sendData(user, self.makePUData(), isPuData=True)
+        
 
     def normalSpectrum(self):
         print("Normal environment")
@@ -195,7 +198,7 @@ class Simulator:
                 else:
                     self.sendData(user, self.makeGoodData())
 
-    def sendData(self, user, data):
+    def sendData(self, user, data, isPuData=False):
         payload = []
         report = {}
         freqPerReport = 10000000/self.arraySize # 625000 for arraySize=16
@@ -205,15 +208,21 @@ class Simulator:
             if(printToCSV):
                 report[str((iter*625000)+3550000000)] = data_point
             iter = iter + 1
-        self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"spectrumData": MeasReport(payload).asdict()}}))
+        
+        self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"latitude":user.latitude, "longitude":user.longitude, "spectrumData": MeasReport(payload).asdict()}}))
+        self.socket.emit("checkPUAlert")
+        if(isPuData):
+            print("Adding PU at time: "+str(float("{:0.3f}".format(time.time()))))
 
        # Global flag to print emitted data to a CSV 
         if(printToCSV):
-            with open('reports/output.csv', 'w') as csvfile:
+            with open('reports/output.csv', 'w', newline='') as csvfile:
                 csvwriter = csv.writer(csvfile)
                 for data in report:
                     csvwriter.writerow([data, report[data]])
 
+        # with open('student.json','w') as student_dumped :
+        #     json.dump(student,student_dumped)
 
     def move(self):
         for user in self.users:
@@ -221,6 +230,15 @@ class Simulator:
                 user.latitude = self.generateLat()
                 user.longitude = self.generateLon()
 
+def calculateTimeDifference(data):
+    payload = json.loads(data)
+    if(serverTime := payload["serverCurrentTime"]):
+        global timeDifferenceBetweenServerAndSimClient
+        simtime = time.time()
+        timeDifferenceBetweenServerAndSimClient = simtime-float(serverTime)
+    print("Server: " + str(serverTime))
+    print("Simulation: " + str(simtime))
+    print("Difference: " + str(timeDifferenceBetweenServerAndSimClient))
 
 def handleRegistrationResponse(clientio, data):
     payload = json.loads(data)
@@ -259,66 +277,72 @@ def defineSocketEvents(clientio):
     @clientio.event
     def puStatus(data):
         print(data, flush=True)
-
+    
     @clientio.event
-    def spectrumInquiryResponse(data):
-        if(nodes_awaiting_response):
-            handleSpectrumInquiryResponse(clientio, data)
-            global __blocked
-            __blocked = False
-        else:
-            print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
+    def latencyTest(data):
+        calculateTimeDifference(data)
 
-    @clientio.event
-    def grantResponse(data):
-        if(nodes_awaiting_response):
-            handleGrantResponse(clientio, data)
-            global __blocked
-            __blocked = False
-        else:
-            print("No Nodes are awaiting a SAS response. Ignoring Grant Response from SAS.")
+    def hideComments():
+        pass
+        # @clientio.event
+        # def spectrumInquiryResponse(data):
+        #     if(nodes_awaiting_response):
+        #         handleSpectrumInquiryResponse(clientio, data)
+        #         global __blocked
+        #         __blocked = False
+        #     else:
+        #         print("No Nodes are awaiting a SAS response. Ignoring Spectrum Inquiry Response from SAS.")
 
-    @clientio.event
-    def heartbeatResponse( data):
-        if(nodes_awaiting_response):
-            handleHeartbeatResponse(clientio, data)
-            global __blocked
-            __blocked = False
-        else:
-            print("No Nodes are awaiting a SAS response. Ignoring Heartbeat Response from SAS.")
+        # @clientio.event
+        # def grantResponse(data):
+        #     if(nodes_awaiting_response):
+        #         handleGrantResponse(clientio, data)
+        #         global __blocked
+        #         __blocked = False
+        #     else:
+        #         print("No Nodes are awaiting a SAS response. Ignoring Grant Response from SAS.")
 
-    @clientio.event
-    def relinquishmentResponse(data):
-        if(nodes_awaiting_response):		
-            handleRelinquishmentResponse(clientio, data)
-            global __blocked
-            __blocked = False
-        else:
-            print("No Nodes are awaiting a SAS response. Ignoring Relinquishment  Response from SAS.")
+        # @clientio.event
+        # def heartbeatResponse( data):
+        #     if(nodes_awaiting_response):
+        #         handleHeartbeatResponse(clientio, data)
+        #         global __blocked
+        #         __blocked = False
+        #     else:
+        #         print("No Nodes are awaiting a SAS response. Ignoring Heartbeat Response from SAS.")
 
-    @clientio.event
-    def deregistrationResponse(data):
-        if(nodes_awaiting_response):
-            handleDeregistrationResponse(clientio, data)
-            global __blocked
-            __blocked = False
-        else:
-            print("No Nodes are awaiting a SAS response. Ignoring Deregistration Response from SAS.")
-    # end official WinnForum functions
+        # @clientio.event
+        # def relinquishmentResponse(data):
+        #     if(nodes_awaiting_response):		
+        #         handleRelinquishmentResponse(clientio, data)
+        #         global __blocked
+        #         __blocked = False
+        #     else:
+        #         print("No Nodes are awaiting a SAS response. Ignoring Relinquishment  Response from SAS.")
 
-    @clientio.event
-    def changeRadioParams(data):
-        """
-        SAS command to change RX Parameters for a Node with a cbsdId.
-        Calls 'updateRxParams(data)'
+        # @clientio.event
+        # def deregistrationResponse(data):
+        #     if(nodes_awaiting_response):
+        #         handleDeregistrationResponse(clientio, data)
+        #         global __blocked
+        #         __blocked = False
+        #     else:
+        #         print("No Nodes are awaiting a SAS response. Ignoring Deregistration Response from SAS.")
+        # # end official WinnForum functions
 
-        Parameters
-        ----------
-        data : dictonary
-            Expected keys are cbsdId, highFreq, and lowFreq
-        """
-		# updateRxParams(data)
-        pass # TODO
+        # @clientio.event
+        # def changeRadioParams(data):
+        #     """
+        #     SAS command to change RX Parameters for a Node with a cbsdId.
+        #     Calls 'updateRxParams(data)'
+
+        #     Parameters
+        #     ----------
+        #     data : dictonary
+        #         Expected keys are cbsdId, highFreq, and lowFreq
+        #     """
+        # 	# updateRxParams(data)
+        #     pass # TODO
 
     @clientio.event
     def disconnect():
@@ -332,57 +356,43 @@ def defineSocketEvents(clientio):
 def main(args):
 
     # Connect to SAS Server
-    # clientio = socketio.Client()  # Create Client Socket
-    # defineSocketEvents(clientio)  # Define handlers for events the SAS may emit
-    # socket_addr = 'http://' + args['address'] +':' + args['port']
-    # clientio.connect(socket_addr) # Connect to SAS
+    clientio = socketio.Client()  # Create Client Socket
+    defineSocketEvents(clientio)  # Define handlers for events the SAS may emit
+    socket_addr = 'http://' + args['address'] +':' + args['port']
+    clientio.connect(socket_addr) # Connect to SAS
 
+    clientio.emit("latencyTest")
 
-    looping_path        = args['looping_path']  # Load looping steps
+    # Get CLI Args
+    printToCSV          = bool(args['printToCSV'])
     path                = args['simulation']    # Load Simulation steps from file
-    if(path and looping_path):
-        sys.exit("ERROR: Cannot load Simulation and Looping file at same time...")
     
     global sim_one
-    if(path):   # If path is provided, that means to run 1 simulation
+    if(path): # If looping path is provided, then run multiple simulations
         try:
             with open(path) as config:
-                sim_steps = json.load(config)
+                sim_data = json.load(config)
         except:
-            sys.exit("Fatal Error: No valid simulation file found at "+str(path)+"\nExiting program...")
-        
-        # Pull any commandline args
-        numberOfUsers       = int(args['numberOfUsers'])
-        percentageMU        = float(args['percentageMU'])
-        varianceOfData      = float(args['varianceOfData'])
-        percentageMobile    = float(args['percentageMobile'])
-        secureCount         = float(args['secureCount'])
-        printToCSV          = bool(args['printToCSV'])
-
-        sim_one = Simulator(numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
-        sim_one.run()
-
-    elif(looping_path): # If looping path is provided, then run multiple simulations
-        try:
-            with open(looping_path) as looping_file:
-                looping_data = json.load(looping_file)
-        except:
-            sys.exit("Fatal Error: No valid file found at "+str(looping_path)+"\nExiting program...")
-        for entry in looping_data[""]:
-            numberOfUsers    = float(entry["numberOfUsers"])
+            sys.exit("Fatal Error: No valid file found at "+str(path)+"\nExiting program...")
+        for entry in sim_data[""]:
+            numberOfUsers    = int(entry["numberOfUsers"])
             percentageMU     = float(entry["percentageMU"])
             varianceOfData   = float(entry["varianceOfData"])
             percentageMobile = float(entry["percentageMobile"])
-            secureCount      = float(entry["secureCount"])
-            sim_path         = (entry["sim_steps"])
+            secureCount      = int(entry["secureCount"])
+            sim_path         = entry["sim_steps"]
             try:
                 with open(sim_path) as config:
                     sim_steps = json.load(config)
             except:
                 sys.exit("Fatal Error: No valid simulation file found at "+str(sim_path)+"\nExiting program...")
             sim_one = Simulator(numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
-            for x in range(int(entry["loop_count"])):
+            for _ in range(int(entry["loop_count"])):
                 sim_one.run()
+                print("PU COUNT: " + str(sim_one.activePUCount))
+        sim_one.exit()
+    else:
+        sys.exit("CLI Argument '--simulation' is required")
 
     # Insert graceful exit implementation
     return 0

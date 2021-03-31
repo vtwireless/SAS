@@ -25,6 +25,7 @@ cbsds = [] #cbsd references
 
 databaseLogging = False
 isSimulating = True
+puDetections = {}
 
 socket = socketio.Server()
 app = socketio.WSGIApp(socket, static_files={
@@ -385,13 +386,30 @@ def spectrumData(sid, data):
     except KeyError:
         pass
     try:
-        if jsonData["spectrumData"]["spectrumData"]:
-            for rpmr in jsonData["spectrumData"]["spectrumData"]["rcvdPowerMeasReports"]:
+        deviceInfo=jsonData["spectrumData"]
+        cbsd.latitude = deviceInfo["latitude"]
+        cbsd.longitude = deviceInfo["longitude"]
+        if(deviceInfo["spectrumData"]):
+            for rpmr in deviceInfo["spectrumData"]["rcvdPowerMeasReports"]:
                 mr = measReportObjectFromJSON(rpmr)
                 REM.measReportToSASREMObject(mr, cbsd)
-    except KeyError:
-        print("rcvd power meas error")
+    except KeyError as ke:
+        print("rcvd power meas error: ")
+        print(ke)
 
+@socket.on("latencyTest")
+def sendCurrentTime(sid):
+    """Sends the simulation client the current server time. Used to calulcated latency."""
+    responseDict = {"serverCurrentTime":time.time()}
+    socket.emit('latencyTest', to=sid, data=json.dumps(responseDict))
+
+@socket.on("checkPUAlert")
+def sendSimPuDetection(sid):
+    checkPUAlert()
+
+@socket.on("printPuDetections")
+def printPuDetections(sid):
+    print(puDetections)
 
 def initiateSensing(lowFreq, highFreq):
     count = 0
@@ -423,7 +441,6 @@ def cancelGrant(grant):
     if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now:
         removeGrant(grant.id, grant.cbsdId)
         print('grant ' + grant.id + ' canceled')
-
 
 def sendAssignmentToRadio(cbsd):
     print("a sensing radio has joined")
@@ -491,6 +508,7 @@ def sendObstructionToRadio(cbsd, lowFreq, highFreq):
 
 def checkPUAlert():
     report = []
+    global puDetections
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
     blocks = freqRange/SASAlgorithms.TENMHZ
     for i in range(int(blocks)):
@@ -499,8 +517,8 @@ def checkPUAlert():
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
         if(result == 1):
             if(isSimulating):
-                # socket.emit("puStatus", data="PU FOUND")
                 report.append("PU FOUND")
+                puDetections[str(float("{:0.3f}".format(time.time())))] = {"lowFreq: ":low,"highFreq":high}
             else:
                 for grant in grants:
                     if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
@@ -516,16 +534,19 @@ def checkPUAlert():
                 # socket.emit("puStatus", data="NO SPECTRUM DATA")
     
     
-    print(report)
-    # try:
-    #     socket.emit("puStatus", to=allClients[0],  data="report")
-    # except:
-    #     pass
-    threading.Timer(1.5, checkPUAlert).start()
+    if(isSimulating):
+        print(report)
+        # try:
+        #     socket.emit("puStatus", to=allClients[0],  data="report")
+        # except:
+        #     pass
+    else:
+        threading.Timer(1, checkPUAlert).start()
    
 
 if __name__ == '__main__':
     getSettings()
-    threading.Timer(3.0, checkPUAlert).start()
+    if(not isSimulating):
+        threading.Timer(3.0, checkPUAlert).start()
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
 

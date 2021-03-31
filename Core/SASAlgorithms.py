@@ -188,7 +188,7 @@ class SASAlgorithms:
         return params.operationFrequencyRange.lowFrequency
 
     def frequencyOverlap(self, freqa, freqb, rangea, rangeb):
-        if (freqa <= rangea and freqb <= rangeb):
+        if (freqa <= rangea and freqb >= rangea):
             return True
         elif (freqa >= rangea and freqb <= rangeb):
             return True
