@@ -53,10 +53,10 @@ def delayUntilTime(lastTime, currentTime, socket):
 #------------------------------------------------------------------------------------------
 
 class User:
-    def __init__(self, id, isMU, percentageMU, latitude, longitude, secure, isMobile=False):
+    def __init__(self, id, isMU, percentageMUActive, latitude, longitude, secure, isMobile=False):
         self.id = id
         self.isMU = isMU
-        self.percentageMU = percentageMU
+        self.percentageMUActive = percentageMUActive
         self.latitude = latitude
         self.longitude = longitude
         self.secure = secure
@@ -74,7 +74,7 @@ class User:
         self.id = data["cbsdId"]
 
 class Simulator:
-    def __init__(self, numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, socketObj, sim_steps):
+    def __init__(self, numberOfUsers, percentageMU, percentMUActive, varianceOfData, percentageMobile, secureCount, socketObj, sim_steps):
         """
         numberOfUsers (int) - how many users will be connecting to the SAS
         percentageMU (int [0,100]) - what percent chance of a user will be malicious
@@ -91,11 +91,13 @@ class Simulator:
         self.PUHigh = 40
         self.arraySize = 16
         self.percentageMU = percentageMU
+        self.percentageMUActive = percentMUActive
         self.percentageMobile = percentageMobile
         self.secureCount = secureCount
         self.socket = socketObj
         self.sim_steps = sim_steps
         self.activePUCount = 0
+        self.reportId = 0
 
         #assumes this is for one channel
 
@@ -107,7 +109,7 @@ class Simulator:
             else:
                 mobile = False
             if x < numberMU:#malicious node
-                self.createUser("", True, self.percentageMU, self.generateLat(), self.generateLon(), False, mobile)
+                self.createUser("", True, self.percentageMUActive, self.generateLat(), self.generateLon(), False, mobile)
             else:
                 if sc < self.secureCount:#is secure
                     self.createUser("", False, 0, self.generateLat(), self.generateLon(), True, False)
@@ -125,7 +127,7 @@ class Simulator:
         waitForSim = 0
         print("STARTING A SIM")
         for timeToExecute in self.sim_steps:
-            waitForSim = int(timeToExecute)
+            waitForSim = float(timeToExecute)
             for action in self.sim_steps[timeToExecute]:
                 if(action == "createPu"):
                     threading.Timer(float(timeToExecute)+0.01, self.createPU).start()
@@ -141,8 +143,8 @@ class Simulator:
         time.sleep(waitForSim)
         self.socket.emit("printPuDetections") # At end of test run, print server findings
 
-    def createUser(self, id, isMU, percentageMU, latitude, longitude, secure, isMobile):
-        newUser = User(id, isMU, percentageMU, latitude, longitude, secure, isMobile)
+    def createUser(self, id, isMU, percentageMUActive, latitude, longitude, secure, isMobile):
+        newUser = User(id, isMU, percentageMUActive, latitude, longitude, secure, isMobile)
         self.users.append(newUser)
         self.socket.emit("registrationRequest", newUser.registrationRequest())
 
@@ -180,7 +182,7 @@ class Simulator:
                 self.sendData(user, self.makePUData(), isPuData=True)
             else:
                 x = random.randrange(0,100)
-                if x < user.percentageMU:#if user is malicious send malicious
+                if x <= user.percentageMUActive:#if user is malicious send malicious
                     self.sendData(user, self.makeGoodData(), isPuData=True)
                 else:
                     self.sendData(user, self.makePUData(), isPuData=True)
@@ -193,7 +195,7 @@ class Simulator:
                 self.sendData(user, self.makeGoodData())
             else:
                 x = random.randrange(0,100)
-                if x < user.percentageMU:#if user is malicious send malicious
+                if x <= user.percentageMUActive:#if user is malicious send malicious
                     self.sendData(user, self.makePUData())
                 else:
                     self.sendData(user, self.makeGoodData())
@@ -204,15 +206,17 @@ class Simulator:
         freqPerReport = 10000000/self.arraySize # 625000 for arraySize=16
         iter = 0
         for data_point in data:
-            payload.append(RcvdPowerMeasReport(measFrequency=str((iter*625000)+3550000000),measBandwidth=freqPerReport,measRcvdPower=data_point))
+            payload.append(RcvdPowerMeasReport(measFrequency=str((iter*624999)+3550000000),measBandwidth=freqPerReport,measRcvdPower=data_point))
             if(printToCSV):
                 report[str((iter*625000)+3550000000)] = data_point
             iter = iter + 1
         
         self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"latitude":user.latitude, "longitude":user.longitude, "spectrumData": MeasReport(payload).asdict()}}))
-        self.socket.emit("checkPUAlert")
+        self.socket.emit("simCheckPUAlert", json.dumps({"reportId":str(self.reportId)}))
         if(isPuData):
-            print("Adding PU at time: "+str(float("{:0.3f}".format(time.time()))))
+            formattedTime = str(float("{:0.3f}".format(time.time())))
+            print("ReportID: "+str(self.reportId)+" - Adding PU at time: "+ formattedTime)
+        self.reportId = self.reportId + 1
 
        # Global flag to print emitted data to a CSV 
         if(printToCSV):
@@ -220,7 +224,15 @@ class Simulator:
                 csvwriter = csv.writer(csvfile)
                 for data in report:
                     csvwriter.writerow([data, report[data]])
-
+        # In a header, print how many users there are in this entire run (N)
+        # each entry 
+        #{  
+        #"n":{
+        #       
+        #
+        #
+        #
+        #
         # with open('student.json','w') as student_dumped :
         #     json.dump(student,student_dumped)
 
@@ -366,7 +378,7 @@ def main(args):
     # Get CLI Args
     printToCSV          = bool(args['printToCSV'])
     path                = args['simulation']    # Load Simulation steps from file
-    
+
     global sim_one
     if(path): # If looping path is provided, then run multiple simulations
         try:
@@ -375,18 +387,19 @@ def main(args):
         except:
             sys.exit("Fatal Error: No valid file found at "+str(path)+"\nExiting program...")
         for entry in sim_data[""]:
-            numberOfUsers    = int(entry["numberOfUsers"])
-            percentageMU     = float(entry["percentageMU"])
-            varianceOfData   = float(entry["varianceOfData"])
-            percentageMobile = float(entry["percentageMobile"])
-            secureCount      = int(entry["secureCount"])
-            sim_path         = entry["sim_steps"]
+            numberOfUsers       = int(entry["numberOfUsers"])
+            percentageMU        = float(entry["percentageMU"])
+            percentageMUActive  = float(entry["percentageMUActive"])
+            varianceOfData      = float(entry["varianceOfData"])
+            percentageMobile    = float(entry["percentageMobile"])
+            secureCount         = int(entry["secureCount"])
+            sim_path            = entry["sim_steps"]
             try:
                 with open(sim_path) as config:
                     sim_steps = json.load(config)
             except:
                 sys.exit("Fatal Error: No valid simulation file found at "+str(sim_path)+"\nExiting program...")
-            sim_one = Simulator(numberOfUsers, percentageMU, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
+            sim_one = Simulator(numberOfUsers, percentageMU, percentageMUActive, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
             for _ in range(int(entry["loop_count"])):
                 sim_one.run()
                 print("PU COUNT: " + str(sim_one.activePUCount))

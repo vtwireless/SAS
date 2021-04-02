@@ -4,6 +4,7 @@
                 "loop_count": 1,
                 "numberOfUsers": 1,
                 "percentageMU": 0,
+                "percentageMUActive":0,
                 "varianceOfData": 0,
                 "percentageMobile": 0,
                 "secureCount": 0,
@@ -13,10 +14,11 @@
                 "loop_count": 0,
                 "numberOfUsers": 10,
                 "percentageMU": 100,
+                "percentageMUActive":100,
                 "varianceOfData": 0,
                 "percentageMobile": 0,
                 "secureCount": 0,
-                "sim_steps": "simulations/sim_one.json"
+                "sim_steps": "simulations/sim_two.json"
             }
     ]
 }

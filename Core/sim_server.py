@@ -389,6 +389,9 @@ def spectrumData(sid, data):
         deviceInfo=jsonData["spectrumData"]
         cbsd.latitude = deviceInfo["latitude"]
         cbsd.longitude = deviceInfo["longitude"]
+        # If simulating, dump previously logged data
+        if(isSimulating):
+            REM.objects = []
         if(deviceInfo["spectrumData"]):
             for rpmr in deviceInfo["spectrumData"]["rcvdPowerMeasReports"]:
                 mr = measReportObjectFromJSON(rpmr)
@@ -403,13 +406,19 @@ def sendCurrentTime(sid):
     responseDict = {"serverCurrentTime":time.time()}
     socket.emit('latencyTest', to=sid, data=json.dumps(responseDict))
 
+@socket.on("simCheckPUAlert")
+def simCheckPUAlert(sid, data):
+    payload = json.loads(data)
+    checkPUAlert(payload)
+
 @socket.on("checkPUAlert")
 def sendSimPuDetection(sid):
     checkPUAlert()
 
 @socket.on("printPuDetections")
 def printPuDetections(sid):
-    print(puDetections)
+    # print(puDetections)
+    pass
 
 def initiateSensing(lowFreq, highFreq):
     count = 0
@@ -506,19 +515,22 @@ def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
 
 
-def checkPUAlert():
+def checkPUAlert(data=None):
     report = []
     global puDetections
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
     blocks = freqRange/SASAlgorithms.TENMHZ
+    if(data):
+        puDetections[str(data["reportId"])] = []
     for i in range(int(blocks)):
         low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
         if(result == 1):
             if(isSimulating):
+                if(data):
+                    puDetections[str(data["reportId"])].append({"reportId":data["reportId"],"timestamp":str(float("{:0.3f}".format(time.time()))),"lowFreq":low,"highFreq":high, "result":str(result)})
                 report.append("PU FOUND")
-                puDetections[str(float("{:0.3f}".format(time.time())))] = {"lowFreq: ":low,"highFreq":high}
             else:
                 for grant in grants:
                     if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
@@ -532,10 +544,14 @@ def checkPUAlert():
             if(isSimulating):
                 report.append("NO SPECTRUM DATA")
                 # socket.emit("puStatus", data="NO SPECTRUM DATA")
-    
+            
     
     if(isSimulating):
-        print(report)
+        # print(report)
+        for x in (puDetections[str(data["reportId"])]):
+             print(x)
+        # Write to a (CSV/JOSN) file
+
         # try:
         #     socket.emit("puStatus", to=allClients[0],  data="report")
         # except:
