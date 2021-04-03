@@ -419,6 +419,7 @@ def sendSimPuDetection(sid):
 def printPuDetections(sid):
     global puDetections
     socket.emit("detections", json.dumps(puDetections))
+    puDetections = {}
 
 def initiateSensing(lowFreq, highFreq):
     count = 0

@@ -103,7 +103,7 @@ class Simulator:
 
         #assumes this is for one channel
 
-        numberMU = numberOfUsers*(percentageMU/100)
+        numberMU = numberOfUsers*(percentageMU/100.0)
         sc = 0
         for x in range(numberOfUsers):
             if self.percentageMobile < random.randrange(0, 100):
@@ -121,6 +121,7 @@ class Simulator:
 
     def exit(self):
         """Exits Simulation"""
+        time.sleep(2)
         self.socket.disconnect()
         sys.exit("Exiting Simulation")
 
@@ -180,13 +181,20 @@ class Simulator:
         self.activePUCount = self.activePUCount + 1
         for user in self.users:
             if not user.isMU:
-                self.sendData(user, self.makePUData(), isPuData=True)
+                self.sendData(user, self.makePUData())
             else:
                 x = random.randrange(0,100)
                 if x <= user.percentageMUActive:#if user is malicious send malicious
-                    self.sendData(user, self.makeGoodData(), isPuData=True)
+                    self.sendData(user, self.makeGoodData())
                 else:
-                    self.sendData(user, self.makePUData(), isPuData=True)
+                    self.sendData(user, self.makePUData())
+        self.socket.emit("simCheckPUAlert", json.dumps({"reportId":str(self.reportId)}))
+        # formattedTime = str(float("{:0.3f}".format(time.time())))
+        # print("ReportID: "+str(self.reportId)+" - Adding PU at time: "+ formattedTime)
+
+        # This report should only go with 1 channel (the 1st one)
+        self.sim_log[str(self.reportId)] = "1"
+        self.reportId = self.reportId + 1
 
     def normalSpectrum(self):
         print("Normal environment")
@@ -199,8 +207,12 @@ class Simulator:
                     self.sendData(user, self.makePUData())
                 else:
                     self.sendData(user, self.makeGoodData())
+        self.socket.emit("simCheckPUAlert", json.dumps({"reportId":str(self.reportId)}))
+        self.sim_log[str(self.reportId)] = "0"
+        self.reportId = self.reportId + 1
 
-    def sendData(self, user, data, isPuData=False):
+
+    def sendData(self, user, data):
         payload = []
         report = {}
         freqPerReport = 10000000/self.arraySize # 625000 for arraySize=16
@@ -212,13 +224,13 @@ class Simulator:
             iter = iter + 1
         
         self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"latitude":user.latitude, "longitude":user.longitude, "spectrumData": MeasReport(payload).asdict()}}))
-        self.socket.emit("simCheckPUAlert", json.dumps({"reportId":str(self.reportId)}))
-        if(isPuData):
-            formattedTime = str(float("{:0.3f}".format(time.time())))
-            print("ReportID: "+str(self.reportId)+" - Adding PU at time: "+ formattedTime)
+        # self.socket.emit("simCheckPUAlert", json.dumps({"reportId":str(self.reportId)}))
+        # if(isPuData):
+        #     formattedTime = str(float("{:0.3f}".format(time.time())))
+        #     print("ReportID: "+str(self.reportId)+" - Adding PU at time: "+ formattedTime)
 
-        # This report should only go with 1 channel (the 1st one)
-        self.sim_log[str(self.reportId)] = str(int(isPuData))
+        # # This report should only go with 1 channel (the 1st one)
+        # self.sim_log[str(self.reportId)] = str(int(isPuData))
 
        # Global flag to print emitted data to a CSV 
         # if(printToCSV):
@@ -229,7 +241,7 @@ class Simulator:
 
         # with open('student.json','w') as student_dumped :
         #     json.dump(student,student_dumped)
-        self.reportId = self.reportId + 1
+        # self.reportId = self.reportId + 1
 
     def move(self):
         for user in self.users:
@@ -366,33 +378,38 @@ def getDetections():
     falseDetections  = 0
     missedDetections = 0
     for key in sim_one.sim_log: # For every spectrum the sim sent
-        if(server_data[key]): # if the server has a record then that means the server saw a PU at that reportId
-            if(sim_one.sim_log[key] == "1"): # If they both detected PU
-                correctDetections = correctDetections + 1
-            elif(sim_one.sim_log[key] == "0"): # Misdection
-                falseDetections = falseDetections + 1
-        else: # server did not see anything
-            if(sim_one.sim_log[key] == "1"): # If there was infact a PU
-                missedDetections = missedDetections + 1
+        try:
+            if(server_data[key]):
+                if(sim_one.sim_log[key] == "1"): # If they both detected PU
+                    correctDetections = correctDetections + 1
+                elif(sim_one.sim_log[key] == "0"): # Misdection
+                    falseDetections = falseDetections + 1
+            else:
+                if(sim_one.sim_log[key] == "1"): # If there was infact a PU
+                    missedDetections = missedDetections + 1
+        except KeyError:
+            print("server did not make any attempt at including the missed key. error.")
     return correctDetections, falseDetections, missedDetections
-
-
-    # for report in server_data:
-    #     if(server_data[report]):
-    #         for inner_report in server_data[report]:
-    #             reportId = inner_report["reportId"]
-    #             lowFreq = inner_report["lowFreq"]
-    #             highFreq = inner_report["highFreq"]
-    #             result = inner_report["result"]
     
 def printResults(numberOfUsers, percentageMU, percentageMUActive, varianceOfData, percentageMobile, secureCount, sim_path):
     correctDetections, falseDetections, missedDetections = getDetections()
-    # print(server_data)
-    # print(sim_one.sim_log)
+    print("\nREPORT")
+    print("# Users: "+str(numberOfUsers)+"\t%MU: "+str(percentageMU)+
+    ", %Active: "+str(percentageMUActive)+"\tVariance: "+str(varianceOfData))
+    print(server_data)
+    print(sim_one.sim_log)
     print("TOTAL PU COUNT: " + str(sim_one.activePUCount))
     print("CORRECT DETECTIONS: " + str(correctDetections))
     print("FALSE DETECTIONS: " + str(falseDetections))
     print("MISSED DETECTIONS: " + str(missedDetections))
+    
+
+def resetTrackers():
+    global server_data
+    sim_one.activePUCount = 0
+    sim_one.reportId = 0
+    sim_one.sim_log = {}
+    server_data = {}
 
 def main(args):
 
@@ -431,10 +448,12 @@ def main(args):
             sim_one = Simulator(numberOfUsers, percentageMU, percentageMUActive, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
             for _ in range(int(entry["loop_count"])):
                 sim_one.run()
+                time.sleep(0.5)
                 clientio.emit("getPuDetections") # At end of test run ask server to send over results
                 time.sleep(1)# wait for server_data to be filled
                 printResults(numberOfUsers, percentageMU, percentageMUActive, 
                 varianceOfData, percentageMobile, secureCount, sim_path)
+                resetTrackers()
         sim_one.exit()
     else:
         sys.exit("CLI Argument '--simulation' is required")
