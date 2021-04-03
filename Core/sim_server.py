@@ -415,10 +415,10 @@ def simCheckPUAlert(sid, data):
 def sendSimPuDetection(sid):
     checkPUAlert()
 
-@socket.on("printPuDetections")
+@socket.on("getPuDetections")
 def printPuDetections(sid):
-    # print(puDetections)
-    pass
+    global puDetections
+    socket.emit("detections", json.dumps(puDetections))
 
 def initiateSensing(lowFreq, highFreq):
     count = 0
@@ -548,10 +548,10 @@ def checkPUAlert(data=None):
     
     if(isSimulating):
         # print(report)
-        for x in (puDetections[str(data["reportId"])]):
-             print(x)
+        # for x in (puDetections[str(data["reportId"])]):
+            #  print(x)
         # Write to a (CSV/JOSN) file
-
+        pass
         # try:
         #     socket.emit("puStatus", to=allClients[0],  data="report")
         # except:
@@ -565,4 +565,3 @@ if __name__ == '__main__':
     if(not isSimulating):
         threading.Timer(3.0, checkPUAlert).start()
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
-

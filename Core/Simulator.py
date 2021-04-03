@@ -38,6 +38,7 @@ parser.add_argument('--printToCSV', action='store_true')
 # Create a Global accessor for each Simulation
 sim_one = None
 timeDifferenceBetweenServerAndSimClient = 0
+server_data = {}
 
 # Helper Functions -------------------------------------------------------------------------
 def delayUntilTime(lastTime, currentTime, socket):
@@ -98,6 +99,7 @@ class Simulator:
         self.sim_steps = sim_steps
         self.activePUCount = 0
         self.reportId = 0
+        self.sim_log = {}
 
         #assumes this is for one channel
 
@@ -141,7 +143,6 @@ class Simulator:
                 elif(action == "exit"):
                     threading.Timer(float(timeToExecute)+0.001, self.exit).start()
         time.sleep(waitForSim)
-        self.socket.emit("printPuDetections") # At end of test run, print server findings
 
     def createUser(self, id, isMU, percentageMUActive, latitude, longitude, secure, isMobile):
         newUser = User(id, isMU, percentageMUActive, latitude, longitude, secure, isMobile)
@@ -186,7 +187,6 @@ class Simulator:
                     self.sendData(user, self.makeGoodData(), isPuData=True)
                 else:
                     self.sendData(user, self.makePUData(), isPuData=True)
-        
 
     def normalSpectrum(self):
         print("Normal environment")
@@ -207,8 +207,8 @@ class Simulator:
         iter = 0
         for data_point in data:
             payload.append(RcvdPowerMeasReport(measFrequency=str((iter*624999)+3550000000),measBandwidth=freqPerReport,measRcvdPower=data_point))
-            if(printToCSV):
-                report[str((iter*625000)+3550000000)] = data_point
+            # if(printToCSV):
+            #     report[str((iter*625000)+3550000000)] = data_point
             iter = iter + 1
         
         self.socket.emit("spectrumData", json.dumps({"spectrumData":{"cbsdId":user.id,"latitude":user.latitude, "longitude":user.longitude, "spectrumData": MeasReport(payload).asdict()}}))
@@ -216,25 +216,20 @@ class Simulator:
         if(isPuData):
             formattedTime = str(float("{:0.3f}".format(time.time())))
             print("ReportID: "+str(self.reportId)+" - Adding PU at time: "+ formattedTime)
-        self.reportId = self.reportId + 1
+
+        # This report should only go with 1 channel (the 1st one)
+        self.sim_log[str(self.reportId)] = str(int(isPuData))
 
        # Global flag to print emitted data to a CSV 
-        if(printToCSV):
-            with open('reports/output.csv', 'w', newline='') as csvfile:
-                csvwriter = csv.writer(csvfile)
-                for data in report:
-                    csvwriter.writerow([data, report[data]])
-        # In a header, print how many users there are in this entire run (N)
-        # each entry 
-        #{  
-        #"n":{
-        #       
-        #
-        #
-        #
-        #
+        # if(printToCSV):
+        #     with open('reports/output.csv', 'w', newline='') as csvfile:
+        #         csvwriter = csv.writer(csvfile)
+        #         for data in report:
+        #             csvwriter.writerow([data, report[data]])
+
         # with open('student.json','w') as student_dumped :
         #     json.dump(student,student_dumped)
+        self.reportId = self.reportId + 1
 
     def move(self):
         for user in self.users:
@@ -287,8 +282,9 @@ def defineSocketEvents(clientio):
             # print("No Nodes are awaiting a SAS response. Ignoring Registration Response from SAS.")
 
     @clientio.event
-    def puStatus(data):
-        print(data, flush=True)
+    def detections(data):
+        global server_data
+        server_data = json.loads(data)
     
     @clientio.event
     def latencyTest(data):
@@ -365,6 +361,39 @@ def defineSocketEvents(clientio):
         # print("Exiting System...")
         # sys.exit()
 
+def getDetections():
+    correctDetections = 0
+    falseDetections  = 0
+    missedDetections = 0
+    for key in sim_one.sim_log: # For every spectrum the sim sent
+        if(server_data[key]): # if the server has a record then that means the server saw a PU at that reportId
+            if(sim_one.sim_log[key] == "1"): # If they both detected PU
+                correctDetections = correctDetections + 1
+            elif(sim_one.sim_log[key] == "0"): # Misdection
+                falseDetections = falseDetections + 1
+        else: # server did not see anything
+            if(sim_one.sim_log[key] == "1"): # If there was infact a PU
+                missedDetections = missedDetections + 1
+    return correctDetections, falseDetections, missedDetections
+
+
+    # for report in server_data:
+    #     if(server_data[report]):
+    #         for inner_report in server_data[report]:
+    #             reportId = inner_report["reportId"]
+    #             lowFreq = inner_report["lowFreq"]
+    #             highFreq = inner_report["highFreq"]
+    #             result = inner_report["result"]
+    
+def printResults(numberOfUsers, percentageMU, percentageMUActive, varianceOfData, percentageMobile, secureCount, sim_path):
+    correctDetections, falseDetections, missedDetections = getDetections()
+    # print(server_data)
+    # print(sim_one.sim_log)
+    print("TOTAL PU COUNT: " + str(sim_one.activePUCount))
+    print("CORRECT DETECTIONS: " + str(correctDetections))
+    print("FALSE DETECTIONS: " + str(falseDetections))
+    print("MISSED DETECTIONS: " + str(missedDetections))
+
 def main(args):
 
     # Connect to SAS Server
@@ -373,7 +402,7 @@ def main(args):
     socket_addr = 'http://' + args['address'] +':' + args['port']
     clientio.connect(socket_addr) # Connect to SAS
 
-    clientio.emit("latencyTest")
+    # clientio.emit("latencyTest")
 
     # Get CLI Args
     printToCSV          = bool(args['printToCSV'])
@@ -402,7 +431,10 @@ def main(args):
             sim_one = Simulator(numberOfUsers, percentageMU, percentageMUActive, varianceOfData, percentageMobile, secureCount, clientio, sim_steps)
             for _ in range(int(entry["loop_count"])):
                 sim_one.run()
-                print("PU COUNT: " + str(sim_one.activePUCount))
+                clientio.emit("getPuDetections") # At end of test run ask server to send over results
+                time.sleep(1)# wait for server_data to be filled
+                printResults(numberOfUsers, percentageMU, percentageMUActive, 
+                varianceOfData, percentageMobile, secureCount, sim_path)
         sim_one.exit()
     else:
         sys.exit("CLI Argument '--simulation' is required")
