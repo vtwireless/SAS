@@ -33,6 +33,7 @@ app = socketio.WSGIApp(socket, static_files={
 
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
+NUM_OF_CHANNELS = (SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ)/SASAlgorithms.TENMHZ
 
 def sendGetRequest(parameters):
     parameters["SAS_KEY"] = SASKEY
@@ -405,40 +406,55 @@ def incumbentInformation(sid, data):
     """Function for PUs to send their operating data"""
     utilizeExtraChannel = True
     jsonData = json.loads(data)
-    # Get time, location, and frequency range of PU
-    data = jsonData["puData"]
-    try:
-        desireObfuscation = bool(data["desireObfuscation"])
-        startTime = data["startTime"]
-        puLat = data["puLat"]
-        puLon = data["puLon"]
-        lowFreq = data["lowFreq"]
-        highFreq = data["highFreq"]
-        power = data["power"]
-    except KeyError as ke:
-        print("error in unpacking PU data")
-        print(ke)
-    if(desireObfuscation):
-        if(utilizeExtraChannel):
-            NUM_OF_CHANNELS = (SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ)/SASAlgorithms.TENMHZ
-            for channel in range(NUM_OF_CHANNELS-1):
-                if(lowFreq < ((channel+1)*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ):
-                    print("PU LOW FREQ IN CHANNEL " + str(channel))
+    for data in jsonData["incumbentInformation"]:
+        # Get time, location, and frequency range of PU
+        try:
+            desireObfuscation = bool(data["desireObfuscation"])
+            startTime = data["startTime"]
+            puLat = data["puLat"]
+            puLon = data["puLon"]
+            puLowFreq = data["lowFreq"]
+            puLighFreq = data["highFreq"]
+            power = data["power"]
+        except KeyError as ke:
+            print("error in unpacking PU data")
+            print(ke)
+        if(desireObfuscation):
+            if(utilizeExtraChannel):
+                #Find the channel where the lowest PU frequency resides
+                puLowChannel = getChannelFromFrequency(puLowFreq)
+                channelFreqLow = getChannelFreqFromChannel(puLowChannel)
+                lowCbsdBw = puLowFreq - channelFreqLow
 
-            cbsdLow = lowFreq - SASAlgorithms.MINCBRSFREQ
-            #find the channel the PU_LOW is in
-            if(cbsdLow < 1000):
-                pass # Do not bother obfuscating
-            cbsdHigh = None
-            SASAlgorithms.MINCBRSFREQ
-            SASAlgorithms.TENMHZ
-            sendIICCommand()
-            sendIICCommand()
+                #Find the channel where the highest PU frequency resides
+                puHighChannel = getChannelFromFrequency(puHighFreq)
+                channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
+                highCbsdBw = channelFreqHigh - puHighFreq
+
+                # If there is as least 1kHz between a channel and the PU, turn on an adjacent CBSD
+                if(lowCbsdBw > 1000):
+                    sendIICCommand(channelFreqLow, lowCbsdBw)
+                if(highCbsdBw > 1000):
+                    sendIICCommand(puHighFreq, channelFreqHigh)
+            else:
+                pass # Do not want to use an extra channel
         else:
-            pass
-    else:
-        pass
-    
+            pass # PU does not want special treatment
+
+def getChannelFreqFromChannel(channel, getHighFreq=False):
+    """Convert a channel integer to a freq for the channel"""
+    if(getHighFreq):
+        channel = channel + 1
+    return (channel*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ
+        
+
+def getChannelFromFrequency(freq):
+    """Returns the lowFreq for the channel 'freq' can be found"""
+    for channel in range(NUM_OF_CHANNELS):
+        if(freq < ((channel+1)*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ):
+            print("PU LOW FREQ IN CHANNEL " + str(channel))
+            return channel
+    return None
 
 def initiateSensing(lowFreq, highFreq):
     count = 0

@@ -1544,6 +1544,24 @@ def spectrumData(cbsdId, clientio):
 	payload = {"cbsdId":cbsdId, "spectrumData": measReport.asdict()}
 	clientio.emit("spectrumData", json.dumps(payload))
 
+def incumbentInformation(clientio, requests):
+	"""This allows a node to register as a PU (research purposes)"""
+	arr = []
+	for request in requests: 
+		if(not (node := reqAddressToNode(request, mustBeRegistered=False))):
+			print("Incumbent Information Request invalid.")
+			continue
+		desireObfuscation = _grabPossibleEntry(request, "desireObfuscation")
+		startTime = _grabPossibleEntry(request, "startTime")
+		puLat = _grabPossibleEntry(request, "puLat")
+		puLon = _grabPossibleEntry(request, "puLon")
+		power = _grabPossibleEntry(request, "power")
+		if(inquiredSpectrum := _grabPossibleEntry(request, "inquiredSpectrum")):
+			lowFreq = _grabPossibleEntry(inquiredSpectrum, "lowFreq")
+			highFreq = _grabPossibleEntry(inquiredSpectrum, "highFreq")
+		arr.append()
+
+	clientio.emit("incumbentInformation", json.dumps(payload))
 def updateRxParams(data):
 	"""
 	Handles SAS Command to change RX Parameters
@@ -1780,6 +1798,9 @@ def init(args):
 							elif(func == "endSimulation"):
 								print("Ending Simulation...")
 								endClientExecution(clientio)
+							elif(func == "incumbentInformation"):
+								__blocked == True
+								incumbentInformation(clientio, payload)
 							funcStarted = True
 	else:
 		# Commandline (CMD) Interface Main Menu
