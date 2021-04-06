@@ -931,18 +931,19 @@ def simGrantReq(requests):
 		
 		# Read VTGrantParams from JSON and create object
 		vtGrantParams = _grabPossibleEntry(request, "vtGrantParams")
-		(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, 
-		minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
-		endTime, approximateByteSize, dataType, powerLevel, 
-		location, mobility, maxVelocity) = unpackResponseWithKeys(
-			vtGrantParams, "minFrequency", "maxFrequency", "preferredFrequency", "frequencyAbsolute", 
-			"minBandwidth", "maxBandwidth", "preferredBandwidth", "startTime", 
-			"endTime", "approximateByteSize", "dataType", "powerLevel", 
-			"location", "mobility", "maxVelocity")
-		vtGrantParams = VTGrantParams(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, 
-		minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
-		endTime, approximateByteSize, dataType, powerLevel, 
-		location, mobility, maxVelocity)
+		if(vtGrantParams):
+			(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, 
+			minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
+			endTime, approximateByteSize, dataType, powerLevel, 
+			location, mobility, maxVelocity) = unpackResponseWithKeys(
+				vtGrantParams, "minFrequency", "maxFrequency", "preferredFrequency", "frequencyAbsolute", 
+				"minBandwidth", "maxBandwidth", "preferredBandwidth", "startTime", 
+				"endTime", "approximateByteSize", "dataType", "powerLevel", 
+				"location", "mobility", "maxVelocity")
+			vtGrantParams = VTGrantParams(minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, 
+			minBandwidth, maxBandwidth, preferredBandwidth, startTime, 
+			endTime, approximateByteSize, dataType, powerLevel, 
+			location, mobility, maxVelocity)
 		
 		nodes_awaiting_response.append(node) # Add Node to list of Nodes waiting for SAS Acknowledgment 
 		arr.append(GrantRequest(cbsdId, operationParam, measReport, vtGrantParams).asdict())
