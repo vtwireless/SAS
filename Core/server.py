@@ -416,7 +416,16 @@ def incumbentInformation(sid, data):
         print(ke)
     if(desireObfuscation):
         if(utilizeExtraChannel):
-            #find lowfreq and lowest channel freq
+            NUM_OF_CHANNELS = (SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ)/SASAlgorithms.TENMHZ
+            for channel in range(NUM_OF_CHANNELS-1):
+                if(lowFreq < ((channel+1)*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ):
+                    print("PU LOW FREQ IN CHANNEL " + str(channel))
+
+            cbsdLow = lowFreq - SASAlgorithms.MINCBRSFREQ
+            #find the channel the PU_LOW is in
+            if(cbsdLow < 1000):
+                pass # Do not bother obfuscating
+            cbsdHigh = None
             SASAlgorithms.MINCBRSFREQ
             SASAlgorithms.TENMHZ
             sendIICCommand()
@@ -458,6 +467,12 @@ def cancelGrant(grant):
         removeGrant(grant.id, grant.cbsdId)
         print('grant ' + grant.id + ' canceled')
 
+def singleFrequencyOverlap(self, freq, lowFreq, highFreq):
+    """Checks to see if freq is within range"""
+    if (freqa <= highFreq and freqb >= lowFreq):
+        return True
+    else:
+        return False
 
 def sendAssignmentToRadio(cbsd):
     print("a sensing radio has joined")
