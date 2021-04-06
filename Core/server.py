@@ -86,24 +86,24 @@ def getGrantWithID(grantId):
     else:
         return None
 
-def loadGrantFromJSON(json):
-    ofr = WinnForum.FrequencyRange(json["frequency"], json["frequency"] + json["bandwidth"])
-    operationParam = WinnForum.OperationParam(json["requestPowerLevel"], ofr)
+def loadGrantFromJSON(json_file):
+    ofr = WinnForum.FrequencyRange(json_file["frequency"], json_file["frequency"] + json_file["bandwidth"])
+    operationParam = WinnForum.OperationParam(json_file["requestPowerLevel"], ofr)
     vtgp = WinnForum.VTGrantParams(None, None, None, None, None, None, None, None,None, None, None, None, None, None, None)
     try:
-        vtgp.minFrequency = json["requestMinFrequency"]
-        vtgp.maxFrequency = json["requestMaxFrequency"]
-        vtgp.startTime = json["startTime"]
-        vtgp.endTime = json["endTime"]
-        vtgp.approximateByteSize = json["requestApproximateByteSize"]
-        vtgp.dataType = json["dataType"]
-        vtgp.powerLevel = json["requestPowerLevel"]
-        vtgp.location = json["requestLocation"]
-        vtgp.mobility = json["requestMobility"]
-        vtgp.maxVelocity = json["requestMaxVelocity"]
+        vtgp.minFrequency = json_file["requestMinFrequency"]
+        vtgp.maxFrequency = json_file["requestMaxFrequency"]
+        vtgp.startTime = json_file["startTime"]
+        vtgp.endTime = json_file["endTime"]
+        vtgp.approximateByteSize = json_file["requestApproximateByteSize"]
+        vtgp.dataType = json_file["dataType"]
+        vtgp.powerLevel = json_file["requestPowerLevel"]
+        vtgp.location = json_file["requestLocation"]
+        vtgp.mobility = json_file["requestMobility"]
+        vtgp.maxVelocity = json_file["requestMaxVelocity"]
     except KeyError:
         print("No vtparams")
-    grant = WinnForum.Grant(json["grantID"], json["secondaryUserID"], operationParam, vtgp)
+    grant = WinnForum.Grant(json_file["grantID"], json_file["secondaryUserID"], operationParam, vtgp)
     grants.append(grant)
     return grant 
 
@@ -161,9 +161,9 @@ def connect(sid, environ):
     print('connect ', sid)
     allClients.append(sid)
 
-@socket.event
-def my_message(sid, data):
-    print('message ', data)
+# @socket.event
+# def my_message(sid, data):
+#     print('message ', data)
 
 @socket.event
 def disconnect(sid):
@@ -174,7 +174,6 @@ def disconnect(sid):
     for radio in allRadios:
         if radio.sid == sid:
             allRadios.remove(radio)
-
 
 @socket.on('registrationRequest')
 def register(sid, data):
@@ -400,7 +399,33 @@ def spectrumData(sid, data):
 @socket.on('incumbentInformation')
 def incumbentInformation(sid, data):
     """Funciton for PUs to send their operating data"""
-    pass # TODO
+    utilizeExtraChannel = True
+    jsonData = json.loads(data)
+    # Get time, location, and frequency range of PU
+    data = jsonData["puData"]
+    try:
+        desireObfuscation = bool(data["desireObfuscation"])
+        startTime = data["startTime"]
+        puLat = data["puLat"]
+        puLon = data["puLon"]
+        lowFreq = data["lowFreq"]
+        highFreq = data["highFreq"]
+        power = data["power"]
+    except KeyError as ke:
+        print("error in unpacking PU data")
+        print(ke)
+    if(desireObfuscation):
+        if(utilizeExtraChannel):
+            #find lowfreq and lowest channel freq
+            SASAlgorithms.MINCBRSFREQ
+            SASAlgorithms.TENMHZ
+            sendIICCommand()
+            sendIICCommand()
+        else:
+            pass
+    else:
+        pass
+    
 
 def initiateSensing(lowFreq, highFreq):
     count = 0
@@ -457,6 +482,19 @@ def sendAssignmentToRadio(cbsd):
     
     threading.Timer(3.0, resetRadioStatuses, [[cbsd]]).start()
 
+def sendIICCommand(lowFreq, highFreq):
+    """Will ask 1 idle node to transmit over the low-high freq"""
+    radioCountLimit = 1
+    radiosToChangeBack = []
+    for radio in allRadios:  
+        if not radio.justChangedParams:
+            sendObstructionToRadio(radio, lowFreq, highFreq)
+            radiosToChangeBack.append(radio)
+            threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
+            return True
+    return False
+
+
 def obstructChannel(lowFreq, highFreq, latitude, longitude):
     print("NGGYU")
     result = SASAlgorithms.isPUPresentREM(REM, lowFreq, highFreq, latitude, longitude, None)
@@ -492,14 +530,11 @@ def obstructChannel(lowFreq, highFreq, latitude, longitude):
 
 def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams = dict()
-    changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
-    changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
+    changeParams["lowFrequency"] = lowFreq
+    changeParams["highFrequency"] = highFreq
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
-    socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
-
-
-
+    socket.emit("obstructChannelWithRadioParams", changeParams, to=cbsd.sid)
 
 def checkPUAlert():
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ

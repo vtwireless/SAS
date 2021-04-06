@@ -177,7 +177,7 @@ class Simulator:
         return arr
 
     def createPU(self):
-        print("PU active")
+        # print("PU active")
         self.activePUCount = self.activePUCount + 1
         for user in self.users:
             if not user.isMU:
@@ -197,7 +197,7 @@ class Simulator:
         self.reportId = self.reportId + 1
 
     def normalSpectrum(self):
-        print("Normal environment")
+        # print("Normal environment")
         for user in self.users:
             if not user.isMU:
                 self.sendData(user, self.makeGoodData())
@@ -396,8 +396,8 @@ def printResults(numberOfUsers, percentageMU, percentageMUActive, varianceOfData
     print("\nREPORT")
     print("# Users: "+str(numberOfUsers)+"\t%MU: "+str(percentageMU)+
     ", %Active: "+str(percentageMUActive)+"\tVariance: "+str(varianceOfData))
-    print(server_data)
-    print(sim_one.sim_log)
+    # print(server_data)
+    # print(sim_one.sim_log)
     print("TOTAL PU COUNT: " + str(sim_one.activePUCount))
     print("CORRECT DETECTIONS: " + str(correctDetections))
     print("FALSE DETECTIONS: " + str(falseDetections))
