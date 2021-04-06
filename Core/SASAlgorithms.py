@@ -1,7 +1,9 @@
 import WinnForum
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import threading
+
+josephsMac = False
 
 class SASAlgorithms:
     MINCBRSFREQ = 3550000000
@@ -86,7 +88,11 @@ class SASAlgorithms:
             radius = 1000
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
         if present == 1 and not self.ignoringREM:
-            response.transmitExpireTime = datetime.now(time.timezone.utc).strftime("%Y%m%dT%H:%M:%S%Z")
+            if(josephsMac):
+                t = datetime.now(time.timezone.utc)
+            else:
+                t = datetime.now(timezone.utc)
+            response.transmitExpireTime = t.strftime("%Y%m%dT%H:%M:%S%Z")
             response.response = self.generateResponse(501)#Suspended Grant
         else:
             response.response = self.generateResponse(0)
@@ -173,7 +179,10 @@ class SASAlgorithms:
 
     def calculateGrantExpireTime(self, grants, REM, grant, renew):
         grantCount = len(grants)
-        t = datetime.now(time.timezone.utc)
+        if(josephsMac):
+            t = datetime.now(time.timezone.utc)
+        else:
+            t = datetime.now(timezone.utc)
         if grantCount <= 1:
             t = t + timedelta(seconds = self.maxGrantTime)
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
