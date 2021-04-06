@@ -52,7 +52,6 @@ class SASREM:
 
         return objectsToSend
 
-
     def frequencyOverlap(self, freqa, freqb, rangea, rangeb):
         """Checks to see if freq is within range"""
         if (freqa <= rangea and freqb >= rangea):
@@ -106,7 +105,6 @@ class SASREM:
         r = 6371 # Radius of earth in kilometers. Use 3956 for miles
         calculatedRadius = c * r
         return calculatedRadius
-
 
     def findClosestSecureNode(self, latitude, longitude, cbsds, distance):
         cbsdToReturn = None

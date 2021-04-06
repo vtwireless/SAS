@@ -11,7 +11,7 @@
                 "sim_steps": "simulations/json_test.json"
             },
             {
-                "loop_count": 5,
+                "loop_count": 1,
                 "numberOfUsers": 30,
                 "percentageMU": 100,
                 "percentageMUActive":100,
@@ -21,10 +21,10 @@
                 "sim_steps": "simulations/sim_two.json"
             },
             {
-                "loop_count": 0,
+                "loop_count": 1,
                 "numberOfUsers": 10,
-                "percentageMU": 100,
-                "percentageMUActive":100,
+                "percentageMU": 50,
+                "percentageMUActive":60,
                 "varianceOfData": 0,
                 "percentageMobile": 0,
                 "secureCount": 0,
