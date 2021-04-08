@@ -72,14 +72,12 @@
 				"incumbentInformation":[{
 					"nodeIp":"192.168.40.210",
                     "desireObfuscation": true,
-                    "startTime":"",
+                    "startTime":"20210408T01:23:41UTC",
                     "puLat":"",
                     "puLon":"",
                     "power":"",
-					"inquiredSpectrum":[{
-						"lowFreq":"3564000000",
-						"highFreq":"3566000000"
-					}]
+					"lowFreq":"3564000000",
+					"highFreq":"3566000000"
 				}]
 			}
 		],

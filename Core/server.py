@@ -404,7 +404,7 @@ def spectrumData(sid, data):
 @socket.on('incumbentInformation')
 def incumbentInformation(sid, data):
     """Function for PUs to send their operating data"""
-    utilizeExtraChannel = True
+    utilizeExtraChannel = True # TODO: Decide when to toggle this
     jsonData = json.loads(data)
     for data in jsonData["incumbentInformation"]:
         # Get time, location, and frequency range of PU

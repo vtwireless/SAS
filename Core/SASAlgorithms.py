@@ -91,7 +91,7 @@ class SASAlgorithms:
             if(josephsMac):
                 t = datetime.now(time.timezone.utc)
             else:
-                t = datetime.now(timezone.utc)
+                    t = datetime.now(timezone.utc)
             response.transmitExpireTime = t.strftime("%Y%m%dT%H:%M:%S%Z")
             response.response = self.generateResponse(501)#Suspended Grant
         else:

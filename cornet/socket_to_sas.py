@@ -1546,7 +1546,7 @@ def spectrumData(cbsdId, clientio):
 
 def incumbentInformation(clientio, requests):
 	"""This allows a node to register as a PU (research purposes)"""
-	arr = []
+	payload = {}
 	for request in requests: 
 		if(not (node := reqAddressToNode(request, mustBeRegistered=False))):
 			print("Incumbent Information Request invalid.")
@@ -1556,12 +1556,11 @@ def incumbentInformation(clientio, requests):
 		puLat = _grabPossibleEntry(request, "puLat")
 		puLon = _grabPossibleEntry(request, "puLon")
 		power = _grabPossibleEntry(request, "power")
-		if(inquiredSpectrum := _grabPossibleEntry(request, "inquiredSpectrum")):
-			lowFreq = _grabPossibleEntry(inquiredSpectrum, "lowFreq")
-			highFreq = _grabPossibleEntry(inquiredSpectrum, "highFreq")
-		arr.append()
+		lowFreq = _grabPossibleEntry(request, "lowFreq")
+		highFreq = _grabPossibleEntry(request, "highFreq")
 
 	clientio.emit("incumbentInformation", json.dumps(payload))
+
 def updateRxParams(data):
 	"""
 	Handles SAS Command to change RX Parameters
@@ -1799,7 +1798,7 @@ def init(args):
 								print("Ending Simulation...")
 								endClientExecution(clientio)
 							elif(func == "incumbentInformation"):
-								__blocked == True
+								# __blocked == True
 								incumbentInformation(clientio, payload)
 							funcStarted = True
 	else:
