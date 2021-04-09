@@ -33,7 +33,7 @@ app = socketio.WSGIApp(socket, static_files={
 
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
-NUM_OF_CHANNELS = (SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ)/SASAlgorithms.TENMHZ
+NUM_OF_CHANNELS = int((SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ)/SASAlgorithms.TENMHZ)
 
 def sendGetRequest(parameters):
     parameters["SAS_KEY"] = SASKEY
@@ -408,17 +408,27 @@ def incumbentInformation(sid, data):
     jsonData = json.loads(data)
     for data in jsonData["incumbentInformation"]:
         # Get time, location, and frequency range of PU
+        desireObfuscation = None
+        startTime = None
+        puLat = None
+        puLon = None
+        puLowFreq = None
+        puLighFreq = None
+        power = None
         try:
             desireObfuscation = bool(data["desireObfuscation"])
-            startTime = data["startTime"]
-            puLat = data["puLat"]
-            puLon = data["puLon"]
-            puLowFreq = data["lowFreq"]
-            puLighFreq = data["highFreq"]
-            power = data["power"]
+            puLowFreq = float(data["lowFreq"])
+            puHighFreq = float(data["highFreq"])
         except KeyError as ke:
             print("error in unpacking PU data")
             print(ke)
+        try:
+            puLat = data["puLat"]
+            puLon = data["puLon"]
+            power = data["power"]
+            startTime = data["startTime"]
+        except:
+            pass
         if(desireObfuscation):
             if(utilizeExtraChannel):
                 #Find the channel where the lowest PU frequency resides
@@ -433,8 +443,11 @@ def incumbentInformation(sid, data):
 
                 # If there is as least 1kHz between a channel and the PU, turn on an adjacent CBSD
                 if(lowCbsdBw > 1000):
-                    sendIICCommand(channelFreqLow, lowCbsdBw)
+                    # sendIICCommand(channelFreqLow, puLowFreq) # TODO
+                    print("SENDING BOTTOM")
+                    sendIICCommand(puLowFreq-1e6, puLowFreq)
                 if(highCbsdBw > 1000):
+                    print("SENDING TOP")
                     sendIICCommand(puHighFreq, channelFreqHigh)
             else:
                 pass # Do not want to use an extra channel
@@ -452,7 +465,6 @@ def getChannelFromFrequency(freq):
     """Returns the lowFreq for the channel 'freq' can be found"""
     for channel in range(NUM_OF_CHANNELS):
         if(freq < ((channel+1)*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ):
-            print("PU LOW FREQ IN CHANNEL " + str(channel))
             return channel
     return None
 
@@ -524,8 +536,10 @@ def sendIICCommand(lowFreq, highFreq):
     """Will ask 1 idle node to transmit over the low-high freq"""
     radioCountLimit = 1
     radiosToChangeBack = []
+    global allRadios
     for radio in allRadios:  
         if not radio.justChangedParams:
+            print("SENDING LOW: " +str(lowFreq)+" and HIGH: "+str(highFreq))
             sendObstructionToRadio(radio, lowFreq, highFreq)
             radiosToChangeBack.append(radio)
             threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
@@ -572,7 +586,7 @@ def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams["highFrequency"] = highFreq
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
-    socket.emit("obstructChannelWithRadioParams", changeParams, to=cbsd.sid)
+    socket.emit("obstructChannelWithRadioParams", json.dumps(changeParams), to=cbsd.sid)
 
 def checkPUAlert():
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ

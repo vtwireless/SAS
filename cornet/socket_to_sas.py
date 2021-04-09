@@ -333,11 +333,22 @@ def safeCast(value, dataType):
 	dataType : Python data type object
 		Data type to cast 'value' to
 	"""
+	if(not value):
+		print("Cannot cast a None type")
+		return None		
 	try:
 		return dataType(value)
 	except ValueError:
 		print("Cannot cast '"+str(value)+"' to data type '"+str(dataType)+"'.")
 		return None
+
+def getCenterPlusBwFromLowHigh(lowFreq, highFreq):
+	"""Takes a low and high freq and returns the centerFreq and bandwidth"""
+	centerFreq = (highFreq + lowFreq)/2
+	bw = (highFreq - lowFreq)
+	print("HIGH: "+str(highFreq)+" and LOW: "+str(lowFreq))
+	print("CENTER FREQ: "+str(centerFreq)+" and BW: "+str(bw))
+	return centerFreq, bw
 # End Helper Functions---------------------------------------------------------------------
 
 # Create Node------------------------------------------------------------------------------
@@ -1551,15 +1562,23 @@ def incumbentInformation(clientio, requests):
 		if(not (node := reqAddressToNode(request, mustBeRegistered=False))):
 			print("Incumbent Information Request invalid.")
 			continue
-		desireObfuscation = _grabPossibleEntry(request, "desireObfuscation")
-		startTime = _grabPossibleEntry(request, "startTime")
-		puLat = _grabPossibleEntry(request, "puLat")
-		puLon = _grabPossibleEntry(request, "puLon")
-		power = _grabPossibleEntry(request, "power")
-		lowFreq = _grabPossibleEntry(request, "lowFreq")
-		highFreq = _grabPossibleEntry(request, "highFreq")
+		if(desireObfuscation := _grabPossibleEntry(request, "desireObfuscation")):
+			payload["desireObfuscation"] = desireObfuscation
+		if(startTime := _grabPossibleEntry(request, "startTime")):
+			payload["startTime"] = startTime
+		if(puLat := _grabPossibleEntry(request, "puLat")):
+			payload["puLat"] = puLat
+		if(puLon := _grabPossibleEntry(request, "puLon")):
+			payload["puLon"] = puLon
+		if(power := _grabPossibleEntry(request, "power")):
+			payload["power"] = power
+		if(lowFreq := float(_grabPossibleEntry(request, "lowFreq"))):
+			payload["lowFreq"] = lowFreq
+		if(highFreq := float(_grabPossibleEntry(request, "highFreq"))):
+			payload["highFreq"] = highFreq
 
-	clientio.emit("incumbentInformation", json.dumps(payload))
+		node.enableTx()
+		clientio.emit("incumbentInformation", json.dumps({"incumbentInformation":[payload]}))
 
 def updateRxParams(data):
 	"""
@@ -1710,6 +1729,25 @@ def defineSocketEvents(clientio):
 			Expected keys are cbsdId, highFreq, and lowFreq
 		"""
 		updateRxParams(data)
+
+	@clientio.event
+	def obstructChannelWithRadioParams(payload):
+		"""This is the SASs method of controlling the TX of a CBSD"""
+		data = json.loads(payload)
+		cbsdId = _grabPossibleEntry(data, "cbsdId")
+		if(node := findRegisteredNodeByCbsdId(cbsdId)):
+			if(low := safeCast(_grabPossibleEntry(data, "lowFrequency"), float)):
+				if(high := safeCast(_grabPossibleEntry(data, "highFrequency"), float)):
+					centerFreq, bw = getCenterPlusBwFromLowHigh(low, high)
+					node.updateTxParams(fc=centerFreq, bw=bw)
+					node.enableTx()
+				else:
+					print("Error: Could not safeCast 'highFreq'")
+			else:
+				print("Error: Could not safeCast 'lowFreq'")
+		else:
+			print("SAS Error: Invalid CBSD ID:" + str(cbsdId))
+
 
 	@clientio.event
 	def disconnect():

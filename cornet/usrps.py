@@ -11,6 +11,7 @@ from gnuradio import eng_notation
 from gnuradio import uhd
 import threading
 from datetime import datetime, timedelta
+import time
 
 
 class Grant:
@@ -320,7 +321,7 @@ class TXRX_USRP(gr.top_block):
         self.uhd_usrp_sink_0.set_center_freq(tx_fc, 0)
         self.uhd_usrp_sink_0.set_gain(tx_gain, 0)
         self.uhd_usrp_sink_0.set_antenna('TX/RX', 0)
-        self.uhd_usrp_sink_0.set_bandwidth(tx_bw, 0)
+        self.uhd_usrp_sink_0.set_bandwidth(0, 0)
         self.uhd_usrp_sink_0.set_clock_rate(200e6, uhd.ALL_MBOARDS)
         self.uhd_usrp_sink_0.set_samp_rate(tx_bw)
         self.uhd_usrp_sink_0.set_time_unknown_pps(uhd.time_spec())
@@ -375,9 +376,16 @@ class TXRX_USRP(gr.top_block):
         return self.bw
 
     def set_tx_bw(self, tx_bw):
-        self.__tx_bw = tx_bw
-        self.uhd_usrp_sink_0.set_samp_rate(tx_bw)
-        self.uhd_usrp_sink_0.set_bandwidth(tx_bw, 0)
+        self.__tx_bw = float(tx_bw)
+        # self.uhd_usrp_sink_0.set_samp_rate(tx_bw)
+        self.stop()
+        self.wait()
+        print("BW: "+str(tx_bw)+"\nSRC AMP: " +str(self.__tx_src_amp))
+        time.sleep(0.1)
+        self.uhd_usrp_sink_0.set_samp_rate(self.__tx_bw)
+        time.sleep(0.2)
+        self.start()
+        # self.uhd_usrp_sink_0.set_bandwidth(tx_bw, 0)
 
     def get_tx_gain(self):
         return self.__tx_gain
@@ -390,13 +398,13 @@ class TXRX_USRP(gr.top_block):
         return self.__tx_src_amp
 
     def set_tx_src_amp(self, src_amp):
-        self.src_amp = src_amp
-        self.analog_noise_source_x_0.set_amplitude(self.src_amp)
+        self.__tx_src_amp = src_amp
+        self.analog_noise_source_x_0.set_amplitude(self.__tx_src_amp)
 
     def disableTx(self):
         self.analog_noise_source_x_0.set_amplitude(0)
     
-    def enableTx(self):
+    def enableTx(self):     
         self.analog_noise_source_x_0.set_amplitude(self.__tx_src_amp)
 
     def get_rx_fc(self):
@@ -723,7 +731,7 @@ class Node:
             if(waveform and self.__operationMode == "TX"):
                 self.__usrp.set_waveform(waveform)
         else:
-            print("Invalid Node operationMode for setRxParams command. No Node updated.")    
+            print("Invalid Node operationMode for setRxParams command. No Node updated.")  
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
         if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
