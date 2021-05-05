@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
+"""
+Commandline Interface for CORNET-SAS Client (Incomplete)
 
+Revised: November 14, 2020
+Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Advised by Carl Dietrich (cdietric@vt.edu)
+For Wireless@VT
+
+"""
 # Author: Cam Makin
 # For Research Efforts: Wireless@VT
 # Description: User Library for Command Line Prompts. Used for by socket_to_sas.py 
 # Last Updated: 01/05/2021
 
-from WinnForum import CbsdInfo, InstallationParam, FrequencyRange, OperationParam, VTGrantParams, RcvdPowerMeasReport
+from Client_WinnForum import CbsdInfo, InstallationParam, FrequencyRange, OperationParam, VTGrantParams, RcvdPowerMeasReport
 from gnuradio import uhd
 
 # Helper Functions -----------------------------------------------------------------

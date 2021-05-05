@@ -1,4 +1,12 @@
 #!/usr/bin/env python3
+"""
+File containing GNU USRP Flowgraphs, Node, and Grant objects
+
+Revised: March 20, 2021
+Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Advised by Carl Dietrich (cdietric@vt.edu)
+For Wireless@VT
+"""
 
 from gnuradio import analog
 from gnuradio import blocks
@@ -446,7 +454,6 @@ class TXRX_USRP(gr.top_block):
         """
         return list(self.rx_probe.level())
 
-
 class Node:
     """
     An instance of a Node has a 1-to-1 relationship with a USRP. I.e.,  Node object corresponds exclusivly with 1 USRP.
@@ -780,7 +787,7 @@ class Node:
 
     def info(self):
         """
-        This function will neatly return all Node information in a dictonary
+        This function will neatly return all Node information in a dictonary (Incomplete)
         """
         return "node data"
 

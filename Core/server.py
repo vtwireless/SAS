@@ -6,7 +6,7 @@ import SASAlgorithms
 import SASREM
 import time
 from datetime import datetime, timedelta
-import WinnForum
+import Server_WinnForum as WinnForum
 import CBSD
 import threading
 import uuid
@@ -611,7 +611,6 @@ def obstructChannel(lowFreq, highFreq, latitude, longitude):
                                 break 
         threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
 
-
 def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams = dict()
     changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
@@ -619,9 +618,6 @@ def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
     socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
-
-
-
 
 def checkPUAlert():
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ

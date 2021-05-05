@@ -1,4 +1,4 @@
-import WinnForum
+import Server_WinnForum as WinnForum
 import time
 from datetime import datetime, timedelta
 import threading

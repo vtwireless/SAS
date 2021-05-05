@@ -3,7 +3,7 @@ Very similar to server.py
 
 Revised: March 20, 2021
 Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
-Advised by Carl Dietrich (cdietric@vt.edu)
+Advised by Dr. Carl Dietrich (cdietric@vt.edu)
 For Wireless@VT
 """
 
@@ -19,6 +19,7 @@ import Server_WinnForum as WinnForum
 import CBSD
 import threading
 import uuid
+import random
 
 GETURL = "http://localhost/SASAPI/SAS_API_GET.php"
 POSTURL = "http://localhost/SASAPI/SAS_API.php"
@@ -49,7 +50,6 @@ def sendGetRequest(parameters):
     x = requests.post(GETURL, parameters)
     return x.json()
 
-
 def generateResponse(responseCode):
     response = {}
     response["responseCode"] = str(responseCode)
@@ -62,7 +62,7 @@ def sendPostRequest(parameters):
     print(x.text)
     return x.json()
 
-def getSettings() :
+def getSettings():
     if databaseLogging:
         getAl = { "action": "getSettings"}
         result = sendGetRequest(getAl)
@@ -430,6 +430,118 @@ def printPuDetections(sid):
     socket.emit("detections", json.dumps(puDetections))
     puDetections = {}
 
+# IIC Functions ---------------------------------------
+def getRandBool():
+    """Randomly returns True or False"""
+    return bool(random.getrandbits(1)) # Requires import random
+
+def double_pad_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
+    """Executes Double Pad Obfuscation Scheme"""
+
+    pu_bw = puHighFreq - puLowFreq
+    low_su_low_freq = puLowFreq - pu_bw
+    low_su_high_freq = puLowFreq
+    high_su_low_freq = puHighFreq
+    high_su_high_freq = puHighFreq + pu_bw
+
+
+    if(getRandBool()): # Randomly pick to pad top or bottom first
+        if(low_su_low_freq >= SASAlgorithms.MINCBRSFREQ and est_num_of_available_sus):
+            sendIICCommand(low_su_low_freq, low_su_high_freq)
+            est_num_of_available_sus -= 1
+        if(high_su_high_freq <= SASAlgorithms.MAXCBRSFREQ and est_num_of_available_sus):
+            sendIICCommand(high_su_low_freq, high_su_high_freq)
+            est_num_of_available_sus -= 1
+    else:
+        if(high_su_high_freq <= SASAlgorithms.MAXCBRSFREQ):
+            sendIICCommand(high_su_low_freq, high_su_high_freq)
+            est_num_of_available_sus -= 1
+        if(low_su_low_freq >= SASAlgorithms.MINCBRSFREQ):
+            sendIICCommand(low_su_low_freq, low_su_high_freq)
+            est_num_of_available_sus -= 1
+
+def fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
+    """Fills PU Occupied Channel(s)"""
+
+    #Find the channel where the lowest PU frequency resides
+    puLowChannel = getChannelFromFrequency(puLowFreq)
+    channelFreqLow = getChannelFreqFromChannel(puLowChannel)
+    lowCbsdBw = puLowFreq - channelFreqLow
+
+    #Find the channel where the highest PU frequency resides
+    puHighChannel = getChannelFromFrequency(puHighFreq)
+    channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
+    highCbsdBw = channelFreqHigh - puHighFreq
+    
+    # Only command radio if the obfuscating spectrum is at least 1 kHz
+    if(highCbsdBw > 1000):
+        sendIICCommand(puHighFreq, channelFreqHigh)   
+    if(lowCbsdBw >= 1000):
+        sendIICCommand(channelFreqLow, puLowFreq)
+
+
+@socket.on('incumbentInformation')
+def incumbentInformation(sid, data):
+    """Function for PUs to send their operating data"""
+    utilizeExtraChannel = True # TODO: Decide when to toggle this
+    jsonData = json.loads(data)
+    for data in jsonData["incumbentInformation"]:
+        # Get time, location, and frequency range of PU
+        desireObfuscation = None
+        scheme = None
+        startTime = None
+        endTime = None
+        puLat = None
+        puLon = None
+        puLowFreq = None
+        puLighFreq = None
+        power = None
+        try:
+            desireObfuscation = bool(data["desireObfuscation"])
+            scheme = str(data["scheme"])
+            puLowFreq = float(data["lowFreq"])
+            puHighFreq = float(data["highFreq"])
+        except KeyError as ke:
+            print("error in unpacking PU data")
+            print(ke)
+        try:
+            puLat = data["puLat"]
+            puLon = data["puLon"]
+            power = data["power"]
+            startTime = data["startTime"]
+            endTime = data["endTime"]
+        except:
+            pass
+        if(desireObfuscation):
+            if(scheme):
+                # global allRadios
+                est_num_of_available_sus = 0
+                for radio in allRadios:  
+                    if not radio.justChangedParams:
+                        est_num_of_available_sus += 1
+                if(scheme == "double_pad"):
+                    double_pad_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus)
+                elif(scheme == "fill_channel"):
+                    fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus)
+            else:
+                print("No PU Obfuscation Scheme Detected...")     
+        else:
+            pass # PU does not want special treatment
+
+def getChannelFreqFromChannel(channel, getHighFreq=False):
+    """Convert a channel integer to a freq for the channel"""
+    if(getHighFreq):
+        channel = channel + 1
+    return (channel*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ
+        
+
+def getChannelFromFrequency(freq):
+    """Returns the lowFreq for the channel 'freq' can be found"""
+    for channel in range(NUM_OF_CHANNELS):
+        if(freq < ((channel+1)*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ):
+            return channel
+    return None
+
 def initiateSensing(lowFreq, highFreq):
     count = 0
     radioCountLimit = 3
@@ -483,6 +595,20 @@ def sendAssignmentToRadio(cbsd):
             break
     
     threading.Timer(3.0, resetRadioStatuses, [[cbsd]]).start()
+
+def sendIICCommand(lowFreq, highFreq):
+    """Will ask 1 idle node to transmit over the low-high freq"""
+    radioCountLimit = 1
+    radiosToChangeBack = []
+    global allRadios
+    for radio in allRadios:  
+        if not radio.justChangedParams:
+            # print("SENDING LOW: " +str(lowFreq)+" and HIGH: "+str(highFreq))
+            sendObstructionToRadio(radio, lowFreq, highFreq)
+            radiosToChangeBack.append(radio)
+            threading.Timer(5.0, resetRadioStatuses, [radiosToChangeBack]).start()
+            return True
+    return False
 
 def obstructChannel(lowFreq, highFreq, latitude, longitude):
     print("NGGYU")
@@ -554,8 +680,7 @@ def checkPUAlert(data=None):
             if(isSimulating):
                 report.append("NO SPECTRUM DATA")
                 # socket.emit("puStatus", data="NO SPECTRUM DATA")
-            
-    
+
     if(isSimulating):
         # print(report)
         # for x in (puDetections[str(data["reportId"])]):

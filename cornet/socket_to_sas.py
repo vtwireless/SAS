@@ -22,7 +22,7 @@ from argparse import ArgumentParser
 from datetime import datetime, timedelta
 from gnuradio import uhd
 from usrps import Node
-from WinnForum import *		# File containing object definitions used
+from Client_WinnForum import *		# File containing object definitions used
 from cmd_prompts import * 	# User defined module for cmd prompts
 
 # Globals

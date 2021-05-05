@@ -1,3 +1,12 @@
+"""
+Very similar to server.py
+
+Revised: March 20, 2021
+Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Advised by Carl Dietrich (cdietric@vt.edu)
+For Wireless@VT
+"""
+
 import eventlet #pip install eventlet
 import socketio #pip install socketio
 import requests
@@ -6,7 +15,7 @@ import SASAlgorithms
 import SASREM
 import time
 from datetime import datetime, timedelta
-import WinnForum
+import Server_WinnForum as WinnForum
 import CBSD
 import threading
 import uuid
@@ -545,8 +554,6 @@ def checkPUAlert(data=None):
             if(isSimulating):
                 report.append("NO SPECTRUM DATA")
                 # socket.emit("puStatus", data="NO SPECTRUM DATA")
-            
-    
     if(isSimulating):
         # print(report)
         # for x in (puDetections[str(data["reportId"])]):

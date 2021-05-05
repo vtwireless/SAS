@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
-#
-#
-#
+"""
+Main file to set up various environmental parameters for server and CBSD simulation.
+Includes user registration and submitting various environment variables.
+Additional enhancements can be made in primary user generation and simulated spectrum access measure reports. 
+
+Revised: March 20, 2021
+Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Advised by Carl Dietrich (cdietric@vt.edu)
+For Wireless@VT
+"""
+
 from datetime import datetime, timedelta
 from math import radians, cos, sin, asin, sqrt
 import random
@@ -11,7 +19,7 @@ import sys
 import csv
 import time
 import threading
-from WinnForum import RegistrationRequest, InstallationParam, RcvdPowerMeasReport, MeasReport
+from Server_WinnForum import RegistrationRequest, InstallationParam, RcvdPowerMeasReport, MeasReport
 from argparse import ArgumentParser # If we want command line args
 
 #global flags
@@ -390,7 +398,7 @@ def getDetections():
         except KeyError:
             print("server did not make any attempt at including the missed key. error.")
     return correctDetections, falseDetections, missedDetections
-    
+
 def printResults(numberOfUsers, percentageMU, percentageMUActive, varianceOfData, percentageMobile, secureCount, sim_path):
     correctDetections, falseDetections, missedDetections = getDetections()
     print("\nREPORT")
@@ -402,7 +410,6 @@ def printResults(numberOfUsers, percentageMU, percentageMUActive, varianceOfData
     print("CORRECT DETECTIONS: " + str(correctDetections))
     print("FALSE DETECTIONS: " + str(falseDetections))
     print("MISSED DETECTIONS: " + str(missedDetections))
-    
 
 def resetTrackers():
     global server_data
