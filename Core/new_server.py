@@ -35,6 +35,7 @@ cbsds = [] #cbsd references
 
 databaseLogging = False
 isSimulating = True
+NUM_OF_CHANNELS = 15
 puDetections = {}
 
 socket = socketio.Server()
@@ -533,7 +534,6 @@ def getChannelFreqFromChannel(channel, getHighFreq=False):
     if(getHighFreq):
         channel = channel + 1
     return (channel*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ
-        
 
 def getChannelFromFrequency(freq):
     """Returns the lowFreq for the channel 'freq' can be found"""

@@ -25,6 +25,7 @@ cbsds = [] #cbsd references
 
 
 databaseLogging = False
+NUM_OF_CHANNELS = 15
 
 socket = socketio.Server()
 app = socketio.WSGIApp(socket, static_files={
@@ -500,7 +501,6 @@ def getChannelFreqFromChannel(channel, getHighFreq=False):
     if(getHighFreq):
         channel = channel + 1
     return (channel*SASAlgorithms.TENMHZ)+SASAlgorithms.MINCBRSFREQ
-        
 
 def getChannelFromFrequency(freq):
     """Returns the lowFreq for the channel 'freq' can be found"""
