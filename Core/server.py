@@ -10,6 +10,7 @@ import WinnForum
 import CBSD
 import threading
 import uuid
+import random
 
 GETURL = "http://localhost/SASAPI/SAS_API_GET.php"
 POSTURL = "http://localhost/SASAPI/SAS_API.php"
@@ -40,7 +41,6 @@ def sendGetRequest(parameters):
     x = requests.post(GETURL, parameters)
     return x.json()
 
-
 def generateResponse(responseCode):
     response = {}
     response["responseCode"] = str(responseCode)
@@ -53,7 +53,7 @@ def sendPostRequest(parameters):
     print(x.text)
     return x.json()
 
-def getSettings() :
+def getSettings():
     if databaseLogging:
         getAl = { "action": "getSettings"}
         result = sendGetRequest(getAl)
@@ -401,6 +401,64 @@ def spectrumData(sid, data):
     except KeyError:
         print("rcvd power meas error")
 
+# IIC Functions ---------------------------------------
+def getRandBool():
+    """Randomly returns True or False"""
+    return bool(random.getrandbits(1)) # Requires import random
+
+def double_pad_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
+    """Executes Double Pad Obfuscation Scheme"""
+
+    pu_bw = puHighFreq - puLowFreq
+    low_su_low_freq = puLowFreq - pu_bw
+    low_su_high_freq = puLowFreq
+    high_su_low_freq = puHighFreq
+    high_su_high_freq = puHighFreq + pu_bw
+
+
+    if(getRandBool()): # Randomly pick to pad top or bottom first
+        if(low_su_low_freq >= SASAlgorithms.MINCBRSFREQ and est_num_of_available_sus):
+            sendIICCommand(low_su_low_freq, low_su_high_freq)
+            est_num_of_available_sus -= 1
+        if(high_su_high_freq <= SASAlgorithms.MAXCBRSFREQ and est_num_of_available_sus):
+            sendIICCommand(high_su_low_freq, high_su_high_freq)
+            est_num_of_available_sus -= 1
+    else:
+        if(high_su_high_freq <= SASAlgorithms.MAXCBRSFREQ):
+            sendIICCommand(high_su_low_freq, high_su_high_freq)
+            est_num_of_available_sus -= 1
+        if(low_su_low_freq >= SASAlgorithms.MINCBRSFREQ):
+            sendIICCommand(low_su_low_freq, low_su_high_freq)
+            est_num_of_available_sus -= 1
+
+def fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
+    """Fills PU Occupied Channel(s)"""
+
+    #Find the channel where the lowest PU frequency resides
+    puLowChannel = getChannelFromFrequency(puLowFreq)
+    channelFreqLow = getChannelFreqFromChannel(puLowChannel)
+    lowCbsdBw = puLowFreq - channelFreqLow
+
+    #Find the channel where the highest PU frequency resides
+    puHighChannel = getChannelFromFrequency(puHighFreq)
+    channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
+    highCbsdBw = channelFreqHigh - puHighFreq
+    print("HERE")
+    # print(lowCbsdBw)
+    # if(getRandBool()):
+    #     # Only command radio if the obfuscating spectrum is at least 1 kHz
+    #     if(lowCbsdBw >= 1000):
+    #         sendIICCommand(channelFreqLow, puLowFreq)
+    #     if(highCbsdBw > 1000):
+    #         sendIICCommand(puHighFreq, channelFreqHigh)
+    # else:
+    # Only command radio if the obfuscating spectrum is at least 1 kHz
+    if(highCbsdBw > 1000):
+        sendIICCommand(puHighFreq, channelFreqHigh)   
+    if(lowCbsdBw >= 1000):
+        sendIICCommand(channelFreqLow, puLowFreq)
+
+
 @socket.on('incumbentInformation')
 def incumbentInformation(sid, data):
     """Function for PUs to send their operating data"""
@@ -409,7 +467,9 @@ def incumbentInformation(sid, data):
     for data in jsonData["incumbentInformation"]:
         # Get time, location, and frequency range of PU
         desireObfuscation = None
+        scheme = None
         startTime = None
+        endTime = None
         puLat = None
         puLon = None
         puLowFreq = None
@@ -417,6 +477,7 @@ def incumbentInformation(sid, data):
         power = None
         try:
             desireObfuscation = bool(data["desireObfuscation"])
+            scheme = str(data["scheme"])
             puLowFreq = float(data["lowFreq"])
             puHighFreq = float(data["highFreq"])
         except KeyError as ke:
@@ -427,30 +488,41 @@ def incumbentInformation(sid, data):
             puLon = data["puLon"]
             power = data["power"]
             startTime = data["startTime"]
+            endTime = data["endTime"]
         except:
             pass
         if(desireObfuscation):
-            if(utilizeExtraChannel):
-                #Find the channel where the lowest PU frequency resides
-                puLowChannel = getChannelFromFrequency(puLowFreq)
-                channelFreqLow = getChannelFreqFromChannel(puLowChannel)
-                lowCbsdBw = puLowFreq - channelFreqLow
-
-                #Find the channel where the highest PU frequency resides
-                puHighChannel = getChannelFromFrequency(puHighFreq)
-                channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
-                highCbsdBw = channelFreqHigh - puHighFreq
-
-                # If there is as least 1kHz between a channel and the PU, turn on an adjacent CBSD
-                if(lowCbsdBw > 1000):
-                    # sendIICCommand(channelFreqLow, puLowFreq) # TODO
-                    print("SENDING BOTTOM")
-                    sendIICCommand(puLowFreq-1e6, puLowFreq)
-                if(highCbsdBw > 1000):
-                    print("SENDING TOP")
-                    sendIICCommand(puHighFreq, channelFreqHigh)
+            if(scheme):
+                # global allRadios
+                est_num_of_available_sus = 0
+                for radio in allRadios:  
+                    if not radio.justChangedParams:
+                        est_num_of_available_sus += 1
+                if(scheme == "double_pad"):
+                    double_pad_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus)
+                elif(scheme == "fill_channel"):
+                    fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus)
             else:
-                pass # Do not want to use an extra channel
+                print("No PU Obfuscation Scheme Detected...")
+            # if(utilizeExtraChannel):
+            #     #Find the channel where the lowest PU frequency resides
+            #     puLowChannel = getChannelFromFrequency(puLowFreq)
+            #     channelFreqLow = getChannelFreqFromChannel(puLowChannel)
+            #     lowCbsdBw = puLowFreq - channelFreqLow
+
+            #     #Find the channel where the highest PU frequency resides
+            #     puHighChannel = getChannelFromFrequency(puHighFreq)
+            #     channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
+            #     highCbsdBw = channelFreqHigh - puHighFreq
+
+            #     # If there is as least 1kHz between a channel and the PU, turn on an adjacent CBSD
+            #     if(lowCbsdBw > 1000):
+            #         sendIICCommand(channelFreqLow, puLowFreq) # TODO
+            #         # sendIICCommand(puLowFreq-1e6, puLowFreq)
+            #     if(highCbsdBw > 1000):
+            #         sendIICCommand(puHighFreq, channelFreqHigh)
+            # else:
+            #     pass # Do not want to use an extra channel
         else:
             pass # PU does not want special treatment
 
@@ -539,10 +611,10 @@ def sendIICCommand(lowFreq, highFreq):
     global allRadios
     for radio in allRadios:  
         if not radio.justChangedParams:
-            print("SENDING LOW: " +str(lowFreq)+" and HIGH: "+str(highFreq))
+            # print("SENDING LOW: " +str(lowFreq)+" and HIGH: "+str(highFreq))
             sendObstructionToRadio(radio, lowFreq, highFreq)
             radiosToChangeBack.append(radio)
-            threading.Timer(3.0, resetRadioStatuses, [radiosToChangeBack]).start()
+            threading.Timer(5.0, resetRadioStatuses, [radiosToChangeBack]).start()
             return True
     return False
 

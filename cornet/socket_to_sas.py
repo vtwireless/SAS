@@ -346,8 +346,6 @@ def getCenterPlusBwFromLowHigh(lowFreq, highFreq):
 	"""Takes a low and high freq and returns the centerFreq and bandwidth"""
 	centerFreq = (highFreq + lowFreq)/2
 	bw = (highFreq - lowFreq)
-	print("HIGH: "+str(highFreq)+" and LOW: "+str(lowFreq))
-	print("CENTER FREQ: "+str(centerFreq)+" and BW: "+str(bw))
 	return centerFreq, bw
 # End Helper Functions---------------------------------------------------------------------
 
@@ -1564,8 +1562,12 @@ def incumbentInformation(clientio, requests):
 			continue
 		if(desireObfuscation := _grabPossibleEntry(request, "desireObfuscation")):
 			payload["desireObfuscation"] = desireObfuscation
+		if(obfuscationScheme := _grabPossibleEntry(request, "scheme")):
+			payload["scheme"] = obfuscationScheme
 		if(startTime := _grabPossibleEntry(request, "startTime")):
 			payload["startTime"] = startTime
+		if(startTime := _grabPossibleEntry(request, "endTime")):
+			payload["endTime"] = startTime
 		if(puLat := _grabPossibleEntry(request, "puLat")):
 			payload["puLat"] = puLat
 		if(puLon := _grabPossibleEntry(request, "puLon")):
