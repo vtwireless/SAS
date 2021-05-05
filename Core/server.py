@@ -443,15 +443,7 @@ def fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
     puHighChannel = getChannelFromFrequency(puHighFreq)
     channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
     highCbsdBw = channelFreqHigh - puHighFreq
-    print("HERE")
-    # print(lowCbsdBw)
-    # if(getRandBool()):
-    #     # Only command radio if the obfuscating spectrum is at least 1 kHz
-    #     if(lowCbsdBw >= 1000):
-    #         sendIICCommand(channelFreqLow, puLowFreq)
-    #     if(highCbsdBw > 1000):
-    #         sendIICCommand(puHighFreq, channelFreqHigh)
-    # else:
+    
     # Only command radio if the obfuscating spectrum is at least 1 kHz
     if(highCbsdBw > 1000):
         sendIICCommand(puHighFreq, channelFreqHigh)   
@@ -503,26 +495,7 @@ def incumbentInformation(sid, data):
                 elif(scheme == "fill_channel"):
                     fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus)
             else:
-                print("No PU Obfuscation Scheme Detected...")
-            # if(utilizeExtraChannel):
-            #     #Find the channel where the lowest PU frequency resides
-            #     puLowChannel = getChannelFromFrequency(puLowFreq)
-            #     channelFreqLow = getChannelFreqFromChannel(puLowChannel)
-            #     lowCbsdBw = puLowFreq - channelFreqLow
-
-            #     #Find the channel where the highest PU frequency resides
-            #     puHighChannel = getChannelFromFrequency(puHighFreq)
-            #     channelFreqHigh = getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
-            #     highCbsdBw = channelFreqHigh - puHighFreq
-
-            #     # If there is as least 1kHz between a channel and the PU, turn on an adjacent CBSD
-            #     if(lowCbsdBw > 1000):
-            #         sendIICCommand(channelFreqLow, puLowFreq) # TODO
-            #         # sendIICCommand(puLowFreq-1e6, puLowFreq)
-            #     if(highCbsdBw > 1000):
-            #         sendIICCommand(puHighFreq, channelFreqHigh)
-            # else:
-            #     pass # Do not want to use an extra channel
+                print("No PU Obfuscation Scheme Detected...")     
         else:
             pass # PU does not want special treatment
 
