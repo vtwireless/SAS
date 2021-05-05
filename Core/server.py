@@ -444,10 +444,8 @@ def incumbentInformation(sid, data):
                 # If there is as least 1kHz between a channel and the PU, turn on an adjacent CBSD
                 if(lowCbsdBw > 1000):
                     # sendIICCommand(channelFreqLow, puLowFreq) # TODO
-                    print("SENDING BOTTOM")
                     sendIICCommand(puLowFreq-1e6, puLowFreq)
                 if(highCbsdBw > 1000):
-                    print("SENDING TOP")
                     sendIICCommand(puHighFreq, channelFreqHigh)
             else:
                 pass # Do not want to use an extra channel
