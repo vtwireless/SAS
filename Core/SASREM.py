@@ -6,8 +6,33 @@ class SASREM:
     def __init__(self):
         self.nodes = []
         self.objects = []
-        self.regions = []
         self.secondsAgo = 5
+        self.cells = []
+
+    def makeCells(self, latitude, longitude, numberOfCells, radius):
+        cellWidth = radius #~km
+        rows = int(sqrt(numberOfCells))
+        self.cells = []
+        id = 0
+        if (rows % 2) == 0:#even
+            for x in range(rows):
+                for y in range(rows):
+                    startx = ((x - int(rows/2) + 0.5)*cellWidth) + longitude
+                    starty = ((y - int(rows/2) + 0.5)*cellWidth) + latitude
+                    point = REMPoint(starty, startx)
+                    rc = REMCell(id, point, cellWidth)
+                    id = id + 1
+                    self.cells.append(rc)
+        else:
+            for x in range(rows):
+                for y in range(rows):
+                    startx = ((x - int(rows/2))*cellWidth) + longitude
+                    starty = ((y - int(rows/2))*cellWidth) + latitude
+                    point = REMPoint(starty, startx)
+                    rc = REMCell(id, point, cellWidth)
+                    id = id + 1
+                    self.cells.append(rc)
+
 
     def addREMObject(self, object):
         self.objects.append(object)
@@ -15,12 +40,6 @@ class SASREM:
     
     def removeREMObject(self, object):
         self.objects.remove(object)
-
-    def addRegion(self, region):
-        self.regions.append(region)
-    
-    def removeRegionObject(self, region):
-        self.regions.remove(region)
 
     def clearOldData(self, now, secondsAgo):
         for object in self.objects:
@@ -51,6 +70,7 @@ class SASREM:
                 self.objects.remove(object)
 
         return objectsToSend
+
 
     def frequencyOverlap(self, freqa, freqb, rangea, rangeb):
         """Checks to see if freq is within range"""
@@ -106,6 +126,7 @@ class SASREM:
         calculatedRadius = c * r
         return calculatedRadius
 
+
     def findClosestSecureNode(self, latitude, longitude, cbsds, distance):
         cbsdToReturn = None
         minDist = distance
@@ -129,14 +150,9 @@ class SASREMObject:
         self.lowFrequency = lowFrequency
         self.timeStamp = timeStamp
 
-class REMRegion:
-    def __init__(self, longitude, latitude, radius):
-        self.longitude = longitude
-        self.latitude = latitude
-        self.radius = radius
 
 class REMPoint:
-    def __init__(self, longitude, latitude):
+    def __init__(self, latitude, longitude):
         self.longitude = longitude
         self.latitude = latitude
 
@@ -145,3 +161,21 @@ class CBSDSocket:
         self.cbsdId = cbsdId
         self.sid = sid
         self.justChangedParams = justChangedParams
+
+class REMCell:
+    def __init__(self, id, centerPoint, diameter):
+        self.id = id
+        self.centerPoint = centerPoint
+        self.diameter = diameter
+        self.data = []
+        self.variance = 0
+        self.best = False
+        self.worst = False
+    
+    def isInCell(self, dataPoint):
+        lat = dataPoint.cbsd.latitude
+        lon = dataPoint.cbsd.longitude
+        if (lat >= (self.centerPoint.latitude - self.diameter) and lat <= (self.centerPoint.latitude + self.diameter) and lon >= (self.centerPoint.longitude - self.diameter) and lon <= (self.centerPoint.longitude + self.diameter)):
+            return True
+        else:
+            return False

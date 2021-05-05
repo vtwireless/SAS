@@ -129,7 +129,7 @@ class RegistrationRequest:
 	def __init__(self, userId, fccId, 
 		cbsdSerialNumber, callSign=None, cbsdCategory=None,
 		cbsdInfo=None, airInterface=None, installationParam=None, 
-		measCapability=None, groupingParam=None, cpiSignatureData=None, vtParams=None):
+		measCapability=None, groupingParam=None, cpiSignatureData=None, vtParams=None, trustScore=None, fullyTrusted=None):
 
 		self.userId = userId #R
 		self.fccId = fccId #R
@@ -143,6 +143,8 @@ class RegistrationRequest:
 		self.groupingParam = _ensureIsList(groupingParam) #O
 		self.cpiSignatureData = cpiSignatureData #O
 		self.vtParams = vtParams #O
+		self.trustScore = trustScore #O
+		self.fullyTrusted = fullyTrusted #O
 
 	def asdict(self):
 		return_dict = {}
@@ -170,6 +172,10 @@ class RegistrationRequest:
 			return_dict["cpiSignatureData"] = self.cpiSignatureData.asdict()
 		if(self.vtParams):
 			return_dict["vtParams"] = self.vtParams.asdict()
+		if(self.trustScore):
+			return_dict["trustScore"] = self.trustScore
+		if(self.fullyTrusted):
+			return_dict["fullyTrusted"] = self.fullyTrusted
 		return return_dict
 
 class AirInterface:

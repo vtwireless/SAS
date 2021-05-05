@@ -5,7 +5,7 @@ import json
 import SASAlgorithms
 import SASREM
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import WinnForum
 import CBSD
 import threading
@@ -25,7 +25,6 @@ cbsds = [] #cbsd references
 
 
 databaseLogging = False
-josephsMac = False # timezone isnt cooperating on Mac
 
 socket = socketio.Server()
 app = socketio.WSGIApp(socket, static_files={
@@ -34,7 +33,6 @@ app = socketio.WSGIApp(socket, static_files={
 
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
-NUM_OF_CHANNELS = int((SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ)/SASAlgorithms.TENMHZ)
 
 def sendGetRequest(parameters):
     parameters["SAS_KEY"] = SASKEY
@@ -88,24 +86,24 @@ def getGrantWithID(grantId):
     else:
         return None
 
-def loadGrantFromJSON(json_file):
-    ofr = WinnForum.FrequencyRange(json_file["frequency"], json_file["frequency"] + json_file["bandwidth"])
-    operationParam = WinnForum.OperationParam(json_file["requestPowerLevel"], ofr)
+def loadGrantFromJSON(json):
+    ofr = WinnForum.FrequencyRange(json["frequency"], json["frequency"] + json["bandwidth"])
+    operationParam = WinnForum.OperationParam(json["requestPowerLevel"], ofr)
     vtgp = WinnForum.VTGrantParams(None, None, None, None, None, None, None, None,None, None, None, None, None, None, None)
     try:
-        vtgp.minFrequency = json_file["requestMinFrequency"]
-        vtgp.maxFrequency = json_file["requestMaxFrequency"]
-        vtgp.startTime = json_file["startTime"]
-        vtgp.endTime = json_file["endTime"]
-        vtgp.approximateByteSize = json_file["requestApproximateByteSize"]
-        vtgp.dataType = json_file["dataType"]
-        vtgp.powerLevel = json_file["requestPowerLevel"]
-        vtgp.location = json_file["requestLocation"]
-        vtgp.mobility = json_file["requestMobility"]
-        vtgp.maxVelocity = json_file["requestMaxVelocity"]
+        vtgp.minFrequency = json["requestMinFrequency"]
+        vtgp.maxFrequency = json["requestMaxFrequency"]
+        vtgp.startTime = json["startTime"]
+        vtgp.endTime = json["endTime"]
+        vtgp.approximateByteSize = json["requestApproximateByteSize"]
+        vtgp.dataType = json["dataType"]
+        vtgp.powerLevel = json["requestPowerLevel"]
+        vtgp.location = json["requestLocation"]
+        vtgp.mobility = json["requestMobility"]
+        vtgp.maxVelocity = json["requestMaxVelocity"]
     except KeyError:
         print("No vtparams")
-    grant = WinnForum.Grant(json_file["grantID"], json_file["secondaryUserID"], operationParam, vtgp)
+    grant = WinnForum.Grant(json["grantID"], json["secondaryUserID"], operationParam, vtgp)
     grants.append(grant)
     return grant 
 
@@ -163,9 +161,9 @@ def connect(sid, environ):
     print('connect ', sid)
     allClients.append(sid)
 
-# @socket.event
-# def my_message(sid, data):
-#     print('message ', data)
+@socket.event
+def my_message(sid, data):
+    print('message ', data)
 
 @socket.event
 def disconnect(sid):
@@ -176,6 +174,7 @@ def disconnect(sid):
     for radio in allRadios:
         if radio.sid == sid:
             allRadios.remove(radio)
+
 
 @socket.on('registrationRequest')
 def register(sid, data):
@@ -315,10 +314,7 @@ def heartbeat(sid, data):
         except KeyError:
             print("no measure report")
         response = SASAlgorithms.runHeartbeatAlgorithm(grants, REM, hb, grant)
-        if(josephsMac):
-            grant.heartbeatTime = datetime.now(time.timezone.utc)
-        else:
-            grant.heartbeatTime = datetime.now(timezone.utc)
+        grant.heartbeatTime = datetime.now(time.timezone.utc)
         grant.heartbeatInterval = response.heartbeatInterval
         hbrArray.append(response.asdict())
     responseDict = {"heartbeatResponse":hbrArray}
@@ -539,20 +535,11 @@ def resetRadioStatuses(radios):
         radio.justChangedParams = False
 
 def cancelGrant(grant):
-    if(josephsMac):
-        now = datetime.now(time.timezone.utc)
-    else:
-        now = datetime.now(timezone.utc)
+    now = datetime.now(time.timezone.utc)
     if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now:
         removeGrant(grant.id, grant.cbsdId)
         print('grant ' + grant.id + ' canceled')
 
-def singleFrequencyOverlap(self, freq, lowFreq, highFreq):
-    """Checks to see if freq is within range"""
-    if (freqa <= highFreq and freqb >= lowFreq):
-        return True
-    else:
-        return False
 
 def sendAssignmentToRadio(cbsd):
     print("a sensing radio has joined")
@@ -627,11 +614,14 @@ def obstructChannel(lowFreq, highFreq, latitude, longitude):
 
 def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams = dict()
-    changeParams["lowFrequency"] = lowFreq
-    changeParams["highFrequency"] = highFreq
+    changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
+    changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
-    socket.emit("obstructChannelWithRadioParams", json.dumps(changeParams), to=cbsd.sid)
+    socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
+
+
+
 
 def checkPUAlert():
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
@@ -653,4 +643,3 @@ if __name__ == '__main__':
     getSettings()
     threading.Timer(3.0, checkPUAlert).start()
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
-

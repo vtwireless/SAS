@@ -1,9 +1,8 @@
 import WinnForum
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import threading
-
-josephsMac = False
+import numpy
 
 class SASAlgorithms:
     MINCBRSFREQ = 3550000000
@@ -13,7 +12,7 @@ class SASAlgorithms:
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT' #DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
         self.defaultHeartbeatInterval = 5
-        self.threshold = 10.0 #POWER THRESHOLD
+        self.threshold = 30.0 #POWER THRESHOLD
         self.longitude = -80.4 #Blacksburg location
         self.latitude = 37.2
         self.radius = 1000#Kilometers
@@ -21,6 +20,7 @@ class SASAlgorithms:
         self.ignoringREM = True
         self.offerNewParams = True
         self.maxEIRP = 30
+        self.cells = []
 
     def setGrantAlgorithm(self, algorithm):
         self.grantAlgorithm = algorithm
@@ -88,11 +88,7 @@ class SASAlgorithms:
             radius = 1000
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
         if present == 1 and not self.ignoringREM:
-            if(josephsMac):
-                t = datetime.now(time.timezone.utc)
-            else:
-                    t = datetime.now(timezone.utc)
-            response.transmitExpireTime = t.strftime("%Y%m%dT%H:%M:%S%Z")
+            response.transmitExpireTime = datetime.now(time.timezone.utc).strftime("%Y%m%dT%H:%M:%S%Z")
             response.response = self.generateResponse(501)#Suspended Grant
         else:
             response.response = self.generateResponse(0)
@@ -160,12 +156,32 @@ class SASAlgorithms:
             #print("Currently no spectrum data") # TODO: remove comment
             return 2
         if self.getREMAlgorithm() == 'DEFAULT':
-            if self.defaultREMAlgorith(remData):
+            if self.defaultREMAlgorithm(remData):
                 return 1
             else:
                 return 0
         elif self.getREMAlgorithm() == 'TRUSTSCORE':
             if self.trustScoreREMAlgorithm(remData):
+                return 1
+            else:
+                return 0
+        elif self.getREMAlgorithm() == 'TSRL':
+            if self.trustScoreRemoveLowestREMAlgorithm(remData):
+                return 1
+            else:
+                return 0
+        elif self.getREMAlgorithm() == 'SECREM':
+            if self.secREMAlgorithm(remData):
+                return 1
+            else:
+                return 0
+        elif self.getREMAlgorithm() == 'SECREMCELLS':
+            if self.secREMAlgorithmWithCells(remData, REM):
+                return 1
+            else:
+                return 0
+        elif self.getREMAlgorithm() == 'NOFK':
+            if self.nofKREMAlgorithm(remData):
                 return 1
             else:
                 return 0
@@ -179,10 +195,7 @@ class SASAlgorithms:
 
     def calculateGrantExpireTime(self, grants, REM, grant, renew):
         grantCount = len(grants)
-        if(josephsMac):
-            t = datetime.now(time.timezone.utc)
-        else:
-            t = datetime.now(timezone.utc)
+        t = datetime.now(time.timezone.utc)
         if grantCount <= 1:
             t = t + timedelta(seconds = self.maxGrantTime)
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
@@ -209,30 +222,183 @@ class SASAlgorithms:
             return False
 
 
-    def defaultREMAlgorith(self, remData):
+    def defaultREMAlgorithm(self, remData):
         total = 0.0
         #Equal weight with threshold parameter, no location, all parameters
         for data_point in remData:
             total = total + float(data_point.powerLevel)
-            
         if (total*1.0/len(remData)) > self.threshold:
+            return True
+        else:
+            return False
+
+    def nofKREMAlgorith(self, remData):
+        yes = 0
+        no = 0
+        #Equal weight with threshold parameter, no location, all parameters
+        for data_point in remData:
+            if data_point.powerLevel >= self.threshold:
+                yes = yes + 1
+            else:
+                no = no + 1
+
+        if yes > no:
             return True
         else:
             return False
 
     def trustScoreREMAlgorithm(self, remData):
         #Trust scores with threshold parameter, no location, all parameters
-        total = 0.0
-        trustScoreThreshold = 5.0
+        totalTandP = 0.0
+        totalTrustLevel = 0
         for data_point in remData:
-            if float(data_point.powerLevel) > self.threshold:#if the individual power level sensed is geater than threshold
-                total = total + data_point.cbsd.trustScore
-        if (total*1.0/len(remData)) > trustScoreThreshold:
+            totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+            totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+        if totalTandP > (self.threshold*totalTrustLevel):
             return True
         else:
             return False
 
+    def secREMAlgorithm(self, remData):
+        #Trust scores with threshold parameter, no location, all parameters
+        totalTandP = 0.0
+        totalTrustLevel = 0.0
+        variance = self.getVarianceOfData(remData)
+        for data_point in remData:
+            if (variance > 600 and data_point.cbsd.fullyTrusted):
+                totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel           
+            else:
+                totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+            if (variance > 200 and data_point.cbsd.fullyTrusted):#double count secure nodes
+                totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+        if totalTandP > (self.threshold*totalTrustLevel):
+            return True
+        else:
+            return False
+
+    def getVarianceOfData(self, remData):
+        dataForVar = []
+        for data in remData:
+            dataForVar.append(data.powerLevel)
+        return numpy.var(dataForVar)
+        
+
+    def trustScoreRemoveLowestREMAlgorithm(self, remData):
+        #Trust scores with threshold parameter, no location, all parameters
+        totalTandP = 0.0
+        totalTrustLevel = 0.0
+        choppedRemData = self.removeDataWithLowestTrustScores(5, remData)
+        for data_point in choppedRemData:
+            totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+            totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+        if totalTandP > (self.threshold*totalTrustLevel):
+            return True
+        else:
+            return False
+
+    def removeDataWithLowestTrustScores(self, percentRemoved, remData):
+        cbsds = []
+        for data_point in remData:
+            if data_point.cbsd not in cbsds:
+                cbsds.append(data_point.cbsd)
+        removeCount = max(1, (float(percentRemoved)/100.0)*len(cbsds))
+        removeCount = int(removeCount)#make whole number
+        if len(cbsds) < 5:#if there are less than 5 cbsds
+            return remData
+        lowestTrustNodes = []
+            
+        for x in range(5, 40):
+            if len(lowestTrustNodes) < removeCount:
+                for cbsd in cbsds:
+                    if (cbsd.trustLevel == x/10.0):
+                        lowestTrustNodes.append(cbsd)
+                        cbsds.remove(cbsd)
+
+        for data in remData:
+            if data.cbsd in lowestTrustNodes:
+                remData.remove(data)
+        return remData
+
+
+    def secREMAlgorithmWithCells(self, remData, REM):
+        #Trust scores with threshold parameter, no location, all parameters
+        totalTandP = 0.0
+        totalTrustLevel = 0.0
+        variance = self.getVarianceOfData(remData)
+        for x in REM.cells:#clear data
+            x.data = []
+
+        for d in remData:#put each data point into its cell or cells
+            for cell in REM.cells:
+                if cell.isInCell(d):
+                    cell.data.append(d)
+
+        for c in REM.cells:#calculate the variance of each cell
+            c.variance = self.getVarianceOfData(c.data)
+        if len(REM.cells) > 1:
+            worst = 0
+            worstId = -1
+            best = 1000000
+            bestId = -1
+            for cell in REM.cells:
+                if cell.variance and len(cell.data) > 1:
+                    if cell.variance < best:
+                        best = cell.variance
+                        bestId = cell.id
+                    if cell.variance > worst:
+                        worst = cell.variance
+                        worstId = cell.id 
+
+            for cellCheck in REM.cells:
+                if cellCheck.id == worstId and cellCheck.id == bestId:
+                    cellCheck.worst = False
+                    cellCheck.best = False
+                elif cellCheck.id == worstId:
+                    cellCheck.worst = True  
+                    cellCheck.best = False
+                else:
+                    cellCheck.worst = False
+                    cellCheck.best = True   
+
+        for cell in REM.cells:
+            for data_point in cell.data:
+                if (variance > 6000 and data_point.cbsd.fullyTrusted):#system variance
+                    totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                    totalTrustLevel = totalTrustLevel + (data_point.cbsd.trustLevel)           
+                elif data_point.cbsd.fullyTrusted:
+                    totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                    totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+                else:                
+                    if cell.worst:
+                        totalTandP = totalTandP + 0.9*(data_point.cbsd.trustLevel * data_point.powerLevel)
+                        totalTrustLevel = totalTrustLevel + 0.9*data_point.cbsd.trustLevel
+                    elif cell.best:
+                        totalTandP = totalTandP + 1.1*(data_point.cbsd.trustLevel * data_point.powerLevel)
+                        totalTrustLevel = totalTrustLevel + 1.1*data_point.cbsd.trustLevel
+                    else:
+                        totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                        totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+
+                if (cell.variance > 200 and data_point.cbsd.fullyTrusted):#double count secure nodes
+                    totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
+                    totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
+        if totalTandP > (self.threshold*totalTrustLevel):
+            return True
+        else:
+            return False
+
+
+
+
+        
+                
+
+
     def trustedREMAlgorithm(self, remData):
+        #Only use if trust score is high enough
        #Trust scores with threshold parameter, no location, all parameters
         count = 0
         total = 0.0
