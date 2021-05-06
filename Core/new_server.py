@@ -648,7 +648,7 @@ def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams["highFrequency"] = highFreq
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
-    socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
+    socket.emit("obstructChannelWithRadioParams", json.dumps(changeParams), room=cbsd.sid)
 
 
 def checkPUAlert(data=None):
