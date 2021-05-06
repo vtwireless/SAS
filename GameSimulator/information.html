@@ -1,1 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {box-sizing: border-box}
+body {font-family: Verdana, sans-serif; margin:0}
+.mySlides {display: none}
+img {vertical-align: middle;}
 
+/* Slideshow container */
+.slideshow-container {
+  max-width: 100%;
+  position: relative;
+  margin: auto;
+}
+
+/* Next & previous buttons */
+.prev, .next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  padding: 16px;
+  margin-top: -22px;
+  color: black;
+  font-weight: bold;
+  font-size: 18px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+}
+
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover, .next:hover {
+  background-color: rgba(0,0,0,0.8);
+}
+
+/* Caption text */
+.text {
+  color: #f2f2f2;
+  font-size: 15px;
+  padding: 8px 12px;
+  position: absolute;
+  bottom: 8px;
+  width: 100%;
+  text-align: center;
+}
+
+/* Number text (1/3 etc) */
+.numbertext {
+  color: #00000;
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+}
+
+/* The dots/bullets/indicators */
+.dot {
+  cursor: pointer;
+  height: 15px;
+  width: 15px;
+  margin: 0 2px;
+  background-color: #bbb;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color 0.6s ease;
+}
+
+.active, .dot:hover {
+  background-color: #717171;
+}
+
+/* Fading animation */
+.fade {
+  -webkit-animation-name: fade;
+  -webkit-animation-duration: 1.5s;
+  animation-name: fade;
+  animation-duration: 1.5s;
+}
+
+@-webkit-keyframes fade {
+  from {opacity: .4} 
+  to {opacity: 1}
+}
+
+@keyframes fade {
+  from {opacity: .4} 
+  to {opacity: 1}
+}
+
+/* On smaller screens, decrease text size */
+@media only screen and (max-width: 300px) {
+  .prev, .next,.text {font-size: 11px}
+}
+</style>
+</head>
+<body style="background-color:white;">
+
+<div class="slideshow-container">
+
+<div class="mySlides fade">
+  <div class="numbertext">1 / 5</div>
+    <div style="padding:40px;">
+  <h2>What is a SAS?</h2>
+<p>A SAS (Spectrum Access System) is a frequency coordinator that grants users access to the Citizens Broadband Radio Service (CBRS). There are 3 main tiers according to the FCC which include incumbent users, priority access, and general authorized access. Both the simulation and game show incumbent and priority as primary users while general authorized access users request grants to the system to use available space. The game takes place in the 3.5GHz range for radio devices.
+</p>
+  <!--div class="text">Caption Text</div-->
+  </div>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">2 / 5</div>
+  <div style="padding:40px;">
+ <h2>The Game</h2>
+<p>The game has two main components: the list of grant requests and the active spectrum usage. Grant requests come in on the left and show the time they wish to start as well as their bands. Some grants have two possible frequencies; only one may be selected. You can also choose to deny the grant entirely thus removing it from the list. If you approve a grant that would interrupt or overlap the PU activity, the grant will remain red and the number of conflicting grants will increase.<p>
+  <img src="img/grant.png" style="width:50%;">
+  <!--div class="text">Caption Two</div-->
+  </div>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">3 / 5</div>
+  <div style="padding:40px;">
+     <h2>Hovering</h2>
+
+  <p>Hovering over an approve button will show when and where a grant request would take place if approved. If the grant is blue, it has no overlap. Red grants would conflict with current grants and PU activity. Grants that do not show up do not take place on the game's current visible time scale.
+</p>
+  </div>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">4 / 5</div>
+  <div style="padding:40px;">
+     <h2>Scores and Commands</h2>
+
+  <p>On the bottom of the game includes a list of scores. For every grant that is approved, denied, or missed scores will change. The objective is to put as many good grants into the system as possible with no overlap.
+</p>
+<img src="img/scores.png" style="width:50%;">
+
+  <p>At the bottom of the screen includes selecting different speeds and seeds. You can pause the game, speed it up or slow it down. The speed of the game will show at the top of the screen with the current time and not affect your scores. There are two seeded events for a repeatable game and one game that is entirely random. If you leave the screen or change tabs, the game will automatically pause.
+</p>
+<img src="img/commands.png" style="width:50%;">
+  </div>
+</div>
+
+<div class="mySlides fade">
+  <div class="numbertext">5 / 5</div>
+  <div style="padding:40px;">
+  <h2>Simulator</h2>
+  <p>The simulator is just that, a passive simulator. The simulator is pre-filled with PU activity and grant requests. A SAS filled with a higher capacity would be more common but is too difficult to manage as a game since these processes are normally automatic.</p>
+  <img src="img/simulator.png" style="width:50%;">
+
+  </div>
+</div>
+
+
+
+
+<a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+<a class="next" onclick="plusSlides(1)">&#10095;</a>
+
+</div>
+<br>
+
+<div style="text-align:center;">
+  <span class="dot" onclick="currentSlide(1)"></span> 
+  <span class="dot" onclick="currentSlide(2)"></span> 
+  <span class="dot" onclick="currentSlide(3)"></span> 
+  <span class="dot" onclick="currentSlide(4)"></span> 
+  <span class="dot" onclick="currentSlide(5)"></span> 
+</div>
+
+<script>
+var slideIndex = 1;
+showSlides(slideIndex);
+
+function plusSlides(n) {
+  showSlides(slideIndex += n);
+}
+
+function currentSlide(n) {
+  showSlides(slideIndex = n);
+}
+
+function showSlides(n) {
+  var i;
+  var slides = document.getElementsByClassName("mySlides");
+  var dots = document.getElementsByClassName("dot");
+  if (n > slides.length) {slideIndex = 1}    
+  if (n < 1) {slideIndex = slides.length}
+  for (i = 0; i < slides.length; i++) {
+      slides[i].style.display = "none";  
+  }
+  for (i = 0; i < dots.length; i++) {
+      dots[i].className = dots[i].className.replace(" active", "");
+  }
+  slides[slideIndex-1].style.display = "block";  
+  dots[slideIndex-1].className += " active";
+}
+</script>
+
+</body>
+</html> 
