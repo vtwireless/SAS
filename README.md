@@ -19,9 +19,10 @@ before attempting to launch this. If you are a Wireless@VT user with
 CORNET access, this is how you can connect a Kelly Hall (or any other
 network attached USRP) to the SAS.
 
-An example of executing the CORNET SAS client socket_to_sas.py: ```python3
-socket_to_sas.py -p 5000 -a "127.0.0.1" --sim
-"simulations/sim_one.json"``` *Note: On CORNET there may be environment
+An example of executing the CORNET SAS client socket_to_sas.py:
+```python3 socket_to_sas.py -p 5000 -a "127.0.0.1" --sim
+"simulations/sim_one.json"```
+*Note: On CORNET there may be environment
 issues with Python. Please use:
 ```grrun python3 socket_to_sas.py -p ... -a ... --sim ...```
 
