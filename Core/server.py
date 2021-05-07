@@ -1,3 +1,12 @@
+"""
+Very similar to server.py
+
+Revised: March 20, 2021
+Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Advised by Dr. Carl Dietrich (cdietric@vt.edu)
+For Wireless@VT
+"""
+
 import eventlet #pip install eventlet
 import socketio #pip install socketio
 import requests
@@ -25,7 +34,9 @@ cbsds = [] #cbsd references
 
 
 databaseLogging = False
+isSimulating = True
 NUM_OF_CHANNELS = 15
+puDetections = {}
 
 socket = socketio.Server()
 app = socketio.WSGIApp(socket, static_files={
@@ -140,7 +151,7 @@ def loadCBSDFromJSON(json):
     return cbsd
 
 def measReportObjectFromJSON(json):
-    return WinnForum.RcvdPowerMeasReport(json["measFrequency"], json["measBandwidth"], json["measRcvdPower"] or 0)
+    return WinnForum.RcvdPowerMeasReport(float(json["measFrequency"]), json["measBandwidth"], json["measRcvdPower"] or 0)
 
 def removeGrant(grantId, cbsdId):
     for g in grants:
@@ -163,10 +174,6 @@ def connect(sid, environ):
     allClients.append(sid)
 
 @socket.event
-def my_message(sid, data):
-    print('message ', data)
-
-@socket.event
 def disconnect(sid):
     print('disconnect ', sid)
     allClients.remove(sid)
@@ -175,7 +182,6 @@ def disconnect(sid):
     for radio in allRadios:
         if radio.sid == sid:
             allRadios.remove(radio)
-
 
 @socket.on('registrationRequest')
 def register(sid, data):
@@ -384,19 +390,46 @@ def changeAlgorithm(sid, data):
 @socket.on('spectrumData')
 def spectrumData(sid, data):
     jsonData = json.loads(data)
-    print(jsonData) #TODO Remove
     cbsd = None
     try:
         cbsd = getCBSDWithId(jsonData["spectrumData"]["cbsdId"])
     except KeyError:
         pass
     try:
-        if jsonData["spectrumData"]["spectrumData"]:
-            for rpmr in jsonData["spectrumData"]["spectrumData"]["rcvdPowerMeasReports"]:
+        deviceInfo=jsonData["spectrumData"]
+        cbsd.latitude = deviceInfo["latitude"]
+        cbsd.longitude = deviceInfo["longitude"]
+        # If simulating, dump previously logged data
+        if(isSimulating):
+            REM.objects = []
+        if(deviceInfo["spectrumData"]):
+            for rpmr in deviceInfo["spectrumData"]["rcvdPowerMeasReports"]:
                 mr = measReportObjectFromJSON(rpmr)
                 REM.measReportToSASREMObject(mr, cbsd)
-    except KeyError:
-        print("rcvd power meas error")
+    except KeyError as ke:
+        print("rcvd power meas error: ")
+        print(ke)
+
+@socket.on("latencyTest")
+def sendCurrentTime(sid):
+    """Sends the simulation client the current server time. Used to calulcated latency."""
+    responseDict = {"serverCurrentTime":time.time()}
+    socket.emit('latencyTest', to=sid, data=json.dumps(responseDict))
+
+@socket.on("simCheckPUAlert")
+def simCheckPUAlert(sid, data):
+    payload = json.loads(data)
+    checkPUAlert(payload)
+
+@socket.on("checkPUAlert")
+def sendSimPuDetection(sid):
+    checkPUAlert()
+
+@socket.on("getPuDetections")
+def printPuDetections(sid):
+    global puDetections
+    socket.emit("detections", json.dumps(puDetections))
+    puDetections = {}
 
 # IIC Functions ---------------------------------------
 def getRandBool():
@@ -540,7 +573,6 @@ def cancelGrant(grant):
         removeGrant(grant.id, grant.cbsdId)
         print('grant ' + grant.id + ' canceled')
 
-
 def sendAssignmentToRadio(cbsd):
     print("a sensing radio has joined")
     if cbsd in allRadios:
@@ -578,7 +610,6 @@ def sendIICCommand(lowFreq, highFreq):
             return True
     return False
 
-
 def obstructChannel(lowFreq, highFreq, latitude, longitude):
     print("NGGYU")
     result = SASAlgorithms.isPUPresentREM(REM, lowFreq, highFreq, latitude, longitude, None)
@@ -613,29 +644,59 @@ def obstructChannel(lowFreq, highFreq, latitude, longitude):
 
 def sendObstructionToRadio(cbsd, lowFreq, highFreq):
     changeParams = dict()
-    changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
-    changeParams["highFrequency"] =str((SASAlgorithms.TENMHZ * (i+ 1)) + SASAlgorithms.MINCBRSFREQ)
+    changeParams["lowFrequency"] = lowFreq
+    changeParams["highFrequency"] = highFreq
     changeParams["cbsdId"] = cbsd.cbsdId
     cbsd.justChangedParams = True
-    socket.emit("obstructChannelWithRadioParams", changeParams, room=cbsd.sid)
+    socket.emit("obstructChannelWithRadioParams", json.dumps(changeParams), room=cbsd.sid)
 
-def checkPUAlert():
+
+def checkPUAlert(data=None):
+    report = []
+    global puDetections
     freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
     blocks = freqRange/SASAlgorithms.TENMHZ
+    if(data):
+        puDetections[str(data["reportId"])] = []
     for i in range(int(blocks)):
         low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
         result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
-        if result == 1:
-            for grant in grants:
-                if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
-                    cbsd = getCBSDWithId(grant.cbsdId)
-                    cbsd.sid.emit('pauseGrant', { 'grantId' : grant.id })
-    
-    threading.Timer(1.5, checkPUAlert).start()
+        if(result == 1):
+            if(isSimulating):
+                if(data):
+                    puDetections[str(data["reportId"])].append({"reportId":data["reportId"],"timestamp":str(float("{:0.3f}".format(time.time()))),"lowFreq":low,"highFreq":high, "result":str(result)})
+                report.append("PU FOUND")
+            else:
+                for grant in grants:
+                    if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam), SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
+                        cbsd = getCBSDWithId(grant.cbsdId)
+                        cbsd.sid.emit('pauseGrant', { 'grantId' : grant.id })
+        elif result == 0:
+            if(isSimulating):
+                report.append("PU NOT FOUND")
+                # socket.emit("puStatus", data="PU NOT FOUND")
+        elif(result == 2):
+            if(isSimulating):
+                report.append("NO SPECTRUM DATA")
+                # socket.emit("puStatus", data="NO SPECTRUM DATA")
+
+    if(isSimulating):
+        # print(report)
+        # for x in (puDetections[str(data["reportId"])]):
+            #  print(x)
+        # Write to a (CSV/JOSN) file
+        pass
+        # try:
+        #     socket.emit("puStatus", to=allClients[0],  data="report")
+        # except:
+        #     pass
+    else:
+        threading.Timer(1, checkPUAlert).start()
    
 
 if __name__ == '__main__':
     getSettings()
-    threading.Timer(3.0, checkPUAlert).start()
+    if(not isSimulating):
+        threading.Timer(3.0, checkPUAlert).start()
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
