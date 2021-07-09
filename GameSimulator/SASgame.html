@@ -129,7 +129,7 @@
 
 
 
-
+    // inits components to draw on canvas
     function startGame() {
       nowLine = new component(2, canvasHeight - summaryTextHeight - titleOffset, "red", nowLinePosition, 50);
       grantSummaryText = new component("20px", "Consolas", "black", 150, canvasHeight - 50, "text");
@@ -158,7 +158,7 @@
 
       myGameArea.start();
     }
-
+    // canvas itself
     var myGameArea = {
       canvas: document.createElement("canvas"),
       speed: "1x",
@@ -184,7 +184,7 @@
       }
     }
 
-
+    // Mouseover event listener attached to canvas
     myGameArea.canvas.onmousemove = function (e) {
       // important: correct mouse position:
       var rect = this.getBoundingClientRect(),
@@ -226,6 +226,23 @@
         }
       });
 
+      // CHECK OTHER GRANTS
+      grantsToShow.forEach(function (grant, idx) {
+        var startPlace = grant.frequency - (grant.bandwidth / 2);
+        var heightOfBlock = grant.bandwidth;
+
+        startPlace = frequencyToPixelConversion(startPlace);
+        pixHeight = bandwidthToComponentHeight(grant.bandwidth);
+        if (x > (grant.startTime - myGameArea.frameNo) && x < (grant.startTime - myGameArea.frameNo) + grant.length && y > startPlace && y < (startPlace) + pixHeight) {
+          currHover.text = "Requested Grant #: " + idx + " SU Grant F: " + (baseFrequency + grant.frequency) / 10000 + "GHz Bw: " + grant.bandwidth / 10 + "MHz";
+          grantHovered = true;
+          hoveredGrant.x = grant.startTime - myGameArea.frameNo;
+          hoveredGrant.y = startPlace;
+          hoveredGrant.width = grant.length;
+          hoveredGrant.height = pixHeight;
+        }
+      });
+
       if (!grantHovered) {
         currHover.text = "(" + Math.floor(x) + ", " + Math.floor(y) + ")";
         hoveredGrant.x = 0;
@@ -234,7 +251,7 @@
         hoveredGrant.height = 0;
       }
     }
-
+    // Mouseout event listener attached to canvas
     myGameArea.canvas.onmouseleave = function (e) {
       currHover.text = "";
       hoveredGrant.x = 0;
@@ -243,6 +260,7 @@
       hoveredGrant.height = 0;
     }
 
+    // Mouseclick event listener attached to canvas
     myGameArea.canvas.onmousedown = function (e) {
 
       // important: correct mouse position:
@@ -276,8 +294,6 @@
         }
       });
 
-
-
     }
 
     function seedChange(value) {
@@ -285,7 +301,13 @@
       startGame();
 
     }
-
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // PU's and grant requests are loaded here
+    // PU's (the existing boxes) have makePUGrant() called on them
+    // grant requests (the new boxes) are added to grantsToShow
+    // seed values of 1 and 2 are hardcoded
+    // any other seed value will init random generation
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     function loadGrantsAndPUs() {
       var grant = new Grant(100, 1000, 100, 200, 0, 0);
       if (seedValue == 1) {
@@ -409,7 +431,7 @@
 
 
 
-
+    // Everything drawn on the canvas is a component object.
     function component(width, height, color, x, y, type) {
       this.type = type;
       this.score = 0;
@@ -423,23 +445,28 @@
       this.gravitySpeed = 0;
       this.update = function () {
         ctx = myGameArea.context;
-        if (this.type == "text") {
-          ctx.font = this.width + " " + this.height;
-          ctx.fillStyle = color;
-          ctx.fillText(this.text, this.x, this.y);
-        } else if (this.type == "select") {
-          ctx.globalAlpha = 0.4;
-          ctx.fillStyle = color;
-          ctx.fillRect(this.x, this.y, this.width, this.height);
-          ctx.globalAlpha = 1;
+        switch (this.type) {
+          case 'text':
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+            break;
+          case 'select': // ! hoverover box, !! TEMP
+            ctx.globalAlpha = 0.4; // our next draw is at 40% opacity
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.globalAlpha = 1; // if not set back to 100% opacity, all draws after this will be transparent
+            break;
+          default: // anything else, such as the rects representing the grant
+            ctx.fillStyle = color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
         }
-        else {
-          ctx.fillStyle = color;
-          ctx.fillRect(this.x, this.y, this.width, this.height);
-        }
+
       }
     }
 
+
+    // computes actual frequency of a grant and appends units ('Ghz')
     function createFrequencyTexts() {
       var numberOfTexts = 10;
 
@@ -453,54 +480,79 @@
       }
     }
 
-
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // canvas drawing function
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     function updateGameArea() {
       var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+
+      // Iterate through all the requested grants, 
+      // check whether the current gameTime is within the grant's time window,
+      // in which case pass it to queueGrant
       for (i = 0; i < grantsToShow.length; i += 1) {
         if (grantsToShow[i].showTime == myGameArea.frameNo) {
           queueGrant(grantsToShow[i]);
         }
       }
 
-      myGameArea.clear();
-      myGameArea.frameNo += 1;
+      myGameArea.clear(); // clears canvas to draw a new frame 
+      myGameArea.frameNo += 1; // increment frame number
 
+      // iterate through all PU grants, increment their x position (tickrate == horizontal speed)
       for (i = 0; i < myGrants.length; i += 1) {
         myGrants[i].x += -1;
         myGrants[i].update();
       }
 
-      tempGrantComponent.x += -1;
+      tempGrantComponent.x += -1; // ?
+
+      // calculate score
       score = approvedGrantCount + deniedGrantCount;
       outOf = approvedGrantCount + deniedGrantCount + conflictingGrantCount + missedGrantCount;
 
+      // draw current gameTime at the top left corner
       myTime.text = "Now Time: " + parseMillisecondsIntoReadableTime(myGameArea.frameNo, true);
+
+      // ! redundant and TEMP ! sets x position of hover text to the current time marker
       currHover.x = nowLinePosition;
+
+      // draws text at bottom of canvas 
       grantSummaryText.text = "Grants Approved: " + approvedGrantCount + " " +
         "Grants Denied: " + deniedGrantCount + " " +
         "Conflicting Grants: " + conflictingGrantCount + " " +
         "Grants Missed: " + missedGrantCount + " | SCORE: " + score + "/" + outOf;
-      purgeGrantList();
-      grantSummaryBox.update();
-      grantSummaryText.update();
-      currHover.update();
-      myTime.update();
-      nowLine.update();
 
-      tempGrantComponent.update();
+      purgeGrantList(); // ??
+
+      grantSummaryBox.update(); // draws summary box
+      grantSummaryText.update(); // draws summary text
+      currHover.update(); // draws hover text
+      myTime.update(); // draws time text
+      nowLine.update(); // draws line at current time
+
+
+
+      tempGrantComponent.update(); // ??
+
+      // ??
       for (i = 0; i < movingTexts.length; i += 1) {
         movingTexts[i].x += -1;
         movingTexts[i].update();
       }
 
+      // ! TEMP ! increments x position of the mouseovered grantDiv
       hoveredGrant.x += -1;
-      hoveredGrant.update();
+      hoveredGrant.update(); // draw hovered grant
 
-      bandwidthBox.update();
+      bandwidthBox.update(); // draws bandwidth box
 
+
+      // ??
       for (i = 0; i < frequencyTexts.length; i += 1) {
         frequencyTexts[i].update();
       }
+
+      // kills the draw loop when curr tick is above stopTime
       if (myGameArea.frameNo >= stopTime) {
         clearInterval(myGameArea.interval);
       }
@@ -508,23 +560,30 @@
     }
 
     function purgeGrantList() {
-      var container = document.getElementById("grantList");
+      var container = document.getElementById("grantList"); // grantList is the side panel with buttons and grants to approve
+      // iterate through all the grant 'boxes' in the panel
       for (var i = 0; i < container.childNodes.length; i++) {
+        // !! COMPARES THE ID OF THE BOX TO FRAMENO TO REMOVE GRANTS THAT HAVE EXPIRED
+        // !! THIS MEANS THE ID NEEDS TO BE THE LENGTH OF THE GRANT, WHICH IT IS NOT RIGHT NOW
+        // !! I CHANGED ID TO SOMETHING MORE UNIQUE, THUS THIS IS NOT WORKING CORRECTLY
+        // !! TODO: FIX THIS
         if (container.childNodes[i].id < myGameArea.frameNo + 20) {
           //20 is a threshold
+
+          // delete the grant box from the panel
           container.removeChild(container.childNodes[i]);
           i--;
-          cancelGrant("");
+          cancelGrant(""); // ??
         }
       }
     }
-
+    // if executed on every tick, this will return true for the ticks on an [n] tick interval 
     function everyinterval(n) {
       if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
       return false;
     }
 
-
+    // ms into string
     function parseMillisecondsIntoReadableTime(minutes, speed) {
 
       var days = minutes / (60 * 24);
@@ -550,7 +609,7 @@
         return d + 'd:' + h + 'h:' + m + 'm';
       }
     }
-
+    // compares given params to current approvedGrants, and returns true on overlap
     function checkOverlap(startTime, endTime, frequency, bandwidth) {
       for (i = 0; i < approvedGrants.length; i += 1) {
         if (approvedGrants[i].startTime <= startTime && (approvedGrants[i].startTime + approvedGrants[i].length) >= startTime) {
@@ -573,7 +632,8 @@
       }
       return false;
     }
-
+    
+    // ??
     function checkFrequency(freqa, banda, freqb, bandb) {
       var la = freqa - (banda / 2);
       var ha = freqa + (banda / 2);
@@ -590,38 +650,46 @@
 
 
     function queueGrant(grant) {
-      var grantDiv = document.createElement("div");
-      grantDiv.classList.add('grantDiv');
-      var abutton = document.createElement("button");
-      grantDiv.id = grant.startTime + "" + grant.bandwidth;
-      var text = document.createElement("p");
+      // grantDivs are the grant boxes in the side panel (grantList)
+      var grantDiv = document.createElement("div"); // generate new grant box
+      grantDiv.classList.add('grantDiv'); // set class to grantDiv
+      var abutton = document.createElement("button"); // generate new button
+      grantDiv.id = grant.startTime + "" + grant.bandwidth; // set id to startTime + bandwidth !! TODO FIX THIS, REMOVAL OF GRANTDIVS DEPENDS ON ID
+      var text = document.createElement("p"); // generate new text
       text.innerHTML = "Grant Start Time: " + parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition, false) + " Length: " + parseMillisecondsIntoReadableTime(grant.length, false);
-      grantDiv.appendChild(text);
-      var textb = document.createElement("p");
+      grantDiv.appendChild(text); // add text to grantDiv
+      var textb = document.createElement("p"); // generate new text
       textb.innerHTML = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
-      grantDiv.appendChild(textb);
+      grantDiv.appendChild(textb); // add text to grantDiv
 
+      // add text to approve button
       abutton.innerHTML = "Approve f<sub>c</sub> " + ((baseFrequency + grant.frequency) / 10000).toPrecision(5) + "GHz";
-      abutton.value = grant;
-      abutton.classList.add('approveButton');
+      abutton.value = grant; // set value to the current grant ??
+      abutton.classList.add('approveButton'); // set class to approveButton
 
+      // onclick listener for approve button
       abutton.addEventListener('click', function (e) {
+        // does not work when paused
         if (!isPaused) {
+          // if the grantDiv being clicked overlaps with any of the approved grants
           if (checkOverlap(grant.startTime, grant.startTime + grant.length, grant.frequency, grant.bandwidth)) {
+            // mark the rect as red to indicate failure ??
             convertGrant(grant, false, "red", "SU Grant F: " + (baseFrequency + grant.frequency) / 10000 + "GHz Bandwidth: " + grant.bandwidth / 10 + "MHz");
-            conflictingGrantCount++;
+            conflictingGrantCount++; // increment conflicting grant count
           } else {
-            console.log("approve");
+            console.log("approve"); // log success to console ??
             convertGrant(grant, false, "cyan", "SU Grant F: " + (baseFrequency + grant.frequency) / 10000 + "GHz Bandwidth: " + grant.bandwidth / 10 + "MHz");
 
-            approvedGrantCount++;
+            approvedGrantCount++; // increment approved grant count
           }
-          approvedGrants.push(grant);
-          tempGrantComponent = new component(0, 0, "blue", 0, 0);
-          e.currentTarget.parentNode.remove();
+          approvedGrants.push(grant); // add the current grant to approved grants
+          tempGrantComponent = new component(0, 0, "blue", 0, 0); // ??
+          e.currentTarget.parentNode.remove(); // remove the parent node of the approve button (the grantDiv), when it's clicked
         }
       }, false);
 
+      // mouseover listener for approve button,
+      // highlights the grantRect when grantDiv approve button is mouseovered
       abutton.addEventListener('mouseover', function (e) {
         var color = "blue";
         if (checkOverlap(grant.startTime, grant.startTime + grant.length, grant.frequency, grant.bandwidth)) {
@@ -632,21 +700,22 @@
 
         startPlace = frequencyToPixelConversion(startPlace);
         pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-
-
-
-        tempGrantComponent = new component(grant.length, pixHeight, color, grant.startTime - myGameArea.frameNo, startPlace);
-
+        tempGrantComponent = new component(grant.length, pixHeight, color, grant.startTime - myGameArea.frameNo, startPlace); // ??
       }, false);
 
+      // mouseout listener for approve button
       abutton.addEventListener('mouseout', function (e) {
-        tempGrantComponent = new component(0, 0, "blue", 0, 0);
+        tempGrantComponent = new component(0, 0, "blue", 0, 0); // ??
       }, false);
 
-      abutton.value = grant;
-      abutton.style.padding = "10px";
-      grantDiv.appendChild(abutton);
+      abutton.value = grant; // set value to the current grant ??
+      abutton.style.padding = "10px"; 
+      grantDiv.appendChild(abutton); // add button to grantDiv
 
+      // i think frequencyb is an alternative frequency for the grant,
+      // if frequencyb is given, another approve button (bbutton) is generated within the grantDiv,
+      // to allow the user to approve the grant with a different frequency
+      // Redudant code, exact same as abutton
       if (grant.frequencyb > 0) {
         var bbutton = document.createElement("button");
 
@@ -695,7 +764,7 @@
         bbutton.classList.add('approveButton');
         grantDiv.appendChild(bbutton);
       }
-
+      // deny button
       var dbutton = document.createElement("button");
 
       dbutton.innerHTML = "Deny";
@@ -720,6 +789,7 @@
 
 
     }
+    
 
     function frequencyToPixelConversion(frequency) {
       var visibleScreenPixelCount = canvasHeight - titleOffset - summaryTextHeight;
@@ -733,7 +803,7 @@
       return visibleScreenPixelCount * percentage;
     }
 
-
+    
     function makePUGrant(grant) {
       convertGrant(grant, false, "green", "PU Grant F: " + (baseFrequency + grant.frequency) / 10000 + "GHz Bw: " + grant.bandwidth / 10 + "MHz");
       approvedGrants.push(grant);
@@ -796,7 +866,7 @@
       clearInterval(myGameArea.interval);
       myGameArea.interval = setInterval(updateGameArea, 20);
     }
-
+    // change frame timings to speed up game
     function setFrameInterval(speed) {
       myGameArea.speed = 1 / (speed) + 'x';
       clearInterval(myGameArea.interval);
