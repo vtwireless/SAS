@@ -78,14 +78,21 @@
   </div>
 
   <script>
+    /**  text component holding current 'time' based off tickrate @type {component} */
     var myTime;
+    /**  rect component representing current time line indicator @type {component} */
     var nowLine;
+    /** text component representing highlighted grant on mouseover @type {component} */
     var currHover;
+    /** rect representing highlighted grant on mouseover @type {component} */
     var hoveredGrant;
 
     var canvasWidth = 1200;
     var canvasHeight = 700;
+
+    /**  array of fully accepted rect components to be drawn to canvas at all times@type {component[]} */
     var myGrants = [];
+    /** UNSURE, but I think this is simply all grants accepted by the user, as rect components @type {component[]} */
     var approvedGrants = [];
 
     var approvedGrantCount = 0;
@@ -99,8 +106,11 @@
     var titleOffset = 50;
     var baseFrequency = 35500;
     var nowLinePosition = 200;
+    /**  Similar to frequencyTexts, an array of text components being drawn over rect components in the canvas @type {component[]} */
     var movingTexts = [];
+    /**  Similar to movingTexts, an array of text components being drawn over rect components in the canvas @type {component[]} */
     var frequencyTexts = [];
+    /**  Maximum total runtime in ticks(iterations of draw loop) @type {int} */
     var stopTime = 5000;
 
     var seedValue = 1;
@@ -119,17 +129,17 @@
       }
 
     }
+    /** rect component, used randomly to draw misc things onto canvas @type {component} */
+    var tempGrantComponent = new component(0, 0, "green", 0, 0); // 
 
-    var tempGrantComponent = new component(0, 0, "green", 0, 0);
-
+    /**  array of rect components representing the initial hardcoded (or randomly generated) grants @type {component[]} */
     var grantsToShow = [];
 
 
-
-
-
-
-    // inits components to draw on canvas
+    /**
+     * inits components and arrays for drawing to canvas
+     *
+     */
     function startGame() {
       nowLine = new component(2, canvasHeight - summaryTextHeight - titleOffset, "red", nowLinePosition, 50);
       grantSummaryText = new component("20px", "Consolas", "black", 150, canvasHeight - 50, "text");
@@ -182,7 +192,7 @@
       clear: function () {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
-    }
+    };
 
     // Mouseover event listener attached to canvas
     myGameArea.canvas.onmousemove = function (e) {
@@ -301,13 +311,15 @@
       startGame();
 
     }
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // PU's and grant requests are loaded here
-    // PU's (the existing boxes) have makePUGrant() called on them
-    // grant requests (the new boxes) are added to grantsToShow
-    // seed values of 1 and 2 are hardcoded
-    // any other seed value will init random generation
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+    /**
+     * PU's and grant requests are loaded here
+     * PU's (the existing boxes) have makePUGrant() called on them
+     * grant requests (the new boxes) are added to grantsToShow
+     * seed values of 1 and 2 are hardcoded
+     * any other seed value will init random generation
+     */
     function loadGrantsAndPUs() {
       var grant = new Grant(100, 1000, 100, 200, 0, 0);
       if (seedValue == 1) {
@@ -428,10 +440,18 @@
       }
     }
 
-
-
-
-    // Everything drawn on the canvas is a component object.
+    /**
+     * Component object for canvas
+     * everything drawn on the canvas is a component object
+     * .update() is called to draw the object onto the canvas
+     *
+     * @param {*} width 
+     * @param {*} height
+     * @param {*} color
+     * @param {*} x
+     * @param {*} y
+     * @param {string} type either "text", "select", or null
+     */
     function component(width, height, color, x, y, type) {
       this.type = type;
       this.score = 0;
@@ -466,7 +486,10 @@
     }
 
 
-    // computes actual frequency of a grant and appends units ('Ghz')
+    /**
+     * computes actual frequency of a grant and appends units ('Ghz')
+     *
+     */
     function createFrequencyTexts() {
       var numberOfTexts = 10;
 
@@ -480,9 +503,9 @@
       }
     }
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // canvas drawing function
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    /**
+     * Canvas draw loop 
+     */
     function updateGameArea() {
       var x, height, gap, minHeight, maxHeight, minGap, maxGap;
 
@@ -522,7 +545,7 @@
         "Conflicting Grants: " + conflictingGrantCount + " " +
         "Grants Missed: " + missedGrantCount + " | SCORE: " + score + "/" + outOf;
 
-      purgeGrantList(); // ??
+      purgeGrantList(); // purge grantDivs not visible in current frame 
 
       grantSummaryBox.update(); // draws summary box
       grantSummaryText.update(); // draws summary text
@@ -534,7 +557,8 @@
 
       tempGrantComponent.update(); // ??
 
-      // ??
+      // iterates through component objects (text), 
+      // increments their position with tickrate, and draws them
       for (i = 0; i < movingTexts.length; i += 1) {
         movingTexts[i].x += -1;
         movingTexts[i].update();
@@ -559,6 +583,10 @@
 
     }
 
+    /**
+     * iterates through all visible grantDivs and removes ones which have left display context
+     *
+     */
     function purgeGrantList() {
       var container = document.getElementById("grantList"); // grantList is the side panel with buttons and grants to approve
       // iterate through all the grant 'boxes' in the panel
@@ -573,11 +601,17 @@
           // delete the grant box from the panel
           container.removeChild(container.childNodes[i]);
           i--;
-          cancelGrant(""); // ??
+          cancelGrant(""); // all this function does is iterate missedGrantCount
         }
       }
     }
-    // if executed on every tick, this will return true for the ticks on an [n] tick interval 
+
+    /**
+     * when executed on every tick, this will return true for the ticks on an [n] tick interval 
+     *
+     * @param {int} n interval
+     * @return {boolean} true if current tick is on a valid n interval
+     */
     function everyinterval(n) {
       if ((myGameArea.frameNo / n) % 1 == 0) { return true; }
       return false;
@@ -609,7 +643,19 @@
         return d + 'd:' + h + 'h:' + m + 'm';
       }
     }
-    // compares given params to current approvedGrants, and returns true on overlap
+
+
+    /**
+     * compares given params to current approvedGrants, and returns true on overlap
+     * start time is checked in the outer if statements, and frequency overlap is checked
+     * through the function checkFrequency
+     *
+     * @param {*} startTime
+     * @param {*} endTime
+     * @param {*} frequency
+     * @param {*} bandwidth
+     * @return {*} true if overlap between params and grants in approvedGrants
+     */
     function checkOverlap(startTime, endTime, frequency, bandwidth) {
       for (i = 0; i < approvedGrants.length; i += 1) {
         if (approvedGrants[i].startTime <= startTime && (approvedGrants[i].startTime + approvedGrants[i].length) >= startTime) {
@@ -632,8 +678,16 @@
       }
       return false;
     }
-    
-    // ??
+
+    /**
+     * Returns true on frequency overlap
+     *
+     * @param {*} freqa
+     * @param {*} banda
+     * @param {*} freqb
+     * @param {*} bandb
+     * @return {boolean} true on freq overlap
+     */
     function checkFrequency(freqa, banda, freqb, bandb) {
       var la = freqa - (banda / 2);
       var ha = freqa + (banda / 2);
@@ -648,7 +702,11 @@
       }
     }
 
-
+    /**
+     * GrantDiv box generator for the grantList
+     *
+     * @param {*} grant grant to generate grantDiv for
+     */
     function queueGrant(grant) {
       // grantDivs are the grant boxes in the side panel (grantList)
       var grantDiv = document.createElement("div"); // generate new grant box
@@ -664,7 +722,7 @@
 
       // add text to approve button
       abutton.innerHTML = "Approve f<sub>c</sub> " + ((baseFrequency + grant.frequency) / 10000).toPrecision(5) + "GHz";
-      abutton.value = grant; // set value to the current grant ??
+      abutton.value = grant; // set value to the current grant ?? this just ends up adding value="[object Object]" ??
       abutton.classList.add('approveButton'); // set class to approveButton
 
       // onclick listener for approve button
@@ -709,7 +767,7 @@
       }, false);
 
       abutton.value = grant; // set value to the current grant ??
-      abutton.style.padding = "10px"; 
+      abutton.style.padding = "10px";
       grantDiv.appendChild(abutton); // add button to grantDiv
 
       // i think frequencyb is an alternative frequency for the grant,
@@ -789,7 +847,7 @@
 
 
     }
-    
+
 
     function frequencyToPixelConversion(frequency) {
       var visibleScreenPixelCount = canvasHeight - titleOffset - summaryTextHeight;
@@ -803,7 +861,12 @@
       return visibleScreenPixelCount * percentage;
     }
 
-    
+    /**
+     * Calls convertGrant to add the grant to myGrants and grantText, 
+     * then adds grant to approvedGrants[]
+     *
+     * @param {*} grant to action upon
+     */
     function makePUGrant(grant) {
       convertGrant(grant, false, "green", "PU Grant F: " + (baseFrequency + grant.frequency) / 10000 + "GHz Bw: " + grant.bandwidth / 10 + "MHz");
       approvedGrants.push(grant);
@@ -811,28 +874,36 @@
 
 
 
-    //grant, true/false/ colorstring
+
+    /**
+     * Translates grant object into a rect component and text component, 
+     * then adds them to the myGrants and movingTexts arrays
+     * 
+     * @param {grant} grant grant to draw
+     * @param {boolean} b if true, use frequency B, if false, use frequency A
+     * @param {string} color
+     * @param {string} text to draw over grant rect in the canvas
+    */
     function convertGrant(grant, b, color, text) {
-      //width, height, color, x, y
 
-
-
+      // redundant if block, can be replaced with unary operators
       if (b) {
         //use frequency b
-        var startFrequency = grant.frequencyb - (grant.bandwidth / 2);
-        var startPlace = frequencyToPixelConversion(startFrequency);
-        var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth);
+        var startFrequency = grant.frequencyb - (grant.bandwidth / 2); // calc start frequency
+        var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
+        var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth); // calc height of block
 
+        // create the grant component
         var approvedGrant = new component(grant.length, heightOfBlock, color, grant.startTime - myGameArea.frameNo, startPlace);
-        myGrants.push(approvedGrant);
-
+        myGrants.push(approvedGrant); // push onto mygrants
+        // generate the text for the grant component
         grantText = new component("20px", "Consolas", "black", grant.startTime - myGameArea.frameNo, startPlace + heightOfBlock / 2, "text");
-        grantText.text = text;
-        movingTexts.push(grantText);
+        grantText.text = text; // set text value
+        movingTexts.push(grantText); // append to array of moving texts
 
       }
       else {
-
+        // not commented as it is redundant, look above
         //use frequency a
         var startFrequency = grant.frequency - (grant.bandwidth / 2);
         var startPlace = frequencyToPixelConversion(startFrequency);
@@ -847,10 +918,15 @@
       }
     }
 
+    /**
+     * Increments conflictingGrantCount
+     *
+     * @param {*} grant unused var
+     */
     function conflictGrant(grant) {
       conflictingGrantCount++;
     }
-
+    // increments missedGrantCount
     function cancelGrant(grant) {
       missedGrantCount++;
     }
@@ -878,6 +954,7 @@
       location.reload();
     }
 
+    // ??
     function overlayOn() {
 
       document.getElementById("overlay").style.display = "block";
@@ -891,7 +968,7 @@
     }
 
 
-
+    // ??
     function overlayOff() {
 
       document.getElementById("overlay").style.display = "none";
