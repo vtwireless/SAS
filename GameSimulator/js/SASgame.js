@@ -190,7 +190,7 @@ myGameArea.canvas.onmousemove = function (e) {
           "MHz";
         grantHovered = true;
         hoveredGrant.x = grant.startTime - myGameArea.frameNo;
-        hoveredGrant.y = startPlaceb;
+        hoveredGrant.y = startPlace;
         hoveredGrant.width = grant.length;
         hoveredGrant.height = pixHeight;
       }
