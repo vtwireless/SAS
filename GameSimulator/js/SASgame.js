@@ -60,12 +60,6 @@ var currHover;
  */
 var hoveredGrant;
 
-/**
- * Rect component, used randomly to draw misc things onto canvas
- *
- * @type {component}
- */
-var tempGrantComponent = new component(0, 0, "green", 0, 0);
 
 /**
  * Array of fully accepted rect components to be drawn to canvas at all times
@@ -279,10 +273,10 @@ myGameArea.canvas.onmousedown = function (e) {
             false,
             "red",
             "SU Grant F: " +
-              (baseFrequency + grant.frequency) / 10000 +
-              "GHz Bandwidth: " +
-              grant.bandwidth / 10 +
-              "MHz"
+            (baseFrequency + grant.frequency) / 10000 +
+            "GHz Bandwidth: " +
+            grant.bandwidth / 10 +
+            "MHz"
           );
           conflictingGrantCount++;
         } else {
@@ -292,18 +286,17 @@ myGameArea.canvas.onmousedown = function (e) {
             false,
             "cyan",
             "SU Grant F: " +
-              (baseFrequency + grant.frequency) / 10000 +
-              "GHz Bandwidth: " +
-              grant.bandwidth / 10 +
-              "MHz"
+            (baseFrequency + grant.frequency) / 10000 +
+            "GHz Bandwidth: " +
+            grant.bandwidth / 10 +
+            "MHz"
           );
 
           approvedGrantCount++;
         }
         approvedGrants.push(grant);
-        tempGrantComponent = new component(0, 0, "blue", 0, 0);
         document
-          .getElementById(grant.startTime + "" + grant.bandwidth)
+          .getElementById(grant.startTime + "." + grant.bandwidth)
           .remove();
       }
     }
@@ -619,7 +612,6 @@ function updateGameArea() {
     myGrants[i].update();
   }
 
-  tempGrantComponent.x += -1; // ?
 
   // calculate score
   score = approvedGrantCount + deniedGrantCount;
@@ -662,7 +654,6 @@ function updateGameArea() {
   myTime.update(); // draws time text
   nowLine.update(); // draws line at current time
 
-  tempGrantComponent.update(); // ??
 
   // iterates through component objects (text),
   // increments their position with tickrate, and draws them
@@ -693,11 +684,7 @@ function purgeGrantList() {
   var container = document.getElementById("grantList"); // grantList is the side panel with buttons and grants to approve
   // iterate through all the grant 'boxes' in the panel
   for (var i = 0; i < container.childNodes.length; i++) {
-    // !! COMPARES THE ID OF THE BOX TO FRAMENO TO REMOVE GRANTS THAT HAVE EXPIRED
-    // !! THIS MEANS THE ID NEEDS TO BE THE LENGTH OF THE GRANT, WHICH IT IS NOT RIGHT NOW
-    // !! I CHANGED ID TO SOMETHING MORE UNIQUE, THUS THIS IS NOT WORKING CORRECTLY
-    // !! TODO: FIX THIS
-    if (container.childNodes[i].id < myGameArea.frameNo + 20) {
+    if (container.childNodes[i].id.split('.')[0] < myGameArea.frameNo + 20) {
       //20 is a threshold
 
       // delete the grant box from the panel
@@ -859,7 +846,7 @@ function queueGrant(grant) {
   var grantDiv = document.createElement("div"); // generate new grant box
   grantDiv.classList.add("grantDiv"); // set class to grantDiv
   var abutton = document.createElement("button"); // generate new button
-  grantDiv.id = grant.startTime + "" + grant.bandwidth; // set id to startTime + bandwidth !! TODO FIX THIS, REMOVAL OF GRANTDIVS DEPENDS ON ID
+  grantDiv.id = grant.startTime + "." + grant.bandwidth; // set id to startTime + bandwidth !! TODO FIX THIS, REMOVAL OF GRANTDIVS DEPENDS ON ID
   var text = document.createElement("p"); // generate new text
   text.innerHTML =
     "Grant Start Time: " +
@@ -903,10 +890,10 @@ function queueGrant(grant) {
             false,
             "red",
             "SU Grant F: " +
-              (baseFrequency + grant.frequency) / 10000 +
-              "GHz Bandwidth: " +
-              grant.bandwidth / 10 +
-              "MHz"
+            (baseFrequency + grant.frequency) / 10000 +
+            "GHz Bandwidth: " +
+            grant.bandwidth / 10 +
+            "MHz"
           );
           conflictingGrantCount++; // increment conflicting grant count
         } else {
@@ -916,62 +903,21 @@ function queueGrant(grant) {
             false,
             "cyan",
             "SU Grant F: " +
-              (baseFrequency + grant.frequency) / 10000 +
-              "GHz Bandwidth: " +
-              grant.bandwidth / 10 +
-              "MHz"
+            (baseFrequency + grant.frequency) / 10000 +
+            "GHz Bandwidth: " +
+            grant.bandwidth / 10 +
+            "MHz"
           );
 
           approvedGrantCount++; // increment approved grant count
         }
         approvedGrants.push(grant); // add the current grant to approved grants
-        tempGrantComponent = new component(0, 0, "blue", 0, 0); // ??
         e.currentTarget.parentNode.remove(); // remove the parent node of the approve button (the grantDiv), when it's clicked
       }
     },
     false
   );
 
-  // mouseover listener for approve button,
-  // highlights the grantRect when grantDiv approve button is mouseovered
-  abutton.addEventListener(
-    "mouseover",
-    function (e) {
-      var color = "blue";
-      if (
-        checkOverlap(
-          grant.startTime,
-          grant.startTime + grant.length,
-          grant.frequency,
-          grant.bandwidth
-        )
-      ) {
-        color = "red";
-      }
-      var startPlace = grant.frequency - grant.bandwidth / 2;
-      var heightOfBlock = grant.bandwidth;
-
-      startPlace = frequencyToPixelConversion(startPlace);
-      pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-      tempGrantComponent = new component(
-        grant.length,
-        pixHeight,
-        color,
-        grant.startTime - myGameArea.frameNo,
-        startPlace
-      ); // ??
-    },
-    false
-  );
-
-  // mouseout listener for approve button
-  abutton.addEventListener(
-    "mouseout",
-    function (e) {
-      tempGrantComponent = new component(0, 0, "blue", 0, 0); // ??
-    },
-    false
-  );
 
   abutton.value = grant; // set value to the current grant ??
   abutton.style.padding = "10px";
@@ -1008,10 +954,10 @@ function queueGrant(grant) {
               false,
               "red",
               "SU Grant F: " +
-                (baseFrequency + grant.frequencyb) / 10000 +
-                "GHz Bandwidth: " +
-                grant.bandwidth / 10 +
-                "MHz"
+              (baseFrequency + grant.frequencyb) / 10000 +
+              "GHz Bandwidth: " +
+              grant.bandwidth / 10 +
+              "MHz"
             );
             conflictingGrantCount++;
           } else {
@@ -1021,15 +967,14 @@ function queueGrant(grant) {
               false,
               "cyan",
               "SU Grant F: " +
-                (baseFrequency + grant.frequencyb) / 10000 +
-                "GHz Bandwidth: " +
-                grant.bandwidth / 10 +
-                "MHz"
+              (baseFrequency + grant.frequencyb) / 10000 +
+              "GHz Bandwidth: " +
+              grant.bandwidth / 10 +
+              "MHz"
             );
 
             approvedGrantCount++;
           }
-          tempGrantComponent = new component(0, 0, "blue", 0, 0);
           e.currentTarget.parentNode.remove();
         }
       },
@@ -1056,21 +1001,6 @@ function queueGrant(grant) {
         startPlace = frequencyToPixelConversion(startPlace);
         pixHeight = bandwidthToComponentHeight(grant.bandwidth);
 
-        tempGrantComponent = new component(
-          grant.length,
-          pixHeight,
-          color,
-          grant.startTime - myGameArea.frameNo,
-          startPlace
-        );
-      },
-      false
-    );
-
-    bbutton.addEventListener(
-      "mouseout",
-      function (e) {
-        tempGrantComponent = new component(0, 0, "blue", 0, 0);
       },
       false
     );
@@ -1092,7 +1022,6 @@ function queueGrant(grant) {
       if (!isPaused) {
         console.log("deny");
         deniedGrantCount++;
-        tempGrantComponent = new component(0, 0, "blue", 0, 0);
         e.currentTarget.parentNode.remove();
       }
     },
@@ -1131,10 +1060,10 @@ function makePUGrant(grant) {
     false,
     "green",
     "PU Grant F: " +
-      (baseFrequency + grant.frequency) / 10000 +
-      "GHz Bw: " +
-      grant.bandwidth / 10 +
-      "MHz"
+    (baseFrequency + grant.frequency) / 10000 +
+    "GHz Bw: " +
+    grant.bandwidth / 10 +
+    "MHz"
   );
   approvedGrants.push(grant);
 }
