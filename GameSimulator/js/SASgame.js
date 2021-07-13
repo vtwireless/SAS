@@ -62,15 +62,15 @@ var hoveredGrant;
 
 
 /**
- * Array of fully accepted rect components to be drawn to canvas at all times
+ * COMPONENT RECTS OF THE GRANTS TO DRAW
  *
  * @type {component[]}
  */
 var myGrants = [];
 /**
- * UNSURE, but I think this is simply all grants accepted by the user, as rect components
+ * GRANTS OF THE GRANTS TO DRAW, SAME IDX AS myGrants
  *
- * @type {component[]}
+ * @type {Grant[]}
  */
 var approvedGrants = [];
 
@@ -97,6 +97,15 @@ var frequencyTexts = [];
  * @type {component[]}
  */
 var grantsToShow = [];
+
+
+/**
+ * Array of rect components representing the requested grants
+ * pre-selection
+ *
+ * @type {component[]}
+ */
+var queuedGrantRects = [];
 
 /** The canvas itself */
 var myGameArea = {
@@ -126,7 +135,7 @@ var myGameArea = {
 
 // Mouseover event listener attached to canvas ! refactor into a function after confirmed working
 myGameArea.canvas.onmousemove = function (e) {
-  // important: correct mouse position:
+  // get mouse pos
   var rect = this.getBoundingClientRect(),
     x = e.clientX - rect.left,
     y = e.clientY - rect.top,
@@ -134,90 +143,59 @@ myGameArea.canvas.onmousemove = function (e) {
     r;
 
   var grantHovered = false;
-  // CHECK APPROVED GRANTS
-  approvedGrants.forEach(function (grant, idx) {
-    var startPlace = grant.frequency - grant.bandwidth / 2;
-    var heightOfBlock = grant.bandwidth;
-
-    startPlace = frequencyToPixelConversion(startPlace);
-    pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-    if (
-      x > grant.startTime - myGameArea.frameNo &&
-      x < grant.startTime - myGameArea.frameNo + grant.length &&
-      y > startPlace &&
-      y < startPlace + pixHeight
-    ) {
-      currHover.text =
-        "Approved Grant #: " +
-        idx +
-        " PU Grant F: " +
-        (baseFrequency + grant.frequency) / 10000 +
-        "GHz Bw: " +
-        grant.bandwidth / 10 +
-        "MHz";
-      grantHovered = true;
-      hoveredGrant.x = grant.startTime - myGameArea.frameNo;
-      hoveredGrant.y = startPlace;
-      hoveredGrant.width = grant.length;
-      hoveredGrant.height = pixHeight;
-    }
-  });
-  // CHECK OTHER GRANTS
-  grantsToShow.forEach(function (grant, idx) {
-    var startPlace = grant.frequency - grant.bandwidth / 2;
-    var heightOfBlock = grant.bandwidth;
-
-    startPlace = frequencyToPixelConversion(startPlace);
-    pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-    if (
-      x > grant.startTime - myGameArea.frameNo &&
-      x < grant.startTime - myGameArea.frameNo + grant.length &&
-      y > startPlace &&
-      y < startPlace + pixHeight
-    ) {
-      currHover.text =
-        "Requested Grant #: " +
-        idx +
-        " SU Grant F: " +
-        (baseFrequency + grant.frequency) / 10000 +
-        "GHz Bw: " +
-        grant.bandwidth / 10 +
-        "MHz";
-      grantHovered = true;
-      hoveredGrant.x = grant.startTime - myGameArea.frameNo;
-      hoveredGrant.y = startPlace;
-      hoveredGrant.width = grant.length;
-      hoveredGrant.height = pixHeight;
-    }
-  });
 
   // CHECK OTHER GRANTS
   grantsToShow.forEach(function (grant, idx) {
-    var startPlace = grant.frequency - grant.bandwidth / 2;
-    var heightOfBlock = grant.bandwidth;
+    if (grant.showTime < myGameArea.frameNo) {
+      var startPlace = grant.frequency - grant.bandwidth / 2;
+      startPlace = frequencyToPixelConversion(startPlace);
 
-    startPlace = frequencyToPixelConversion(startPlace);
-    pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-    if (
-      x > grant.startTime - myGameArea.frameNo &&
-      x < grant.startTime - myGameArea.frameNo + grant.length &&
-      y > startPlace &&
-      y < startPlace + pixHeight
-    ) {
-      currHover.text =
-        "Requested Grant #: " +
-        idx +
-        " SU Grant F: " +
-        (baseFrequency + grant.frequency) / 10000 +
-        "GHz Bw: " +
-        grant.bandwidth / 10 +
-        "MHz";
-      grantHovered = true;
-      hoveredGrant.x = grant.startTime - myGameArea.frameNo;
-      hoveredGrant.y = startPlace;
-      hoveredGrant.width = grant.length;
-      hoveredGrant.height = pixHeight;
+      var startPlaceb = grant.frequencyb - grant.bandwidth / 2;
+      startPlaceb = frequencyToPixelConversion(startPlaceb);
+
+
+      pixHeight = bandwidthToComponentHeight(grant.bandwidth);
+
+
+      if (
+        x > grant.startTime - myGameArea.frameNo &&
+        x < grant.startTime - myGameArea.frameNo + grant.length &&
+        y > startPlace &&
+        y < startPlace + pixHeight
+      ) {
+        currHover.text =
+          "Requested Grant #: " +
+          idx +
+          " SU Grant F: " +
+          (baseFrequency + grant.frequency) / 10000 +
+          "GHz Bw: " +
+          grant.bandwidth / 10 +
+          "MHz";
+        grantHovered = true;
+        hoveredGrant.x = grant.startTime - myGameArea.frameNo;
+        hoveredGrant.y = startPlace;
+        hoveredGrant.width = grant.length;
+        hoveredGrant.height = pixHeight;
+      } else if (x > grant.startTime - myGameArea.frameNo &&
+        x < grant.startTime - myGameArea.frameNo + grant.length &&
+        y > startPlaceb &&
+        y < startPlaceb + pixHeight) {
+        currHover.text =
+          "Requested Grant #: " +
+          idx +
+          " SU Grant F: " +
+          (baseFrequency + grant.frequencyb) / 10000 +
+          "GHz Bw: " +
+          grant.bandwidth / 10 +
+          "MHz";
+        grantHovered = true;
+        hoveredGrant.x = grant.startTime - myGameArea.frameNo;
+        hoveredGrant.y = startPlaceb;
+        hoveredGrant.width = grant.length;
+        hoveredGrant.height = pixHeight;
+      }
     }
+
   });
 
   if (!grantHovered) {
@@ -312,7 +290,7 @@ class Grant {
     this.frequency = frequency;
     this.bandwidth = bandwidth;
     this.frequencyb = frequencyb;
-    this.showTime = showTime;
+    this.showTime = showTime > 0 ? showTime : 1; // if showtime is 0, grants may never be queued
   }
 }
 
@@ -594,23 +572,31 @@ function createFrequencyTexts() {
 function updateGameArea() {
   var x, height, gap, minHeight, maxHeight, minGap, maxGap;
 
+
+  myGameArea.clear(); // clears canvas to draw a new frame
+  myGameArea.frameNo += 1; // increment frame number
+
   // Iterate through all the requested grants,
   // check whether the current gameTime is within the grant's time window,
   // in which case pass it to queueGrant
   for (i = 0; i < grantsToShow.length; i += 1) {
-    if (grantsToShow[i].showTime == myGameArea.frameNo) {
+    if (grantsToShow[i].showTime == myGameArea.frameNo) { // ! if showTime is too low (0), the equality causes it to never show up
       queueGrant(grantsToShow[i]);
     }
   }
 
-  myGameArea.clear(); // clears canvas to draw a new frame
-  myGameArea.frameNo += 1; // increment frame number
 
   // iterate through all PU grants, increment their x position (tickrate == horizontal speed)
   for (i = 0; i < myGrants.length; i += 1) {
     myGrants[i].x += -1;
     myGrants[i].update();
   }
+
+  for (i = 0; i < queuedGrantRects.length; i += 1) {
+    queuedGrantRects[i].x += -1;
+    queuedGrantRects[i].update();
+  }
+
 
 
   // calculate score
@@ -837,11 +823,40 @@ function checkFrequency(freqa, banda, freqb, bandb) {
 }
 
 /**
- * GrantDiv box generator for the grantList
+ * GrantDiv box and rect generator for the grantList and canvas
  *
  * @param {any} grant Grant to generate grantDiv for
  */
 function queueGrant(grant) {
+  var startFrequency = grant.frequency - grant.bandwidth / 2; // calc start frequency
+  var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
+  var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth); // calc height of block
+
+  // create the grant component
+  var queuingGrant = new component(
+    grant.length,
+    heightOfBlock,
+    "pink",
+    grant.startTime - myGameArea.frameNo,
+    startPlace,
+    "select"
+  );
+  queuedGrantRects.push(queuingGrant); // push onto mygrants
+  // if multiple freqs
+  if (grant.frequencyb > 0) {
+    var startFrequencyb = grant.frequencyb - grant.bandwidth / 2; // calc start frequency
+    var startPlaceb = frequencyToPixelConversion(startFrequencyb); // convert startFrequency to pixel coordinates
+    queuingGrant = new component(
+      grant.length,
+      heightOfBlock,
+      "pink",
+      grant.startTime - myGameArea.frameNo,
+      startPlaceb,
+      "select"
+    );
+    queuedGrantRects.push(queuingGrant); // push onto mygrants
+  }
+
   // grantDivs are the grant boxes in the side panel (grantList)
   var grantDiv = document.createElement("div"); // generate new grant box
   grantDiv.classList.add("grantDiv"); // set class to grantDiv
@@ -977,30 +992,6 @@ function queueGrant(grant) {
           }
           e.currentTarget.parentNode.remove();
         }
-      },
-      false
-    );
-
-    bbutton.addEventListener(
-      "mouseover",
-      function (e) {
-        var color = "blue";
-        if (
-          checkOverlap(
-            grant.startTime,
-            grant.startTime + grant.length,
-            grant.frequencyb,
-            grant.bandwidth
-          )
-        ) {
-          color = "red";
-        }
-        var startPlace = grant.frequencyb - grant.bandwidth / 2;
-        var heightOfBlock = grant.bandwidth;
-
-        startPlace = frequencyToPixelConversion(startPlace);
-        pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-
       },
       false
     );
