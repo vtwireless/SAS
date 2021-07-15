@@ -153,9 +153,49 @@ var myGameArea = {
 
 // !---------------------- TEMP: canvas event listeners  -----------------------------!
 
+
+myGameArea.canvas.onmousemove = function (e) {
+  var rect = this.getBoundingClientRect(),
+    x = e.clientX - rect.left,
+    y = e.clientY - rect.top,
+    i = 0,
+    r;
+
+  // Dont do anything if popup box is open
+  if (popupOpened) {
+    return; // all other clicks are ignored if popup is open
+  }
+  var grantHovered = false;
+
+  queuedGrantRects.forEach(function (r) {
+    if (grantHovered) {
+      return;
+    }
+    if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) {
+      hoveredGrant.x = r.x;
+      hoveredGrant.y = r.y;
+      hoveredGrant.width = r.width;
+      hoveredGrant.height = r.height;
+      hoveredGrant.text = r.text;
+      hoveredGrant.id = r.id;
+      hoveredGrant.type = r.type;
+      hoveredGrant.color = "red";
+      grantHovered = true;
+      return;
+    }
+  });
+
+  if (!grantHovered) {
+    hoveredGrant.x = 0;
+    hoveredGrant.y = 0;
+    hoveredGrant.width = 0;
+    hoveredGrant.height = 0;
+    
+  }
+
+};
 // Mouseclick event listener attached to canvas
 myGameArea.canvas.onmousedown = function (e) {
-  // important: correct mouse position:
   var rect = this.getBoundingClientRect(),
     x = e.clientX - rect.left,
     y = e.clientY - rect.top,
