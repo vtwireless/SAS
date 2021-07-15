@@ -423,6 +423,7 @@ function seedChange(value) {
     grant.denied = true;
   }
   );
+  popupOpened = false; // close popup on seed change
   seedValue = value;
   startGame();
 }
