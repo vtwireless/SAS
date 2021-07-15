@@ -300,6 +300,10 @@ myGameArea.canvas.onmousedown = function (e) {
       //console.log("x: " + x + " y: " + y);
 
       popupBox.title = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
+
+      popupBox.startTime = parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition, false) + " Start Time";
+      popupBox.lenStr = parseMillisecondsIntoReadableTime(grant.length, false) + " Duration";
+
       popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + " GHz";
       if (grant.frequencyb > 0) {
         popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + " GHz";
@@ -320,8 +324,11 @@ myGameArea.canvas.onmousedown = function (e) {
       y > startPlaceb &&
       y < startPlaceb + pixHeight
     ) {
-      popupBox.title = "Bandwidth: " +
-        grant.bandwidth / 10 + "MHz";
+      popupBox.title = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
+
+      popupBox.startTime = parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition, false) + " Start Time";
+      popupBox.lenStr = parseMillisecondsIntoReadableTime(grant.length, false) + " Duration";
+
       popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz";
       popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + "GHz";
 
@@ -609,10 +616,20 @@ function component(width, height, color, x, y, type = null) {
         // if not set back to 100% opacity, all draws after this will be transparent
         ctx.globalAlpha = 1;
 
-        // draw popup box title
+        // * Title
         ctx.font = 'Bold 44px Arial';
         ctx.fillStyle = "black";
         ctx.fillText(this.title, this.x + 5, this.y + 44);
+
+        // * Sub-Title
+        ctx.font = '18px Arial';
+        ctx.fillStyle = "black";
+        ctx.fillText(this.startTime, this.x + 5, this.y + 68);
+        ctx.fillText(this.lenStr, this.x + 5, this.y + 88);
+
+
+
+        // * Freq 1
 
         // draw frequency 1 text
         ctx.font = 'Bold 30px Arial';
@@ -628,6 +645,8 @@ function component(width, height, color, x, y, type = null) {
         ctx.fillStyle = "red";
         ctx.font = 'Bold 30px Arial';
         ctx.fillText("Deny", this.x + 370, this.y + 160);
+
+        // * Freq 2
 
         if (this.freqText2.length > 1) {
           // draw frequency 2 text
@@ -647,7 +666,7 @@ function component(width, height, color, x, y, type = null) {
 
         }
 
-        // x button
+        // * [x] button
         ctx.fillStyle = "black";
         ctx.font = 'Bold 48px Arial';
         ctx.fillText("[x]", this.x + this.width - 60, this.y + 40);
