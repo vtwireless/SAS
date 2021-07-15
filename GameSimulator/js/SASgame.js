@@ -167,8 +167,8 @@ myGameArea.canvas.onmousedown = function (e) {
       y < popupBox.y + 40) {
       popupOpened = false;
       play();
-      return;
     }
+    return; // all other clicks are ignored if popup is open
   }
 
   // CHECK REQUESTED GRANTS
