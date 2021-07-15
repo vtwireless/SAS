@@ -153,7 +153,7 @@ var myGameArea = {
   },
 };
 
-// !---------------------- TEMP: canvas event listeners  -----------------------------!
+// !---------------------- canvas event listeners  -----------------------------!
 
 
 myGameArea.canvas.onmousemove = function (e) {
@@ -234,7 +234,7 @@ myGameArea.canvas.onmousedown = function (e) {
       convertGrant(
         grantsToShow[popupBoxGrant],
         false,
-        overlapCheck ? "red" : "cyan", // unary operation for color
+        overlapCheck ? "red" : "cyan", // ternary operation for color
         "SU Grant F: " +
         (baseFrequency + grantsToShow[popupBoxGrant].frequency) / 10000 +
         "GHz Bandwidth: " +
@@ -273,7 +273,7 @@ myGameArea.canvas.onmousedown = function (e) {
         convertGrant(
           grantsToShow[popupBoxGrant],
           true,
-          overlapCheck ? "red" : "cyan", // unary operation for color
+          overlapCheck ? "red" : "cyan", // ternary operation for color
           "SU Grant F: " +
           (baseFrequency + grantsToShow[popupBoxGrant].frequencyb) / 10000 +
           "GHz Bandwidth: " +
@@ -460,6 +460,7 @@ function seedChange(value) {
   startGame();
 }
 
+// ! Should be loaded from a csv rather than hardcoded imo
 /**
  * PU's and grant requests are loaded here PU's (the existing boxes) have
  * makePUGrant() called on them grant requests (the new boxes) are added to
@@ -638,7 +639,7 @@ function component(width, height, color, x, y, type = null) {
         ctx.fillRect(this.x, this.y, this.width, this.height);
         ctx.globalAlpha = 1; // if not set back to 100% opacity, all draws after this will be transparent
         break;
-      case "popup": // ! popup box, !! TEMP
+      case "popup": // ! popup box, needs to be cleaned up
         ctx.save(); // save context
 
         // draw popup box background
@@ -1121,41 +1122,26 @@ function queueGrant(grant) {
       // does not work when paused
       if (!isPaused) {
         // if the grantDiv being clicked overlaps with any of the approved grants
-        if (
-          checkOverlap(
-            grant.startTime,
-            grant.startTime + grant.length,
-            grant.frequency,
-            grant.bandwidth
-          )
-        ) {
-          // mark the rect as red to indicate failure ??
-          convertGrant(
-            grant,
-            false,
-            "red",
-            "SU Grant F: " +
-            (baseFrequency + grant.frequency) / 10000 +
-            "GHz Bandwidth: " +
-            grant.bandwidth / 10 +
-            "MHz"
-          );
-          conflictingGrantCount++; // increment conflicting grant count
-        } else {
-          console.log("approve"); // log success to console ??
-          convertGrant(
-            grant,
-            false,
-            "cyan",
-            "SU Grant F: " +
-            (baseFrequency + grant.frequency) / 10000 +
-            "GHz Bandwidth: " +
-            grant.bandwidth / 10 +
-            "MHz"
-          );
+        var isOverlapped = checkOverlap(
+          grant.startTime,
+          grant.startTime + grant.length,
+          grant.frequency,
+          grant.bandwidth
+        );
+        console.log("approve"); // log success to console
 
-          approvedGrantCount++; // increment approved grant count
-        }
+        convertGrant(
+          grant,
+          false,
+          isOverlapped ? "red" : "cyan",
+          "SU Grant F: " +
+          (baseFrequency + grant.frequency) / 10000 +
+          "GHz Bandwidth: " +
+          grant.bandwidth / 10 +
+          "MHz"
+        );
+        isOverlapped ? conflictingGrantCount++ : approvedGrantCount++;
+
         approvedGrants.push(grant); // add the current grant to approved grants
         e.currentTarget.parentNode.remove(); // remove the parent node of the approve button (the grantDiv), when it's clicked
       }
@@ -1186,40 +1172,23 @@ function queueGrant(grant) {
         if (!isPaused) {
           approvedGrants.push(grant);
           console.log("approve");
-          if (
-            checkOverlap(
-              grant.startTime,
-              grant.startTime + grant.length,
-              grant.frequency,
-              grant.bandwidth
-            )
-          ) {
-            convertGrant(
-              grant,
-              false,
-              "red",
-              "SU Grant F: " +
-              (baseFrequency + grant.frequencyb) / 10000 +
-              "GHz Bandwidth: " +
-              grant.bandwidth / 10 +
-              "MHz"
-            );
-            conflictingGrantCount++;
-          } else {
-            console.log("approve");
-            convertGrant(
-              grant,
-              false,
-              "cyan",
-              "SU Grant F: " +
-              (baseFrequency + grant.frequencyb) / 10000 +
-              "GHz Bandwidth: " +
-              grant.bandwidth / 10 +
-              "MHz"
-            );
-
-            approvedGrantCount++;
-          }
+          var isOverlapped = checkOverlap(
+            grant.startTime,
+            grant.startTime + grant.length,
+            grant.frequencyb,
+            grant.bandwidth
+          );
+          convertGrant(
+            grant,
+            false,
+            isOverlapped ? "red" : "cyan",
+            "SU Grant F: " +
+            (baseFrequency + grant.frequencyb) / 10000 +
+            "GHz Bandwidth: " +
+            grant.bandwidth / 10 +
+            "MHz"
+          );
+          isOverlapped ? conflictingGrantCount++ : approvedGrantCount++;
           e.currentTarget.parentNode.remove();
         }
       },
@@ -1300,7 +1269,7 @@ function makePUGrant(grant) {
 
 /**
  * Translates grant object into a rect component and text component, then adds
- * them to the myGrants and movingTexts arrays
+ * them to the myGrants and movingTexts arrays, 'accepting' them into the 
  *
  * @param {grant} grant Grant to draw
  * @param {boolean} b If true, use frequency B, if false, use frequency A
@@ -1308,60 +1277,36 @@ function makePUGrant(grant) {
  * @param {string} text To draw over grant rect in the canvas
  */
 function convertGrant(grant, b, color, text) {
-  // redundant if block, can be replaced with unary operators
-  if (b) {
-    //use frequency b
-    var startFrequency = grant.frequencyb - grant.bandwidth / 2; // calc start frequency
-    var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
-    var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth); // calc height of block
 
-    // create the grant component
-    var approvedGrant = new component(
-      grant.length,
-      heightOfBlock,
-      color,
-      grant.startTime - myGameArea.frameNo,
-      startPlace
-    );
-    myGrants.push(approvedGrant); // push onto mygrants
-    // generate the text for the grant component
-    grantText = new component(
-      "20px",
-      "Consolas",
-      "black",
-      grant.startTime - myGameArea.frameNo,
-      startPlace + heightOfBlock / 2,
-      "text"
-    );
-    grantText.text = text; // set text value
-    movingTexts.push(grantText); // append to array of moving texts
-  } else {
-    // not commented as it is redundant, look above
-    //use frequency a
-    var startFrequency = grant.frequency - grant.bandwidth / 2;
-    var startPlace = frequencyToPixelConversion(startFrequency);
-    var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth);
+  var startFrequency = b ?
+    grant.frequencyb - grant.bandwidth / 2 : // True == use frequency B
+    grant.frequency - grant.bandwidth / 2; // False == use frequency A
 
-    var approvedGrant = new component(
-      grant.length,
-      heightOfBlock,
-      color,
-      grant.startTime - myGameArea.frameNo,
-      startPlace
-    );
-    console.log(grant);
-    myGrants.push(approvedGrant);
-    grantText = new component(
-      "20px",
-      "Consolas",
-      "black",
-      grant.startTime - myGameArea.frameNo,
-      startPlace + heightOfBlock / 2,
-      "text"
-    );
-    grantText.text = text;
-    movingTexts.push(grantText);
-  }
+  var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
+  var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth); // calc height of block
+
+  // create the grant component
+  var approvedGrant = new component(
+    grant.length,
+    heightOfBlock,
+    color,
+    grant.startTime - myGameArea.frameNo,
+    startPlace
+  );
+  myGrants.push(approvedGrant); // push onto mygrants
+
+  // generate the text for the grant component
+  grantText = new component(
+    "20px",
+    "Consolas",
+    "black",
+    grant.startTime - myGameArea.frameNo,
+    startPlace + heightOfBlock / 2,
+    "text"
+  );
+  grantText.text = text; // set text value
+  movingTexts.push(grantText); // append to array of moving texts
+
 }
 
 /**
@@ -1397,22 +1342,4 @@ function setFrameInterval(speed) {
 
 function restart() {
   location.reload();
-}
-
-// ??
-function overlayOn() {
-  document.getElementById("overlay").style.display = "block";
-
-  document.getElementById("informationHTML").style.visibility = "visible";
-
-  document.getElementById("infoClose").style.visibility = "visible";
-}
-
-// ??
-function overlayOff() {
-  document.getElementById("overlay").style.display = "none";
-
-  document.getElementById("informationHTML").style.visibility = "hidden";
-
-  document.getElementById("infoClose").style.visibility = "hidden";
 }
