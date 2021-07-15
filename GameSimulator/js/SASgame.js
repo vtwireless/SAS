@@ -190,7 +190,7 @@ myGameArea.canvas.onmousemove = function (e) {
     hoveredGrant.y = 0;
     hoveredGrant.width = 0;
     hoveredGrant.height = 0;
-    
+
   }
 
 };
@@ -209,8 +209,12 @@ myGameArea.canvas.onmousedown = function (e) {
       y > popupBox.y &&
       y < popupBox.y + 40) {
       popupOpened = false;
-      play();
+      if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+        play();
+      }
     }
+
+
     return; // all other clicks are ignored if popup is open
   }
 
@@ -246,7 +250,9 @@ myGameArea.canvas.onmousedown = function (e) {
       } else {
         popupBox.freqText2 = "";
       }
-      pause();
+      if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+        pause();
+      }
       popupOpened = true;
       updateGameArea();
     }
@@ -262,7 +268,9 @@ myGameArea.canvas.onmousedown = function (e) {
       popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz";
       popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + "GHz";
 
-      pause();
+      if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+        pause();
+      }
       popupOpened = true;
       updateGameArea();
     }
