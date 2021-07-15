@@ -124,6 +124,8 @@ popupBox.title = "";
 popupBox.freqText1 = "";
 popupBox.freqText2 = "";
 
+var popupBoxGrant;
+
 var popupOpened = false;
 
 
@@ -217,6 +219,57 @@ myGameArea.canvas.onmousedown = function (e) {
       }
     }
 
+    // on clicking Accept1 close popup
+    if (x > popupBox.x + 120 &&
+      x < popupBox.x + 120 + 112 &&
+      y > popupBox.y + 132 &&
+      y < popupBox.y + 132 + 38) {
+      popupOpened = false;
+      console.log("Accept 1 Clicked");
+      if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+        play();
+      }
+    }
+
+    // on clicking Deny1 close popup
+    if (x > popupBox.x + 364 &&
+      x < popupBox.x + 364 + 85 &&
+      y > popupBox.y + 132 &&
+      y < popupBox.y + 132 + 37) {
+      popupOpened = false;
+      console.log("Deny 1 Clicked");
+      popupBoxGrant.denied = true;
+      if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+        play();
+      }
+    }
+    if (popupBox.freqText2.length > 0) {
+      // on clicking Accept2 close popup
+      if (x > popupBox.x + 120 &&
+        x < popupBox.x + 120 + 112 &&
+        y > popupBox.y + 242 &&
+        y < popupBox.y + 242 + 38) {
+        popupOpened = false;
+        console.log("Accept 2 Clicked");
+        if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+          play();
+        }
+      }
+
+      // on clicking Deny2 close popup
+      if (x > popupBox.x + 364 &&
+        x < popupBox.x + 364 + 85 &&
+        y > popupBox.y + 242 &&
+        y < popupBox.y + 242 + 37) {
+        popupOpened = false;
+        console.log("Deny 2 Clicked");
+        popupBoxGrant.denied = true;
+        if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+          play();
+        }
+      }
+    }
+
 
     return; // all other clicks are ignored if popup is open
   }
@@ -256,6 +309,7 @@ myGameArea.canvas.onmousedown = function (e) {
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         pause();
       }
+      popupBoxGrant = grant;
       popupOpened = true;
       updateGameArea();
     }
@@ -274,6 +328,7 @@ myGameArea.canvas.onmousedown = function (e) {
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         pause();
       }
+      popupBoxGrant = grant;
       popupOpened = true;
       updateGameArea();
     }
@@ -388,7 +443,7 @@ function loadGrantsAndPUs() {
 
     grant = new Grant(1000, 500, 1350, 100, 355, 0);
     grantsToShow.push(grant);
-    grant = new Grant(2000, 500, 450, 200, 505, 0);
+    grant = new Grant(2000, 500, 450, 200, 505, 1500); // ! showtime changed from 0 to 1500 as it was being shown within the grantDiv from the very start yet not visible for a long time
     grantsToShow.push(grant);
     grant = new Grant(1300, 200, 1370, 200, 0, 200);
     grantsToShow.push(grant);
@@ -740,8 +795,38 @@ function purgeGrantList() {
   var container = document.getElementById("grantList"); // grantList is the side panel with buttons and grants to approve
   // iterate through all the grant 'boxes' in the panel
   for (var i = 0; i < container.childNodes.length; i++) {
+
+    // grant.startTime + "." + grant.bandwidth
+
+
+    // find grant associated with grantDiv
+    var deniedGrantRemoved = false;
+    grantsToShow.forEach(function (grant) {
+      if (deniedGrantRemoved) {
+        return;
+      }
+      if (container.childNodes[i].id.split('.')[0] == grant.startTime &&
+        container.childNodes[i].id.split('.')[1] == grant.bandwidth) {
+        // If grant has been denied, removed associated grantDiv
+        if (grant.denied) {
+          container.removeChild(container.childNodes[i]);
+          i--;
+          cancelGrant(""); // all this function does is iterate missedGrantCount
+          deniedGrantRemoved = true;
+        }
+      }
+    });
+    if (deniedGrantRemoved) {
+      continue;
+    }
+    // if the grantDiv is not visible in the current frame, remove it from the DOM
     if (container.childNodes[i].id.split('.')[0] < myGameArea.frameNo + 20) {
-      //20 is a threshold
+      grantsToShow.forEach(function (grant) {
+        if (container.childNodes[i].id.split('.')[0] == grant.startTime &&
+          container.childNodes[i].id.split('.')[1] == grant.bandwidth) {
+          grant.denied = true; // ! if grant not visible and not actioned upon yet, mark as denied
+        }
+      });
 
       // delete the grant box from the panel
       container.removeChild(container.childNodes[i]);
