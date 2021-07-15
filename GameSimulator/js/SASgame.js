@@ -120,6 +120,9 @@ var popupBox = new component(
   150,
   "popup"
 );
+popupBox.title = "";
+popupBox.freqText1 = "";
+popupBox.freqText2 = "";
 
 var popupOpened = false;
 
@@ -173,11 +176,19 @@ myGameArea.canvas.onmousedown = function (e) {
 
   // CHECK REQUESTED GRANTS
   grantsToShow.forEach(function (grant, idx) {
+    if (grant.denied) {
+      return; // skip denied grants, return == continue within forEach()
+    }
+
+    if (grant.showTime > myGameArea.frameNo) {
+      return; // skip denied grants, return == continue within forEach()
+    }
+
     var startPlace = grant.frequency - grant.bandwidth / 2;
     var startPlaceb = grant.frequencyb - grant.bandwidth / 2;  // freq2 startplace
 
     startPlace = frequencyToPixelConversion(startPlace);
-    startPlaceb = frequencyToPixelConversion(startPlace);
+    startPlaceb = frequencyToPixelConversion(startPlaceb);
     pixHeight = bandwidthToComponentHeight(grant.bandwidth);
     if (
       x > grant.startTime - myGameArea.frameNo &&
@@ -189,9 +200,9 @@ myGameArea.canvas.onmousedown = function (e) {
       //console.log("x: " + x + " y: " + y);
 
       popupBox.title = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
-      popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + " GHz";
-      if (grant.bandwidth > 0) {
-        popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb + grant.bandwidth) / 10000 + " GHz";
+      popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + " GHz";
+      if (grant.frequencyb > 0) {
+        popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + " GHz";
       } else {
         popupBox.freqText2 = "";
       }
@@ -229,6 +240,7 @@ class Grant {
     this.bandwidth = bandwidth;
     this.frequencyb = frequencyb;
     this.showTime = showTime > 0 ? showTime : 1; // if showtime is 0, grants may never be queued
+    this.denied = false;
   }
 }
 
@@ -506,23 +518,23 @@ function component(width, height, color, x, y, type = null) {
         ctx.font = 'Bold 30px Arial';
         ctx.fillText("Deny", this.x + 370, this.y + 160);
 
+        if (this.freqText2.length > 1) {
+          // draw frequency 2 text
+          ctx.font = 'Bold 30px Arial';
+          ctx.fillStyle = "black";
+          ctx.fillText(this.freqText2, this.x + 115, this.y + 235);
 
-        // draw frequency 2 text
-        ctx.font = 'Bold 30px Arial';
-        ctx.fillStyle = "black";
-        ctx.fillText(this.freqText2, this.x + 115, this.y + 235);
+          // draw Accept2 text
+          ctx.fillStyle = "lime";
+          ctx.font = 'Bold 30px Arial';
+          ctx.fillText("Accept", this.x + 125, this.y + 270);
 
-        // draw Accept2 text
-        ctx.fillStyle = "lime";
-        ctx.font = 'Bold 30px Arial';
-        ctx.fillText("Accept", this.x + 125, this.y + 270);
+          // draw Deny2 text 
+          ctx.fillStyle = "red";
+          ctx.font = 'Bold 30px Arial';
+          ctx.fillText("Deny", this.x + 370, this.y + 270);
 
-        // draw Deny2 text 
-        ctx.fillStyle = "red";
-        ctx.font = 'Bold 30px Arial';
-        ctx.fillText("Deny", this.x + 370, this.y + 270);
-
-
+        }
 
         // x button
         ctx.fillStyle = "black";
@@ -587,8 +599,13 @@ function updateGameArea() {
   }
 
   for (i = 0; i < queuedGrantRects.length; i += 1) {
-    queuedGrantRects[i].x += -1;
-    queuedGrantRects[i].update();
+    if (!queuedGrantRects[i].grant.denied) {
+      queuedGrantRects[i].x += -1;
+      if (queuedGrantRects[i].grant.showTime <= myGameArea.frameNo) {
+        queuedGrantRects[i].update();
+
+      }
+    }
   }
 
 
@@ -825,6 +842,9 @@ function checkFrequency(freqa, banda, freqb, bandb) {
  * @param {any} grant Grant to generate grantDiv for
  */
 function queueGrant(grant) {
+  if (grant.denied) {
+    return; // if grant is denied, do not generate grantDiv
+  }
   var startFrequency = grant.frequency - grant.bandwidth / 2; // calc start frequency
   var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
   var heightOfBlock = bandwidthToComponentHeight(grant.bandwidth); // calc height of block
@@ -838,6 +858,7 @@ function queueGrant(grant) {
     startPlace,
     "select"
   );
+  queuingGrant.grant = grant;
   queuedGrantRects.push(queuingGrant); // push onto mygrants
   // if multiple freqs
   if (grant.frequencyb > 0) {
@@ -851,6 +872,7 @@ function queueGrant(grant) {
       startPlaceb,
       "select"
     );
+    queuingGrant.grant = grant;
     queuedGrantRects.push(queuingGrant); // push onto mygrants
   }
 
@@ -1009,6 +1031,15 @@ function queueGrant(grant) {
       //deny
       if (!isPaused) {
         console.log("deny");
+        // queuedGrantRects.forEach(function (grantRect) {
+        //   if (grantRect.grant === grant) {
+        //     grantRect.width = 0;
+        //     grantRect.height = 0;
+        //     grantRect.x = 0;
+        //     grantRect.y = 0;
+        //   }
+        // });
+        grant.denied = true;
         deniedGrantCount++;
         e.currentTarget.parentNode.remove();
       }
