@@ -107,6 +107,23 @@ var grantsToShow = [];
  */
 var queuedGrantRects = [];
 
+/**
+ * Popup box component 
+ *
+ * @type {component}
+ */
+var popupBox = new component(
+  600,
+  300,
+  "grey",
+  300,
+  150,
+  "popup"
+);
+
+var popupOpened = false;
+
+
 /** The canvas itself */
 var myGameArea = {
   canvas: document.createElement("canvas"),
@@ -133,88 +150,6 @@ var myGameArea = {
 
 // !---------------------- TEMP: canvas event listeners  -----------------------------!
 
-// Mouseover event listener attached to canvas ! refactor into a function after confirmed working
-myGameArea.canvas.onmousemove = function (e) {
-  // get mouse pos
-  var rect = this.getBoundingClientRect(),
-    x = e.clientX - rect.left,
-    y = e.clientY - rect.top,
-    i = 0,
-    r;
-
-  var grantHovered = false;
-
-  // CHECK OTHER GRANTS
-  grantsToShow.forEach(function (grant, idx) {
-    if (grant.showTime < myGameArea.frameNo) {
-      var startPlace = grant.frequency - grant.bandwidth / 2;
-      startPlace = frequencyToPixelConversion(startPlace);
-
-      var startPlaceb = grant.frequencyb - grant.bandwidth / 2;
-      startPlaceb = frequencyToPixelConversion(startPlaceb);
-
-
-      pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-
-
-      if (
-        x > grant.startTime - myGameArea.frameNo &&
-        x < grant.startTime - myGameArea.frameNo + grant.length &&
-        y > startPlace &&
-        y < startPlace + pixHeight
-      ) {
-        currHover.text =
-          "Requested Grant #: " +
-          idx +
-          " SU Grant F: " +
-          (baseFrequency + grant.frequency) / 10000 +
-          "GHz Bw: " +
-          grant.bandwidth / 10 +
-          "MHz";
-        grantHovered = true;
-        hoveredGrant.x = grant.startTime - myGameArea.frameNo;
-        hoveredGrant.y = startPlace;
-        hoveredGrant.width = grant.length;
-        hoveredGrant.height = pixHeight;
-      } else if (x > grant.startTime - myGameArea.frameNo &&
-        x < grant.startTime - myGameArea.frameNo + grant.length &&
-        y > startPlaceb &&
-        y < startPlaceb + pixHeight) {
-        currHover.text =
-          "Requested Grant #: " +
-          idx +
-          " SU Grant F: " +
-          (baseFrequency + grant.frequencyb) / 10000 +
-          "GHz Bw: " +
-          grant.bandwidth / 10 +
-          "MHz";
-        grantHovered = true;
-        hoveredGrant.x = grant.startTime - myGameArea.frameNo;
-        hoveredGrant.y = startPlace;
-        hoveredGrant.width = grant.length;
-        hoveredGrant.height = pixHeight;
-      }
-    }
-
-  });
-
-  if (!grantHovered) {
-    currHover.text = "(" + Math.floor(x) + ", " + Math.floor(y) + ")";
-    hoveredGrant.x = 0;
-    hoveredGrant.y = 0;
-    hoveredGrant.width = 0;
-    hoveredGrant.height = 0;
-  }
-};
-// Mouseout event listener attached to canvas
-myGameArea.canvas.onmouseleave = function (e) {
-  currHover.text = "";
-  hoveredGrant.x = 0;
-  hoveredGrant.y = 0;
-  hoveredGrant.width = 0;
-  hoveredGrant.height = 0;
-};
-
 // Mouseclick event listener attached to canvas
 myGameArea.canvas.onmousedown = function (e) {
   // important: correct mouse position:
@@ -223,13 +158,26 @@ myGameArea.canvas.onmousedown = function (e) {
     y = e.clientY - rect.top,
     i = 0,
     r;
+  // intercept mouse click on popup box
+  if (popupOpened) {
+    // on clicking [x] close popup
+    if (x > popupBox.x + popupBox.width - 60 &&
+      x < popupBox.x + popupBox.width &&
+      y > popupBox.y &&
+      y < popupBox.y + 40) {
+      popupOpened = false;
+      play();
+      return;
+    }
+  }
 
   // CHECK REQUESTED GRANTS
   grantsToShow.forEach(function (grant, idx) {
     var startPlace = grant.frequency - grant.bandwidth / 2;
-    var heightOfBlock = grant.bandwidth;
+    var startPlaceb = grant.frequencyb - grant.bandwidth / 2;  // freq2 startplace
 
     startPlace = frequencyToPixelConversion(startPlace);
+    startPlaceb = frequencyToPixelConversion(startPlace);
     pixHeight = bandwidthToComponentHeight(grant.bandwidth);
     if (
       x > grant.startTime - myGameArea.frameNo &&
@@ -237,49 +185,39 @@ myGameArea.canvas.onmousedown = function (e) {
       y > startPlace &&
       y < startPlace + pixHeight
     ) {
-      if (!isPaused) {
-        if (
-          checkOverlap(
-            grant.startTime,
-            grant.startTime + grant.length,
-            grant.frequency,
-            grant.bandwidth
-          )
-        ) {
-          convertGrant(
-            grant,
-            false,
-            "red",
-            "SU Grant F: " +
-            (baseFrequency + grant.frequency) / 10000 +
-            "GHz Bandwidth: " +
-            grant.bandwidth / 10 +
-            "MHz"
-          );
-          conflictingGrantCount++;
-        } else {
-          console.log("approve");
-          convertGrant(
-            grant,
-            false,
-            "cyan",
-            "SU Grant F: " +
-            (baseFrequency + grant.frequency) / 10000 +
-            "GHz Bandwidth: " +
-            grant.bandwidth / 10 +
-            "MHz"
-          );
+      //console.log("clicked grant " + grant.id);
+      //console.log("x: " + x + " y: " + y);
 
-          approvedGrantCount++;
-        }
-        approvedGrants.push(grant);
-        document
-          .getElementById(grant.startTime + "." + grant.bandwidth)
-          .remove();
+      popupBox.title = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
+      popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + " GHz";
+      if (grant.bandwidth > 0) {
+        popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb + grant.bandwidth) / 10000 + " GHz";
+      } else {
+        popupBox.freqText2 = "";
       }
+      pause();
+      popupOpened = true;
+      updateGameArea();
+    }
+
+    if (
+      x > grant.startTime - myGameArea.frameNo &&
+      x < grant.startTime - myGameArea.frameNo + grant.length &&
+      y > startPlaceb &&
+      y < startPlaceb + pixHeight
+    ) {
+      popupBox.title = "Bandwidth: " +
+        grant.bandwidth / 10 + "MHz";
+      popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz";
+      popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + "GHz";
+
+      pause();
+      popupOpened = true;
+      updateGameArea();
     }
   });
 };
+
 
 // !---------------------- classes and functions  -----------------------------!
 
@@ -537,6 +475,62 @@ function component(width, height, color, x, y, type = null) {
         ctx.fillRect(this.x, this.y, this.width, this.height);
         ctx.globalAlpha = 1; // if not set back to 100% opacity, all draws after this will be transparent
         break;
+      case "popup": // ! popup box, !! TEMP
+        ctx.save(); // save context
+
+        // draw popup box background
+        ctx.globalAlpha = 0.95; // our next draw is transparent
+        ctx.fillStyle = color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+
+        // if not set back to 100% opacity, all draws after this will be transparent
+        ctx.globalAlpha = 1;
+
+        // draw popup box title
+        ctx.font = 'Bold 44px Arial';
+        ctx.fillStyle = "black";
+        ctx.fillText(this.title, this.x + 5, this.y + 44);
+
+        // draw frequency 1 text
+        ctx.font = 'Bold 30px Arial';
+        ctx.fillStyle = "black";
+        ctx.fillText(this.freqText1, this.x + 115, this.y + 125);
+
+        // draw Accept text
+        ctx.fillStyle = "lime";
+        ctx.font = 'Bold 30px Arial';
+        ctx.fillText("Accept", this.x + 125, this.y + 160);
+
+        // draw Deny text 
+        ctx.fillStyle = "red";
+        ctx.font = 'Bold 30px Arial';
+        ctx.fillText("Deny", this.x + 370, this.y + 160);
+
+
+        // draw frequency 2 text
+        ctx.font = 'Bold 30px Arial';
+        ctx.fillStyle = "black";
+        ctx.fillText(this.freqText2, this.x + 115, this.y + 235);
+
+        // draw Accept2 text
+        ctx.fillStyle = "lime";
+        ctx.font = 'Bold 30px Arial';
+        ctx.fillText("Accept", this.x + 125, this.y + 270);
+
+        // draw Deny2 text 
+        ctx.fillStyle = "red";
+        ctx.font = 'Bold 30px Arial';
+        ctx.fillText("Deny", this.x + 370, this.y + 270);
+
+
+
+        // x button
+        ctx.fillStyle = "black";
+        ctx.font = 'Bold 48px Arial';
+        ctx.fillText("[x]", this.x + this.width - 60, this.y + 40);
+        ctx.restore(); // restore prior context
+
+        break;
       default:
         // anything else, such as the rects representing the grant
         ctx.fillStyle = color;
@@ -596,7 +590,6 @@ function updateGameArea() {
     queuedGrantRects[i].x += -1;
     queuedGrantRects[i].update();
   }
-
 
 
   // calculate score
@@ -662,6 +655,10 @@ function updateGameArea() {
   // kills the draw loop when curr tick is above stopTime
   if (myGameArea.frameNo >= stopTime) {
     clearInterval(myGameArea.interval);
+  }
+  // This is last, to draw over all other components
+  if (popupOpened) {
+    popupBox.update();
   }
 }
 
