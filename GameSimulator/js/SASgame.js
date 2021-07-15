@@ -173,7 +173,7 @@ myGameArea.canvas.onmousemove = function (e) {
     if (grantHovered) {
       return;
     }
-    if (r.grant.denied) {
+    if (r.grant.acceptStatus !== 0) {
       return; // dont check for overlap with denied grants
     }
     if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) {
@@ -226,6 +226,20 @@ myGameArea.canvas.onmousedown = function (e) {
       y < popupBox.y + 132 + 38) {
       popupOpened = false;
       console.log("Accept 1 Clicked");
+      var overlapCheck = checkOverlap(grantsToShow[popupBoxGrant].startTime, grantsToShow[popupBoxGrant].startTime + grantsToShow[popupBoxGrant].length, grantsToShow[popupBoxGrant].frequency, grantsToShow[popupBoxGrant].bandwidth);
+      approvedGrants.push(grantsToShow[popupBoxGrant]);
+      grantsToShow[popupBoxGrant].acceptStatus = overlapCheck ? 2 : 1;
+
+      convertGrant(
+        grantsToShow[popupBoxGrant],
+        false,
+        overlapCheck ? "red" : "cyan", // unary operation for color
+        "SU Grant F: " +
+        (baseFrequency + grantsToShow[popupBoxGrant].frequency) / 10000 +
+        "GHz Bandwidth: " +
+        grantsToShow[popupBoxGrant].bandwidth / 10 +
+        "MHz"
+      );
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         play();
       }
@@ -238,32 +252,47 @@ myGameArea.canvas.onmousedown = function (e) {
       y < popupBox.y + 132 + 37) {
       popupOpened = false;
       console.log("Deny 1 Clicked");
-      popupBoxGrant.denied = true;
+      grantsToShow[popupBoxGrant].acceptStatus = 3;
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         play();
       }
     }
     if (popupBox.freqText2.length > 0) {
-      // on clicking Accept2 close popup
+      // on clicking Accept2 
       if (x > popupBox.x + 120 &&
         x < popupBox.x + 120 + 112 &&
         y > popupBox.y + 242 &&
         y < popupBox.y + 242 + 38) {
         popupOpened = false;
         console.log("Accept 2 Clicked");
+        var overlapCheck = checkOverlap(grantsToShow[popupBoxGrant].startTime, grantsToShow[popupBoxGrant].startTime + grantsToShow[popupBoxGrant].length, grantsToShow[popupBoxGrant].frequencyb, grantsToShow[popupBoxGrant].bandwidth);
+        approvedGrants.push(grantsToShow[popupBoxGrant]);
+        grantsToShow[popupBoxGrant].acceptStatus = overlapCheck ? 2 : 1;
+
+        convertGrant(
+          grantsToShow[popupBoxGrant],
+          true,
+          overlapCheck ? "red" : "cyan", // unary operation for color
+          "SU Grant F: " +
+          (baseFrequency + grantsToShow[popupBoxGrant].frequencyb) / 10000 +
+          "GHz Bandwidth: " +
+          grantsToShow[popupBoxGrant].bandwidth / 10 +
+          "MHz"
+        );
+
         if (document.querySelector('input[id="pauseOnPopup"]').checked) {
           play();
         }
       }
 
-      // on clicking Deny2 close popup
+      // on clicking Deny2 
       if (x > popupBox.x + 364 &&
         x < popupBox.x + 364 + 85 &&
         y > popupBox.y + 242 &&
         y < popupBox.y + 242 + 37) {
         popupOpened = false;
         console.log("Deny 2 Clicked");
-        popupBoxGrant.denied = true;
+        grantsToShow[popupBoxGrant].acceptStatus = 3;
         if (document.querySelector('input[id="pauseOnPopup"]').checked) {
           play();
         }
@@ -276,8 +305,8 @@ myGameArea.canvas.onmousedown = function (e) {
 
   // CHECK REQUESTED GRANTS
   grantsToShow.forEach(function (grant, idx) {
-    if (grant.denied) {
-      return; // skip denied grants, return == continue within forEach()
+    if (grant.acceptStatus !== 0) {
+      return; // skip actioned grants, return == continue within forEach()
     }
 
     if (grant.showTime > myGameArea.frameNo) {
@@ -313,7 +342,7 @@ myGameArea.canvas.onmousedown = function (e) {
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         pause();
       }
-      popupBoxGrant = grant;
+      popupBoxGrant = idx;
       popupOpened = true;
       updateGameArea();
     }
@@ -335,7 +364,7 @@ myGameArea.canvas.onmousedown = function (e) {
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         pause();
       }
-      popupBoxGrant = grant;
+      popupBoxGrant = idx;
       popupOpened = true;
       updateGameArea();
     }
@@ -353,7 +382,9 @@ class Grant {
     this.bandwidth = bandwidth;
     this.frequencyb = frequencyb;
     this.showTime = showTime > 0 ? showTime : 1; // if showtime is 0, grants may never be queued
-    this.denied = false;
+    /** 
+     * @type {int} 0 = not yet accepted, 1 = accepted, 2 = conflicting, 3 = denied*/
+    this.acceptStatus = 0;
   }
 }
 
@@ -420,7 +451,7 @@ function startGame() {
 function seedChange(value) {
   // clear grants on seed change
   grantsToShow.forEach(function (grant, idx) {
-    grant.denied = true;
+    grant.acceptStatus = 3;
   }
   );
   popupOpened = false; // close popup on seed change
@@ -730,7 +761,8 @@ function updateGameArea() {
   }
 
   for (i = 0; i < queuedGrantRects.length; i += 1) {
-    if (!queuedGrantRects[i].grant.denied) {
+    // if grant is not accepted nor denied yet  
+    if (queuedGrantRects[i].grant.acceptStatus === 0) {
       queuedGrantRects[i].x += -1;
       if (queuedGrantRects[i].grant.showTime <= myGameArea.frameNo) {
         queuedGrantRects[i].update();
@@ -820,23 +852,40 @@ function purgeGrantList() {
 
 
     // find grant associated with grantDiv
-    var deniedGrantRemoved = false;
+    var grantRemoved = false;
     grantsToShow.forEach(function (grant) {
-      if (deniedGrantRemoved) {
+      if (grantRemoved) {
         return;
       }
       if (container.childNodes[i].id.split('.')[0] == grant.startTime &&
         container.childNodes[i].id.split('.')[1] == grant.bandwidth) {
         // If grant has been denied, removed associated grantDiv
-        if (grant.denied) {
-          container.removeChild(container.childNodes[i]);
-          i--;
-          cancelGrant(""); // all this function does is iterate missedGrantCount
-          deniedGrantRemoved = true;
+        switch (grant.acceptStatus) {
+          case 1:
+            container.removeChild(container.childNodes[i]);
+            i--;
+            approvedGrantCount++;
+            grantRemoved = true;
+            break;
+          case 2:
+            container.removeChild(container.childNodes[i]);
+            i--;
+            conflictingGrantCount++
+            grantRemoved = true;
+            break;
+          case 3:
+            container.removeChild(container.childNodes[i]);
+            i--;
+            cancelGrant(""); // all this function does is iterate missedGrantCount
+            grantRemoved = true;
+            break;
+          default:
+            break;
         }
+
       }
     });
-    if (deniedGrantRemoved) {
+    if (grantRemoved) {
       continue;
     }
     // if the grantDiv is not visible in the current frame, remove it from the DOM
@@ -844,7 +893,7 @@ function purgeGrantList() {
       grantsToShow.forEach(function (grant) {
         if (container.childNodes[i].id.split('.')[0] == grant.startTime &&
           container.childNodes[i].id.split('.')[1] == grant.bandwidth) {
-          grant.denied = true; // ! if grant not visible and not actioned upon yet, mark as denied
+          grant.acceptStatus = 3; // ! if grant not visible and not actioned upon yet, mark as denied
         }
       });
 
@@ -1003,8 +1052,8 @@ function checkFrequency(freqa, banda, freqb, bandb) {
  * @param {any} grant Grant to generate grantDiv for
  */
 function queueGrant(grant) {
-  if (grant.denied) {
-    return; // if grant is denied, do not generate grantDiv
+  if (grant.acceptStatus !== 0) {
+    return; // if grant is actioned, do not generate grantDiv
   }
   var startFrequency = grant.frequency - grant.bandwidth / 2; // calc start frequency
   var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
@@ -1200,7 +1249,7 @@ function queueGrant(grant) {
         //     grantRect.y = 0;
         //   }
         // });
-        grant.denied = true;
+        grant.acceptStatus = 3;
         deniedGrantCount++;
         e.currentTarget.parentNode.remove();
       }
