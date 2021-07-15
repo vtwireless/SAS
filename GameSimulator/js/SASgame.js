@@ -171,6 +171,9 @@ myGameArea.canvas.onmousemove = function (e) {
     if (grantHovered) {
       return;
     }
+    if (r.grant.denied) {
+      return; // dont check for overlap with denied grants
+    }
     if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) {
       hoveredGrant.x = r.x;
       hoveredGrant.y = r.y;
@@ -353,6 +356,11 @@ function startGame() {
 }
 
 function seedChange(value) {
+  // clear grants on seed change
+  grantsToShow.forEach(function (grant, idx) {
+    grant.denied = true;
+  }
+  );
   seedValue = value;
   startGame();
 }
