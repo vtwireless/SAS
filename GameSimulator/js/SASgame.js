@@ -165,7 +165,8 @@ myGameArea.canvas.onmousemove = function (e) {
 
   // Dont do anything if popup box is open
   if (popupOpened) {
-    return; // all other clicks are ignored if popup is open
+    // mouseover events during popup can be added here
+    return; // all other mousemouse events are ignored when popup box is open
   }
   var grantHovered = false;
 
@@ -876,7 +877,7 @@ function purgeGrantList() {
           case 3:
             container.removeChild(container.childNodes[i]);
             i--;
-            cancelGrant(""); // all this function does is iterate missedGrantCount
+            deniedGrantCount++;
             grantRemoved = true;
             break;
           default:
