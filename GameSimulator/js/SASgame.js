@@ -516,85 +516,21 @@ function seedChange(value) {
   startGame();
 }
 
-// ! Should be loaded from a csv rather than hardcoded imo
 /**
- * PU's and grant requests are loaded here PU's (the existing boxes) have
- * makePUGrant() called on them grant requests (the new boxes) are added to
- * grantsToShow seed values of 1 and 2 are hardcoded any other seed value will
- * init random generation
+ * PU's and Requests are loaded from js/setSeeds.js, unless random generation is requested
  */
 function loadGrantsAndPUs() {
-  var grant = new Grant(100, 1000, 100, 200, 0, 0);
-  if (seedValue == 1) {
-    //PUS
-    //(startTime, length, frequency, bandwidth, frequencyb, showTime)
-    //grant = new Grant(1, 500, 350, 200, 355, 0);
-    makePUGrant(new Grant(1, 500, 350, 200, 355, 0));
-    makePUGrant(new Grant(1000, 500, 350, 200, 355, 0));
-    makePUGrant(new Grant(1500, 500, 450, 100, 255, 0));
-    makePUGrant(new Grant(1200, 1000, 600, 200, 355, 0));
-    makePUGrant(new Grant(1300, 300, 850, 150, 355, 0));
-    makePUGrant(new Grant(1600, 1500, 700, 400, 355, 0));
+  var grant = new Grant(100, 1000, 100, 200, 0, 0); // ??
+  if (seedValue <= setSeeds.length) {
+    setSeeds[seedValue - 1]["PU"].forEach(function (seed) {
+      makePUGrant(new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime));
+    });
 
-    //Requests
+    setSeeds[seedValue - 1]["REQ"].forEach(function (seed) {
+      grant = new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime);
+      grantsToShow.push(grant);
+    });
 
-    grant = new Grant(1000, 500, 1350, 100, 355, 0);
-    grantsToShow.push(grant);
-    grant = new Grant(2000, 500, 450, 200, 505, 1500); // ! showtime changed from 0 to 1500 as it was being shown within the grantDiv from the very start yet not visible for a long time
-    grantsToShow.push(grant);
-    grant = new Grant(1300, 200, 1370, 200, 0, 200);
-    grantsToShow.push(grant);
-    grant = new Grant(1300, 200, 570, 200, 0, 1000);
-    grantsToShow.push(grant);
-    grant = new Grant(1400, 300, 1400, 200, 0, 1000);
-    grantsToShow.push(grant);
-    grant = new Grant(1400, 200, 800, 200, 0, 1000);
-    grantsToShow.push(grant);
-    grant = new Grant(2300, 600, 1470, 200, 0, 1800);
-    grantsToShow.push(grant);
-    grant = new Grant(2300, 1200, 1470, 200, 1250, 1600);
-    grantsToShow.push(grant);
-    grant = new Grant(2400, 200, 1200, 200, 1750, 1900);
-    grantsToShow.push(grant);
-    grant = new Grant(2400, 200, 1400, 200, 0, 1900);
-    grantsToShow.push(grant);
-  } else if (seedValue == 2) {
-    //PUS
-    makePUGrant(new Grant(1, 500, 30, 1000, 355, 0));
-    makePUGrant(new Grant(200, 500, 1350, 200, 355, 0));
-    makePUGrant(new Grant(600, 500, 1340, 300, 355, 0));
-    makePUGrant(new Grant(1200, 1000, 1350, 200, 355, 0));
-    makePUGrant(new Grant(1300, 1350, 200, 150, 355, 0));
-    makePUGrant(new Grant(1800, 1700, 1250, 400, 355, 0));
-    makePUGrant(new Grant(2200, 1000, 2350, 200, 355, 0));
-    makePUGrant(new Grant(2300, 1350, 200, 150, 355, 0));
-    makePUGrant(new Grant(2800, 1700, 1250, 400, 355, 0));
-
-    //Requests
-    grant = new Grant(1000, 500, 350, 100, 355, 0);
-    grantsToShow.push(grant);
-    grant = new Grant(2000, 1500, 450, 200, 1505, 1600);
-    grantsToShow.push(grant);
-    grant = new Grant(1300, 400, 1370, 200, 0, 900);
-    grantsToShow.push(grant);
-    grant = new Grant(1300, 600, 1370, 200, 0, 800);
-    grantsToShow.push(grant);
-    grant = new Grant(1400, 700, 700, 200, 0, 1100);
-    grantsToShow.push(grant);
-    grant = new Grant(1400, 200, 1200, 200, 0, 1100);
-    grantsToShow.push(grant);
-    grant = new Grant(1000, 500, 1350, 100, 355, 900);
-    grantsToShow.push(grant);
-    grant = new Grant(2000, 1500, 1350, 200, 1505, 1800);
-    grantsToShow.push(grant);
-    grant = new Grant(2300, 400, 570, 200, 0, 1900);
-    grantsToShow.push(grant);
-    grant = new Grant(2300, 1200, 570, 200, 0, 1800);
-    grantsToShow.push(grant);
-    grant = new Grant(2400, 300, 1300, 200, 0, 2000);
-    grantsToShow.push(grant);
-    grant = new Grant(2400, 200, 1400, 200, 0, 2000);
-    grantsToShow.push(grant);
   } else {
     //RANDOM
     var maxBandwidth = 500;
