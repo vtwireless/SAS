@@ -30,7 +30,7 @@ canvas {
   float: left;
   padding: 5px;
   height: 770px;
-  min-width: 370px;
+  width: 425px;
   border-radius: 5px;
 }
 
