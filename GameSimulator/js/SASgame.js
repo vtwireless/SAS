@@ -47,12 +47,7 @@ var myTime;
  * @type {component}
  */
 var nowLine;
-/**
- * Text component representing highlighted grant on mouseover
- *
- * @type {component}
- */
-var currHover;
+
 /**
  * Rect representing highlighted grant on mouseover
  *
@@ -166,6 +161,29 @@ myGameArea.canvas.onmousemove = function (e) {
   // Dont do anything if popup box is open
   if (popupOpened) {
     // mouseover events during popup can be added here
+    if (
+      (x > popupBox.x + 120 &&
+        x < popupBox.x + 120 + 112 &&
+        y > popupBox.y + 132 &&
+        y < popupBox.y + 132 + 38)
+      ||
+      (x > popupBox.x + 120 &&
+        x < popupBox.x + 120 + 112 &&
+        y > popupBox.y + 242 &&
+        y < popupBox.y + 242 + 38)
+    ) {
+
+      var startFrequency = (y > (popupBox.y + 242) && popupBox.freqText2.length > 0) ?
+        grantsToShow[popupBoxGrant].frequencyb - grantsToShow[popupBoxGrant].bandwidth / 2 :
+        grantsToShow[popupBoxGrant].frequency - grantsToShow[popupBoxGrant].bandwidth / 2; // calc start frequency
+      var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
+      var heightOfBlock = bandwidthToComponentHeight(grantsToShow[popupBoxGrant].bandwidth); // calc height of block
+
+      hoveredGrant.x = grantsToShow[popupBoxGrant].startTime - myGameArea.frameNo;
+      hoveredGrant.y = startPlace;
+      hoveredGrant.width = grantsToShow[popupBoxGrant].length;
+      hoveredGrant.height = heightOfBlock;
+    }
     return; // all other mousemouse events are ignored when popup box is open
   }
   var grantHovered = false;
@@ -182,9 +200,6 @@ myGameArea.canvas.onmousemove = function (e) {
       hoveredGrant.y = r.y;
       hoveredGrant.width = r.width;
       hoveredGrant.height = r.height;
-      hoveredGrant.text = r.text;
-      hoveredGrant.id = r.id;
-      hoveredGrant.type = r.type;
       hoveredGrant.color = "red";
       grantHovered = true;
       return;
@@ -359,8 +374,9 @@ myGameArea.canvas.onmousedown = function (e) {
       popupBox.startTime = parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition, false) + " Start Time";
       popupBox.lenStr = parseMillisecondsIntoReadableTime(grant.length, false) + " Duration";
 
-      popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz";
-      popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + "GHz";
+      popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + "GHz";
+      popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz";
+
 
       if (document.querySelector('input[id="pauseOnPopup"]').checked) {
         pause();
@@ -414,7 +430,7 @@ function startGame() {
     canvasHeight - summaryTextHeight
   );
   bandwidthBox = new component(100, canvasHeight, "white", 0, 0);
-  hoveredGrant = new component(0, 0, "rgba(0, 255, 255)", 0, 0, "select");
+  hoveredGrant = new component(0, 0, "rgba(0, 128, 255)", 0, 0, "select");
 
   myGrants = [];
   approvedGrants = [];
@@ -431,16 +447,6 @@ function startGame() {
     40,
     "text"
   );
-  currHover = new component(
-    "30px",
-    "Consolas",
-    "black",
-    nowLinePosition,
-    70,
-    "text"
-  );
-  currHover.text = "";
-  movingTexts.push(currHover);
   var grantCont = document.getElementById("grantList");
   while (grantCont.firstChild) {
     grantCont.removeChild(grantCont.firstChild);
@@ -786,8 +792,6 @@ function updateGameArea() {
   myTime.text =
     "Now Time: " + parseMillisecondsIntoReadableTime(myGameArea.frameNo, true);
 
-  // ! redundant and TEMP ! sets x position of hover text to the current time marker
-  currHover.x = nowLinePosition;
 
   // draws text at bottom of canvas
   grantSummaryText.text =
@@ -811,7 +815,6 @@ function updateGameArea() {
 
   grantSummaryBox.update(); // draws summary box
   grantSummaryText.update(); // draws summary text
-  currHover.update(); // draws hover text
   myTime.update(); // draws time text
   nowLine.update(); // draws line at current time
 
