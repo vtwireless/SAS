@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="css/SASgame.css">
 </head>
 
-<body onload="startGame()">
+<body onload="loadSetSeed(seedValue, startGame)">
   <h2>Independent Study Game | <a href="SASsimulation.html">Go To Simulator</a> |<a href="information.html"
       target="_blank">About The SAS</a>
   </h2>
@@ -25,6 +25,7 @@
   <div id="grantList" class="grantList">
 
   </div>
+  <script src="js/papaparse.min.js"></script>
   <script src="js/setSeeds.js"></script>
   <script src="js/SASgame.js"></script>
 

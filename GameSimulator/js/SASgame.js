@@ -108,6 +108,8 @@ hoveredGrant.push(new component(0, 0, "rgba(0, 128, 255)", 0, 0, "select"));
 hoveredGrant[0].text = "";
 hoveredGrant[1].text = "";
 
+// holds array of grant data
+var setSeed;
 
 /**
  * Popup box component 
@@ -457,7 +459,8 @@ class Grant {
 }
 
 /** Inits components and arrays for drawing to canvas */
-function startGame() {
+function startGame(readSeed) {
+  setSeed = readSeed;
   nowLine = new component(
     2,
     canvasHeight - summaryTextHeight - titleOffset,
@@ -513,20 +516,24 @@ function seedChange(value) {
   );
   popupOpened = false; // close popup on seed change
   seedValue = value;
-  startGame();
+  // ! 3 is being hardcoded to random generation here !
+  value === 3 ? startGame(null) : loadSetSeed(seedValue, startGame);
 }
 
 /**
  * PU's and Requests are loaded from js/setSeeds.js, unless random generation is requested
  */
 function loadGrantsAndPUs() {
-  var grant = new Grant(100, 1000, 100, 200, 0, 0); // ??
-  if (seedValue <= setSeeds.length) {
-    setSeeds[seedValue - 1]["PU"].forEach(function (seed) {
+  // ! 3 is being hardcoded to random generation here !
+  if (setSeed == null && seedValue !== 3) {
+    return;
+  }
+  if (seedValue !== 3) {
+    setSeed["PU"].forEach(function (seed) {
       makePUGrant(new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime));
     });
 
-    setSeeds[seedValue - 1]["REQ"].forEach(function (seed) {
+    setSeed["REQ"].forEach(function (seed) {
       grant = new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime);
       grantsToShow.push(grant);
     });
