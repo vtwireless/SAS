@@ -624,12 +624,12 @@ function loadGrantsAndPUs() {
     var startTime = 0;
     var length = 0;
     var frequency = 0;
-    var minST = 100;
-    var maxST = startTime;
+    var minST = startTime + 50;
+    var maxST = startTime + 5000;
 
     //(startTime, length, frequency, bandwidth, frequencyb, showTime)
     var bandwidth = 0;
-    for (var i = 0; i < 50; i++) {
+    for (var i = 0; i < 500; i++) {
       gStartTime = Math.floor(Math.random() * maxST) + minST;
       length = Math.floor(Math.random() * maxLength) + minLength;
       frequency =
@@ -638,7 +638,7 @@ function loadGrantsAndPUs() {
         ) +
         minBandwidth / 2;
       bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
-      makePUGrant((gStartTime, length, frequency, bandwidth, 0, 0));
+      makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
     }
 
     maxLength = 1200; //requests
@@ -648,7 +648,7 @@ function loadGrantsAndPUs() {
     var maxDSS = 1000;
     var frequencyb = 0;
     //REQUESTS
-    for (var i = 0; i < 50; i++) {
+    for (var i = 0; i < 20; i++) {
       gStartTime = Math.floor(Math.random() * maxST) + minST;
       showTime =
         Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
