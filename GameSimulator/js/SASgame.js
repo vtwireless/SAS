@@ -179,10 +179,10 @@ myGameArea.canvas.onmousemove = function (e) {
         y > popupBox.y + 132 &&
         y < popupBox.y + 132 + 38)
       ||
-      (x > popupBox.x + 20 &&
+      ((x > popupBox.x + 20 &&
         x < popupBox.x + 20 + 112 &&
         y > popupBox.y + 242 &&
-        y < popupBox.y + 242 + 38)
+        y < popupBox.y + 242 + 38) && grantsToShow[popupBoxGrant].frequencyb > 0) // dont hover over freqb if doesnt exist
     ) {
       var freq = (y > (popupBox.y + 242) && popupBox.freqText2.length > 0) ?
         grantsToShow[popupBoxGrant].frequencyb : grantsToShow[popupBoxGrant].frequency;
