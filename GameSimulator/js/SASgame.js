@@ -1,9 +1,30 @@
-// SASgame.js - canvas scripting for SASgame.html
-/* jshint esversion: 6 */
+// SASgame.js - scripting for SASgame.html
 
-// * Canvas drawloop is initialized onload by SASgame.html:19 '<body onload="startGame()">'
 
-// !---------------------- global variable init  -----------------------------!
+// Notes:
+
+// Default drawloop Interval is 20ms/frame (50fps)
+
+// tickrate of simulation is tied to frame creation,
+// as on each drawloop iteration 'x' values are decremented
+
+// a full 60fps can be achieved by either:
+
+// setting the drawloop interval to 16ms, which is
+// an easy solution that will speed up the simulation
+
+// or by decoupling the drawloop interval from the frame creation interval,
+// and then tying frame creation to Window.requestAnimationFrame()
+// This will synchronize the drawloop with the users refresh rate
+
+
+// * Flow:
+// * 1. On html body load, start async load of set seed values from csv 
+// *
+// * 2. LoadSetSeed calls startGame once finished loading set seeds into an object
+// *
+// * 3. startGame generates new components and clears the grantList, before starting the draw loop
+
 
 var canvasWidth = 1200;
 var canvasHeight = 700;
@@ -79,7 +100,7 @@ var movingTexts = [];
 var frequencyTexts = [];
 
 /**
- * Array of rect components representing the initial hardcoded (or randomly
+ * Array of rect components representing the initial set (or randomly
  * generated) grants
  *
  * @type {component[]}
@@ -157,7 +178,7 @@ var myGameArea = {
   },
 };
 
-// !---------------------- dynamic loading of csv data  -----------------------------!
+// !---------------------- dynamic loading of grant data  -----------------------------!
 /**
  * Array of setSeed Filenames
  *
@@ -205,7 +226,7 @@ function loadSetSeed(seedValue, callback) {
     });
     setSeed.PU = PU;
     setSeed.REQ = REQ;
-    callback(setSeed);
+    callback(setSeed); // startGame is called and passed PU + REQ grant creation arguments
 
   }
 
@@ -571,19 +592,19 @@ function seedChange(value) {
   );
   popupOpened = false; // close popup on seed change
   seedValue = value;
-  // ! 3 is being hardcoded to random generation here !
-  value === 3 ? startGame(null) : loadSetSeed(seedValue, startGame);
+  // ! 0 is being hardcoded to random generation here !
+  value === 0 ? startGame(null) : loadSetSeed(seedValue, startGame);
 }
 
 /**
  * PU's and Requests are loaded from js/setSeeds.js, unless random generation is requested
  */
 function loadGrantsAndPUs() {
-  // ! 3 is being hardcoded to random generation here !
-  if (setSeed == null && seedValue !== 3) {
+  // ! 0 is being hardcoded to random generation here !
+  if (setSeed == null && seedValue !== 0) {
     return;
   }
-  if (seedValue !== 3) {
+  if (seedValue !== 0) {
     setSeed["PU"].forEach(function (seed) {
       makePUGrant(new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime));
     });
@@ -1157,7 +1178,7 @@ function queueGrant(grant) {
   var grantDiv = document.createElement("div"); // generate new grant box
   grantDiv.classList.add("grantDiv"); // set class to grantDiv
   var abutton = document.createElement("button"); // generate new button
-  grantDiv.id = grant.startTime + "." + grant.bandwidth; // set id to startTime + bandwidth !! TODO FIX THIS, REMOVAL OF GRANTDIVS DEPENDS ON ID
+  grantDiv.id = grant.startTime + "." + grant.bandwidth; // set id to startTime + bandwidth 
   var text = document.createElement("p"); // generate new text
   text.innerHTML =
     "Grant Start Time: " +
@@ -1276,14 +1297,6 @@ function queueGrant(grant) {
       //deny
       if (!isPaused) {
         console.log("deny");
-        // queuedGrantRects.forEach(function (grantRect) {
-        //   if (grantRect.grant === grant) {
-        //     grantRect.width = 0;
-        //     grantRect.height = 0;
-        //     grantRect.x = 0;
-        //     grantRect.y = 0;
-        //   }
-        // });
         grant.acceptStatus = 3;
         deniedGrantCount++;
         e.currentTarget.parentNode.remove();
