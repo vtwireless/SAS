@@ -1,23 +1,29 @@
 <!DOCTYPE html>
 <html lang="en-US">
+
 <head>
   <title>HLSI Independent Study 2</title>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width"/>
-  <meta name="author" content="Joseph Tolley"/>
-  <meta name="keywords" content=""/>
-  <meta name="description" content=""/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width" />
+  <meta name="author" content="Joseph Tolley" />
+  <meta name="keywords" content="" />
+  <meta name="description" content="" />
 
 
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/SAS.css">
+  <link rel="stylesheet" href="css/codemirror.css">
+  <link rel="stylesheet" href="css/blackboard.css">
+  <link rel="stylesheet" href="css/simplescrollbars.css">
 </head>
+
 <body onload="startGame()">
-  <h2>Independent Study Simulation | <a href="SASgame.html">Go To Game</a> | <a href="information.html" target="_blank">About The SAS</a></h2>
+  <h2>Independent Study Simulation | <a href="SASgame.html">Go To Game</a> | <a href="information.html"
+      target="_blank">About The SAS</a></h2>
   <div id="codeBox">
     <label>function(requestList) {</label>
-      <br>
+    <br>
     <textarea id="code" name="code" rows="7" cols="80">
 printToOutput(requestList.length + ' Grant Requests');
 for (var i in requestList) {
@@ -26,19 +32,24 @@ for (var i in requestList) {
     }
   }
     </textarea>
+    <br><br>
     <textarea id="consoleOutput" name="code" rows="7" cols="50" readonly>
       Console Output:
       call 'printToOutput(output);' to output
     </textarea>
     <br>
-    <button type="button" onclick="runCode()">Run</button> <button type="button" onclick="clearConsole()">Clear Console</button>
-  </div>
-    
+    <button type="button" onclick="runCode()">Run</button> <button type="button"
+      onclick="displayConsole.setValue('');clearConsole()">Clear
+      Console</button>
   </div>
 
-<script src="js/SASsimulation.js"></script>
-<br>
-<!--div>
+  </div>
+  <script src="js/codemirror.js"></script>
+  <script src="js/javascript.js"></script>
+  <script src="js/simplescrollbars.js"></script>
+  <script src="js/SASsimulation.js"></script>
+  <br>
+  <!--div>
   <input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)" checked="1">
   <label for="1">Seed 1</label><br>
   <input type="radio" id="3" name="seed" value="2" onchange="seedChange(2)">
@@ -47,16 +58,16 @@ for (var i in requestList) {
   <label for="3">Random</label>
 </div-->
 
-<button onclick="play()">PLAY</button>
-<button onclick="pause()">PAUSE</button>
-<button onclick="setFrameInterval(4.0)">1/4X SPEED</button>
-<button onclick="setFrameInterval(2.0)">1/2X SPEED</button>
-<button onclick="setFrameInterval(0.5)">2X SPEED</button>
-<button onclick="restart()">REFRESH</button>
+  <button onclick="play()">PLAY</button>
+  <button onclick="pause()">PAUSE</button>
+  <button onclick="setFrameInterval(4.0)">1/4X SPEED</button>
+  <button onclick="setFrameInterval(2.0)">1/2X SPEED</button>
+  <button onclick="setFrameInterval(0.5)">2X SPEED</button>
+  <button onclick="restart()">REFRESH</button>
 
 </body>
-</html>
-
 
 </html>
 
+
+</html>
