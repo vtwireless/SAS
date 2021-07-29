@@ -14,7 +14,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/SAS.css">
   <link rel="stylesheet" href="css/codemirror.css">
-  <link rel="stylesheet" href="css/blackboard.css">
+  <link rel="stylesheet" href="css/duotone-dark.css">
+  <link rel="stylesheet" href="css/duotone-light.css">
   <link rel="stylesheet" href="css/simplescrollbars.css">
 </head>
 
@@ -32,11 +33,8 @@ for (var i in requestList) {
     }
   }
     </textarea>
-    <br><br>
-    <textarea id="consoleOutput" name="code" rows="7" cols="50" readonly>
-      Console Output:
-      call 'printToOutput(output);' to output
-    </textarea>
+    <br>Console Output (call 'printToOutput(output);' to output):
+    <textarea id="consoleOutput" name="code" rows="7" cols="50" readonly></textarea>
     <br>
     <div>
     <input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)" >

@@ -40,7 +40,7 @@ var editor = CodeMirror.fromTextArea(
     autocapitalize: true,
     rtlMoveVisually: true,
     scrollbarStyle: "overlay",
-    theme: "blackboard",
+    theme: "duotone-dark",
     resize: "vertical",
     mode: { name: "javascript", globalVars: true }
 }
@@ -54,7 +54,7 @@ var displayConsole = CodeMirror.fromTextArea(
     lineNumbers: false,
     scrollbarStyle: "overlay",
     readOnly: "nocursor",
-    theme: "blackboard",
+    theme: "duotone-light",
     resize: "vertical",
     mode: { name: "javascript", globalVars: true }
 }
@@ -380,11 +380,6 @@ function createFrequencyTexts() {
 
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
-    for (i = 0; i < grantsToShow.length; i += 1) {
-        if (grantsToShow[i].showTime == myGameArea.frameNo) {
-            queueGrant(grantsToShow[i]);
-        }
-    }
 
     myGameArea.clear();
     myGameArea.frameNo += 1;
@@ -490,123 +485,6 @@ function checkFrequency(freqa, banda, freqb, bandb) {
     }
 }
 
-
-function queueGrant(grant) {
-    var grantDiv = document.createElement("div");
-    grantDiv.classList.add('grantDiv');
-    var abutton = document.createElement("button");
-    grantDiv.id = grant.startTime;
-    var text = document.createElement("p");
-    text.innerHTML = "Grant Start Time: " + parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition) + " Length: " + parseMillisecondsIntoReadableTime(grant.length);
-    grantDiv.appendChild(text);
-    var textb = document.createElement("p");
-    textb.innerHTML = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
-    grantDiv.appendChild(textb);
-
-    abutton.innerHTML = "Approve f<sub>c</sub> " + ((baseFrequency + grant.frequency) / 10000).toPrecision(5) + "GHz";
-    abutton.value = grant;
-    abutton.classList.add('approveButton');
-
-    abutton.addEventListener('click', function (e) {
-        if (!isPaused) {
-            console.log("approve");
-            convertGrant(grant, false, "cyan", "SU Grant F: " + (baseFrequency + grant.frequency) / 10000 + "GHz Bandwidth: " + grant.bandwidth / 10 + "MHz");
-
-            approvedGrantCount++;
-            approvedGrants.push(grant);
-            tempGrantComponent = new component(0, 0, "blue", 0, 0);
-            e.currentTarget.parentNode.remove();
-        }
-    }, false);
-
-    abutton.addEventListener('mouseover', function (e) {
-        var color = "blue";
-        if (checkOverlap(grant.startTime, grant.startTime + grant.length, grant.frequency, grant.bandwidth)) {
-            color = "red";
-        }
-        var startPlace = grant.frequency - (grant.bandwidth / 2);
-        var heightOfBlock = grant.bandwidth;
-
-        startPlace = frequencyToPixelConversion(startPlace);
-        pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-
-
-
-        tempGrantComponent = new component(grant.length, pixHeight, color, grant.startTime - myGameArea.frameNo, startPlace);
-
-    }, false);
-
-    abutton.addEventListener('mouseout', function (e) {
-        tempGrantComponent = new component(0, 0, "blue", 0, 0);
-    }, false);
-
-    abutton.value = grant;
-    abutton.style.padding = "10px";
-    grantDiv.appendChild(abutton);
-
-    if (grant.frequencyb > 0) {
-        var bbutton = document.createElement("button");
-
-        bbutton.innerHTML = "Approve f<sub>c</sub> " + ((baseFrequency + grant.frequencyb) / 10000).toPrecision(5) + "GHz";
-        bbutton.value = grant;
-        bbutton.addEventListener('click', function (e) {
-            if (!isPaused) {
-                approvedGrants.push(grant);
-                console.log("approve");
-
-                convertGrant(grant, false, "cyan", "SU Grant F: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz Bandwidth: " + grant.bandwidth / 10 + "MHz");
-                approvedGrantCount++;
-                tempGrantComponent = new component(0, 0, "blue", 0, 0);
-                e.currentTarget.parentNode.remove();
-            }
-        }, false);
-
-        bbutton.addEventListener('mouseover', function (e) {
-            var color = "blue";
-            if (checkOverlap(grant.startTime, grant.startTime + grant.length, grant.frequencyb, grant.bandwidth)) {
-                color = "red";
-            }
-            var startPlace = grant.frequencyb - (grant.bandwidth / 2);
-            var heightOfBlock = grant.bandwidth;
-
-            startPlace = frequencyToPixelConversion(startPlace);
-            pixHeight = bandwidthToComponentHeight(grant.bandwidth);
-
-
-            tempGrantComponent = new component(grant.length, pixHeight, color, grant.startTime - myGameArea.frameNo, startPlace);
-        }, false);
-
-        bbutton.addEventListener('mouseout', function (e) {
-            tempGrantComponent = new component(0, 0, "blue", 0, 0);
-        }, false);
-
-
-        bbutton.value = grant;
-
-        bbutton.classList.add('approveButton');
-        grantDiv.appendChild(bbutton);
-    }
-
-    var dbutton = document.createElement("button");
-
-    dbutton.innerHTML = "Deny";
-    dbutton.value = grant;
-    dbutton.addEventListener('click', function (e) {
-        //deny
-        if (!isPaused) {
-            console.log("deny")
-            deniedGrantCount++;
-            tempGrantComponent = new component(0, 0, "blue", 0, 0);
-            e.currentTarget.parentNode.remove();
-        }
-    }, false);
-    dbutton.value = grant;
-    dbutton.classList.add('denyButton');
-
-
-    grantDiv.appendChild(dbutton);
-}
-
 function frequencyToPixelConversion(frequency) {
     var visibleScreenPixelCount = canvasHeight - titleOffset - summaryTextHeight;
     var percentage = frequency / frequencyRange;
@@ -688,7 +566,7 @@ function restart() {
 }
 
 function runCode() {
-    var string = document.getElementById("code").innerHTML;
+    var string = editor.getValue();
     string.replaceAll("rm", "");
     eval(string);
     for (var i = 0; i < finalGrantList.length; i++) {
