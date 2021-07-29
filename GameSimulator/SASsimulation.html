@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/simplescrollbars.css">
 </head>
 
-<body onload="startGame()">
+<body onload="loadSetSeed(seedValue, startGame)">
   <h2>Independent Study Simulation | <a href="SASgame.html">Go To Game</a> | <a href="information.html"
       target="_blank">About The SAS</a></h2>
   <div id="codeBox">
@@ -38,14 +38,24 @@ for (var i in requestList) {
       call 'printToOutput(output);' to output
     </textarea>
     <br>
+    <div>
+    <input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)" >
+    <label>Seed 1</label><br>
+    <input type="radio" id="2" name="seed" value="2" onchange="seedChange(2)">
+    <label>Seed 2</label><br>
+    <input type="radio" id="3" name="seed" value="0" onchange="seedChange(3)" checked="1">
+    <label>Seed 3</label>
+  </div>
     <button type="button" onclick="runCode()">Run</button> <button type="button"
       onclick="displayConsole.setValue('');clearConsole()">Clear
       Console</button>
   </div>
+  
 
   </div>
   <script src="js/codemirror.js"></script>
   <script src="js/javascript.js"></script>
+  <script src="js/papaparse.min.js"></script>
   <script src="js/simplescrollbars.js"></script>
   <script src="js/SASsimulation.js"></script>
   <br>

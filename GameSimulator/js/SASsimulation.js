@@ -23,8 +23,11 @@ var movingTexts = [];
 var frequencyTexts = [];
 var stopTime = 5000;
 
-var seedValue = 1;
+var seedValue = 3;
 var isPaused = false;
+
+// holds array of grant data
+var setSeed;
 
 // ! codemirror
 var editor = CodeMirror.fromTextArea(
@@ -57,9 +60,67 @@ var displayConsole = CodeMirror.fromTextArea(
 }
 );
 
+
 // resize 
 editor.setSize(1000, 200);
 displayConsole.setSize(500, 100);
+
+
+// !---------------------- dynamic loading of grant data  -----------------------------!
+/**
+ * Array of setSeed Filenames
+ *
+ * @type {String[]}
+ */
+ const setSeedFilenames = [
+    "setSeeds/1.csv",
+    "setSeeds/2.csv",
+    "setSeeds/3.csv"
+  ];
+
+/**
+ * Load set seeds from file using papaparse.
+ * CSV loading is async, thus a callback function must
+ * be passed, which will be executed upon the load
+ * 
+ * @param {int} seedValue seed number, filename must be {seedValue}.csv
+ * @param {function} callback callback function to be executed onload
+ */
+function loadSetSeed(seedValue, callback) {
+
+    Papa.parse(setSeedFilenames[seedValue - 1], {
+        download: true,
+        complete: function (results) {
+            addCSVToSetSeeds(results, callback);
+        },
+        header: true,
+        dynamicTyping: true
+    });
+
+
+    function addCSVToSetSeeds(csv, callback) {
+        var readingRequests = false;
+        var PU = [];
+        var REQ = [];
+        var setSeed = [];
+
+        csv.data.forEach(function (row) {
+            if (row.startTime == null) { // empty line means we're now reading requests
+                readingRequests = true;
+                return; // continue
+            }
+            readingRequests ? REQ.push(row) : PU.push(row);
+
+
+        });
+        setSeed.PU = PU;
+        setSeed.REQ = REQ;
+        callback(setSeed); // startGame is called and passed PU + REQ grant creation arguments
+
+    }
+
+}
+
 
 class Grant {
     constructor(startTime, length, frequency, bandwidth, frequencyb, showTime) {
@@ -68,9 +129,11 @@ class Grant {
         this.frequency = frequency;
         this.bandwidth = bandwidth;
         this.frequencyb = frequencyb;
-        this.showTime = showTime;
+        this.showTime = showTime > 0 ? showTime : 1; // if showtime is 0, grants may never be queued
+        /** 
+         * @type {int} 0 = not yet accepted, 1 = accepted, 2 = conflicting, 3 = denied*/
+        this.acceptStatus = 0;
     }
-
 }
 
 var tempGrantComponent = new component(0, 0, "green", 0, 0);
@@ -91,7 +154,8 @@ function clearConsole() {
 
 
 
-function startGame() {
+function startGame(readSeed) {
+    setSeed = readSeed;
     nowLine = new component(2, canvasHeight - summaryTextHeight - titleOffset, "red", nowLinePosition, 50);
     grantSummaryText = new component("20px", "Consolas", "black", 150, canvasHeight - 50, "text");
     grantSummaryBox = new component(canvasWidth, summaryTextHeight, "white", 0, canvasHeight - summaryTextHeight);
@@ -139,41 +203,29 @@ var myGameArea = {
 }
 
 function seedChange(value) {
+    // clear grants on seed change
+  grantsToShow.forEach(function (grant, idx) {
+    grant.acceptStatus = 3;
+  }
+  );
+  popupOpened = false; // close popup on seed change
+  seedValue = value;
+
     seedValue = value;
-    startGame();
+      // ! 0 is being hardcoded to random generation here !
+  value === 0 ? startGame(null) : loadSetSeed(seedValue, startGame);
 
 }
 
 function loadGrantsAndPUs() {
-    makePUGrant(new Grant(1000, 500, 1350, 100, 355, 0));
-    makePUGrant(new Grant(200, 500, 1250, 200, 355, 0));
-    makePUGrant(new Grant(1000, 500, 350, 200, 355, 0));
-    makePUGrant(new Grant(2500, 500, 550, 100, 255, 0));
-    makePUGrant(new Grant(3200, 1000, 600, 200, 355, 0));
-    makePUGrant(new Grant(2300, 300, 1350, 150, 355, 0));
-    makePUGrant(new Grant(2600, 1500, 1150, 400, 355, 0));
-    makePUGrant(new Grant(1, 500, 530, 1000, 355, 0));
-    makePUGrant(new Grant(3000, 500, 550, 200, 355, 0));
-    makePUGrant(new Grant(600, 500, 1150, 300, 355, 0));
-    makePUGrant(new Grant(1200, 1000, 950, 200, 355, 0));
-    makePUGrant(new Grant(300, 1350, 1200, 150, 355, 0));
-    makePUGrant(new Grant(1800, 1700, 1300, 400, 355, 0));
+    setSeed["PU"].forEach(function (seed) {
+        makePUGrant(new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime));
+    });
 
-    //GRANTS
-    requestList.push(new Grant(100, 200, 1350, 200, 355, 0));
-    requestList.push(new Grant(200, 100, 250, 400, 355, 0));
-    requestList.push(new Grant(3000, 100, 1250, 600, 355, 0));
-    requestList.push(new Grant(4000, 200, 1450, 300, 355, 0));
-    requestList.push(new Grant(2500, 1250, 150, 200, 355, 0));
-    requestList.push(new Grant(1500, 1300, 1150, 300, 355, 0));
-    requestList.push(new Grant(1000, 100, 1350, 200, 355, 0));
-    requestList.push(new Grant(1650, 1400, 1550, 300, 355, 0));
-    requestList.push(new Grant(2700, 1200, 250, 200, 355, 0));
-    requestList.push(new Grant(1800, 100, 1150, 200, 355, 0));
-    requestList.push(new Grant(2800, 300, 350, 200, 355, 0));
-    requestList.push(new Grant(1900, 100, 1150, 300, 355, 0));
-    requestList.push(new Grant(950, 500, 510, 200, 355, 0));
-    requestList.push(new Grant(2200, 200, 150, 400, 355, 0));
+    setSeed["REQ"].forEach(function (seed) {
+        grant = new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime);
+        requestList.push(grant);
+    });
 
 }
 
@@ -181,7 +233,18 @@ function loadGrantsAndPUs() {
 
 
 
-function component(width, height, color, x, y, type) {
+/**
+ * Component object for canvas everything drawn on the canvas is a component
+ * object .update() is called to draw the object onto the canvas
+ *
+ * @param {any} width
+ * @param {any} height
+ * @param {any} color
+ * @param {any} x
+ * @param {any} y
+ * @param {string} type Either "text", "select", or null
+ */
+function component(width, height, color, x, y, type = null) {
     this.type = type;
     this.score = 0;
     this.width = width;
@@ -194,15 +257,101 @@ function component(width, height, color, x, y, type) {
     this.gravitySpeed = 0;
     this.update = function () {
         ctx = myGameArea.context;
-        if (this.type == "text") {
-            ctx.font = this.width + " " + this.height;
-            ctx.fillStyle = color;
-            ctx.fillText(this.text, this.x, this.y);
-        } else {
-            ctx.fillStyle = color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+        switch (this.type) {
+            case "text":
+                ctx.font = this.width + " " + this.height;
+                ctx.fillStyle = color;
+                ctx.fillText(this.text, this.x, this.y);
+                break;
+            case "select": // ! hoverover box, !! TEMP
+                ctx.globalAlpha = 0.6; // our next draw is transparent
+                ctx.fillStyle = color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.globalAlpha = 1; // if not set back to 100% opacity, all draws after this will be transparent
+                if (this.text !== undefined) {
+                    ctx.fillStyle = "black";
+                    ctx.font = 'Bold 36px Arial';
+                    ctx.fillText(this.text, this.x, this.y + 36);
+                }
+                break;
+            case "popup": // ! popup box, needs to be cleaned up
+                ctx.save(); // save context
+
+                // draw popup box background
+                ctx.globalAlpha = 0.80; // our next draw is transparent
+                ctx.fillStyle = color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // if not set back to 100% opacity, all draws after this will be transparent
+                ctx.globalAlpha = 1;
+
+                // * Title
+                ctx.font = 'Bold 44px Arial';
+                ctx.fillStyle = "black";
+                ctx.fillText(this.title, this.x + 5, this.y + 44);
+
+                // * Sub-Title
+                ctx.font = '18px Arial';
+                ctx.fillStyle = "black";
+                ctx.fillText(this.startTime, this.x + 5, this.y + 68);
+                ctx.fillText(this.lenStr, this.x + 5, this.y + 88);
+
+
+
+                // * Freq 1
+
+                // draw frequency 1 text
+                ctx.font = 'Bold 30px Arial';
+                ctx.fillStyle = "black";
+                ctx.fillText(this.freqText1, this.x + 5, this.y + 125);
+
+                // draw Accept text
+                ctx.fillStyle = "green";
+                ctx.fillRect(this.x + 20, this.y + 132, 112, 38);
+                ctx.fillStyle = "white";
+                ctx.font = 'Bold 30px Arial';
+                ctx.fillText("Accept", this.x + 25, this.y + 160);
+
+                // * Freq 2
+
+                if (this.freqText2.length > 1) {
+                    // draw frequency 2 text
+                    ctx.font = 'Bold 30px Arial';
+                    ctx.fillStyle = "black";
+                    ctx.fillText(this.freqText2, this.x + 5, this.y + 235);
+
+                    // draw Accept2 text
+                    ctx.fillStyle = "green";
+                    ctx.fillRect(this.x + 20, this.y + 242, 112, 38);
+                    ctx.fillStyle = "white";
+                    ctx.font = 'Bold 30px Arial';
+                    ctx.fillText("Accept", this.x + 25, this.y + 270);
+                }
+
+                // * Deny Button
+                ctx.fillStyle = "red";
+                ctx.globalAlpha = 0.30; // our next draw is transparent
+                ctx.fillRect(this.x + 387, this.y + 83, 183, 183);
+                ctx.globalAlpha = 1.0; // our next draw is transparent
+                ctx.fillStyle = "white";
+                ctx.font = 'Bold 50px Arial';
+                ctx.fillText("Deny", this.x + 387 + 30, this.y + 83 + 106);
+
+                // * [x] button
+                ctx.fillStyle = "red";
+                ctx.fillRect(this.x + 575, this.y, 25, 25);
+                ctx.fillStyle = "white";
+                ctx.font = 'Bold 28px Arial';
+                ctx.fillText("x", this.x + this.width - 20, this.y + 20);
+                ctx.restore(); // restore prior context
+
+                break;
+            default:
+                // anything else, such as the rects representing the grant
+                ctx.fillStyle = color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
         }
-    }
+    };
 }
 
 function makeSUGrant(grant) {
