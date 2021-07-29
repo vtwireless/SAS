@@ -186,7 +186,8 @@ var myGameArea = {
  */
 const setSeedFilenames = [
   "setSeeds/1.csv",
-  "setSeeds/2.csv"
+  "setSeeds/2.csv",
+  "setSeeds/3.csv"
 ];
 
 /**
