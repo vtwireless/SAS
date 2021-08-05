@@ -593,8 +593,15 @@ function seedChange(value) {
   );
   popupOpened = false; // close popup on seed change
   seedValue = value;
+
   // ! 0 is being hardcoded to random generation here !
-  value === 0 ? startGame(null) : loadSetSeed(seedValue, startGame);
+  if (value === 0) {
+    document.getElementById("randomFactors").hidden = false;
+    startGame(null);
+  } else {
+    document.getElementById("randomFactors").hidden = true;
+    loadSetSeed(seedValue, startGame);
+  }
 }
 
 /**
@@ -617,10 +624,6 @@ function loadGrantsAndPUs() {
 
   } else {
     //RANDOM
-    var maxBandwidth = 500;
-    var minBandwidth = 150;
-    var minLength = 100;
-    var maxLength = 2000;
     var showTime = 0;
     var startTime = 0;
     var length = 0;
@@ -628,9 +631,17 @@ function loadGrantsAndPUs() {
     var minST = startTime + 50;
     var maxST = startTime + 5000;
 
+    // * Random generation values from user input
+    var randNumPUs = document.getElementById("punum").value;
+    var randNumREQs = document.getElementById("reqnum").value;
+    var maxBandwidth = document.getElementById("maxband").value * 10;
+    var minBandwidth = document.getElementById("minband").value * 10;
+    var minLength = document.getElementById("minlen").value;
+    var maxLength = document.getElementById("maxlen").value;
+
     //(startTime, length, frequency, bandwidth, frequencyb, showTime)
     var bandwidth = 0;
-    for (var i = 0; i < 500; i++) {
+    for (var i = 0; i < randNumPUs; i++) {
       gStartTime = Math.floor(Math.random() * maxST) + minST;
       length = Math.floor(Math.random() * maxLength) + minLength;
       frequency =
@@ -638,18 +649,15 @@ function loadGrantsAndPUs() {
           Math.random() * (baseFrequency + frequencyRange - maxBandwidth / 2)
         ) +
         minBandwidth / 2;
-      bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
+      bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
       makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
     }
 
-    maxLength = 1200; //requests
-    minBandwidth = 20;
-    maxBandwidth = 250;
     var minDSS = 500; //minimum difference between start time and show time
     var maxDSS = 1000;
     var frequencyb = 0;
     //REQUESTS
-    for (var i = 0; i < 20; i++) {
+    for (var i = 0; i < randNumREQs; i++) {
       gStartTime = Math.floor(Math.random() * maxST) + minST;
       showTime =
         Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
@@ -664,8 +672,7 @@ function loadGrantsAndPUs() {
       } else {
         frequencyb = 0;
       }
-      bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
-      bandwidth = Math.ceil(bandwidth / 5) * 5; //round to nearest 5
+      bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
       grant = new Grant(
         gStartTime,
         length,

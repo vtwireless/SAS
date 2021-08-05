@@ -90,9 +90,6 @@ var displayConsole = CodeMirror.fromTextArea(
 }
 );
 
-
-
-
 // resize 
 editor.setSize(1000, 200);
 displayConsole.setSize(500, 130);
@@ -638,7 +635,7 @@ function loadGrantsAndPUs() {
                     Math.random() * (baseFrequency + frequencyRange - maxBandwidth / 2)
                 ) +
                 minBandwidth / 2;
-            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50
+            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
         }
 
@@ -661,7 +658,7 @@ function loadGrantsAndPUs() {
             } else {
                 frequencyb = 0;
             }
-            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50
+            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
             grant = new Grant(
                 gStartTime,
                 length,

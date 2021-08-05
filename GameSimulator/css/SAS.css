@@ -4,25 +4,49 @@ canvas {
   border-radius: 5px;
 }
 
+label {
+  font-family: monospace;
+  font-size: large;
+}
+
+button {
+  color: rgb(0, 0, 0);
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin: 5px;
+  font-family: monospace;
+  background-color: rgb(197, 195, 195);
+  border: 1px solid rgb(0, 0, 0);
+  font-size: large;
+  border-radius: 5px;
+}
+button:hover {
+  color: rgb(255, 255, 255);
+  background-color: rgb(75, 122, 111);
+  border: 1px solid rgb(255, 255, 255);
+}
+button:active {
+  color: rgb(255, 255, 255);
+  background-color: rgb(0, 255, 195);
+  border: 1px solid rgb(255, 255, 255);
+}
+
 .approveButton {
   background-color: #22ff22;
-  padding: 10px;
-  margin: 5px;
-  border-radius: 5px;
+  font-size: medium;
 }
 
 .denyButton {
   background-color: #ff2222;
-  padding: 10px;
-  margin: 5px;
-  border-radius: 5px;
+  font-size: medium;
 }
 
 .grantDiv {
   background-color: #eeeeee;
   padding: 5px;
   margin: 2px;
-  border-radius: 5px;
 }
 
 .grantList {
@@ -32,6 +56,8 @@ canvas {
   height: 770px;
   width: 425px;
   border-radius: 5px;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 #overlay {
@@ -46,4 +72,32 @@ canvas {
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 2;
   cursor: pointer;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  vertical-align: middle;
+  margin: 5px 10px 5px 0;
+  background-color: #fff;
+  border: 2px solid #000;
+  text-align: center;
+  font-family: monospace;
+  font-size: larger;
+  min-width: 10px;
+  max-width: 50px;
+  width: fit-content;
+}
+
+.randomopts {
+  overflow: auto;
+  background-color: #79797963;
+  width: fit-content;
+  padding: 10px;
+  border-radius: 10px;
 }

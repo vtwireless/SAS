@@ -37,19 +37,36 @@
     <label>Seed 3</label>
     <input type="radio" id="4" name="seed" value="4" onchange="seedChange(0)">
     <label>Random</label>
+    <div id="randomFactors" class="randomopts" hidden=true>
+      <label>Random Generation Factors:</label><br>
+      <label>Number of PU's</label>
+      <input type="number" id="punum" min="1" max="999" value="100" class="randfields"><br>
+      <label>Number of REQ's</label>
+      <input type="number" id="reqnum" min="1" max="999" value="20" class="randfields"><br>
+      <label>Minimum Bandwidth</label>
+      <input type="number" id="minband" min="0" max="999" value="20" class="randfields">MHz<br>
+      <label>Maximum Bandwidth</label>
+      <input type="number" id="maxband" min="0" max="999" value="50" class="randfields">MHz<br>
+      <label>Minimum Length</label>
+      <input type="number" id="minlen" min="0" max="999" value="100" class="randfields">ms<br>
+      <label>Maximum Length</label>
+      <input type="number" id="maxlen" min="0" max="9999" value="1000" class="randfields">ms<br>
+      <button class="button buttonrand" onclick="seedChange(0)"
+        style="width: -webkit-fill-available;">REGENERATE</button>
+    </div>
   </div>
-<br>
-  <div>
+  <br>
+  <div id="timelinecontrols" class="randomopts">
+    <button onclick="play()">PLAY</button>
+    <button onclick="pause()">PAUSE</button>
+    <button onclick="setFrameInterval(4.0)">1/4X SPEED</button>
+    <button onclick="setFrameInterval(2.0)">1/2X SPEED</button>
+    <button onclick="setFrameInterval(0.5)">2X SPEED</button>
+    <button onclick="restart()">REFRESH</button>
     <input type="checkbox" name="pauseOnPopup" id="pauseOnPopup" onchange="">
     <label>Pause on Pop-Up</label>
   </div>
 
-  <button onclick="play()">PLAY</button>
-  <button onclick="pause()">PAUSE</button>
-  <button onclick="setFrameInterval(4.0)">1/4X SPEED</button>
-  <button onclick="setFrameInterval(2.0)">1/2X SPEED</button>
-  <button onclick="setFrameInterval(0.5)">2X SPEED</button>
-  <button onclick="restart()">REFRESH</button>
 
 </body>
 
