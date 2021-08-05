@@ -17,20 +17,20 @@ button {
   display: inline-block;
   margin: 5px;
   font-family: monospace;
-  background-color: rgb(197, 195, 195);
+  background-color: #eeeeee;
   border: 1px solid rgb(0, 0, 0);
   font-size: large;
   border-radius: 5px;
 }
 button:hover {
-  color: rgb(255, 255, 255);
-  background-color: rgb(75, 122, 111);
-  border: 1px solid rgb(255, 255, 255);
+  color: rgb(238, 238, 238);
+  background-color: #8d8c8cd3;
+  border: 1px solid rgb(55, 73, 88);
 }
 button:active {
-  color: rgb(255, 255, 255);
-  background-color: rgb(0, 255, 195);
-  border: 1px solid rgb(255, 255, 255);
+  color: rgb(0, 0, 0);
+  background-color: rgb(0, 255, 13);
+  border: 1px solid rgb(46, 155, 36);
 }
 
 .approveButton {
@@ -96,7 +96,7 @@ input[type="number"] {
 
 .randomopts {
   overflow: auto;
-  background-color: #79797963;
+  background-color: #bbddff;
   width: fit-content;
   padding: 10px;
   border-radius: 10px;
