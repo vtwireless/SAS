@@ -1082,6 +1082,12 @@ function runCode() {
     for (var i = 0; i < finalGrantList.length; i++) {
         makeSUGrant(finalGrantList[i]);
         requestList.splice(requestList.indexOf(finalGrantList[i]), 1);
+        var addingOverlapped = checkOverlap(finalGrantList[i].startTime, finalGrantList[i].endTime, finalGrantList[i].frequency, finalGrantList[i].bandwidth);
+        if (addingOverlapped) {
+            finalGrantList[i].acceptStatus = 2;
+        } else {
+            finalGrantList[i].acceptStatus = 1;
+        }
     }
     finalGrantList = []
 
