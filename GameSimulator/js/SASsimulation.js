@@ -29,6 +29,29 @@ var isPaused = false;
 // holds array of grant data
 var setSeed;
 
+/**
+ * Popup box component 
+ *
+ * @type {component}
+ */
+var popupBox = new component(
+    600,
+    300,
+    "grey",
+    300,
+    150,
+    "popup"
+);
+popupBox.title = "popupBox";
+popupBox.freqText1 = "Freq1";
+popupBox.freqText2 = "Freq2";
+popupBox.startTime = "startTime";
+popupBox.lenStr = "lenStr";
+
+var popupBoxGrant;
+
+var popupOpened = false;
+
 // ! codemirror
 var editor = CodeMirror.fromTextArea(
     document.getElementById("code"), {
@@ -40,11 +63,18 @@ var editor = CodeMirror.fromTextArea(
     autocapitalize: true,
     rtlMoveVisually: true,
     scrollbarStyle: "overlay",
-    theme: "duotone-dark",
+    theme: "blackboard",
     resize: "vertical",
     mode: { name: "javascript", globalVars: true }
 }
 );
+
+// listen for the beforeChange event, test the changed line number, and cancel
+editor.on('beforeChange',function(cm,change) {
+    if ( ~[0, editor.getDoc().size - 1].indexOf(change.from.line) ) {
+        change.cancel();
+    }
+});
 
 // ! codemirror
 var displayConsole = CodeMirror.fromTextArea(
@@ -54,16 +84,40 @@ var displayConsole = CodeMirror.fromTextArea(
     lineNumbers: false,
     scrollbarStyle: "overlay",
     readOnly: "nocursor",
-    theme: "duotone-light",
+    theme: "blackboard",
     resize: "vertical",
     mode: { name: "javascript", globalVars: true }
 }
 );
 
 
+
+
 // resize 
 editor.setSize(1000, 200);
 displayConsole.setSize(500, 100);
+
+
+/**
+ * Array of rect components representing the requested grants
+ * pre-selection
+ *
+ * @type {component[]}
+ */
+var queuedGrantRects = [];
+
+/**
+ * Rects representing highlighted grants on mouseover
+ *
+ * @type {component[]}
+ */
+var hoveredGrant = [];
+
+// load two components into hoveredGrant 
+hoveredGrant.push(new component(0, 0, "rgba(0, 128, 255)", 0, 0, "select"));
+hoveredGrant.push(new component(0, 0, "rgba(0, 128, 255)", 0, 0, "select"));
+hoveredGrant[0].text = "";
+hoveredGrant[1].text = "";
 
 
 // !---------------------- dynamic loading of grant data  -----------------------------!
@@ -72,11 +126,11 @@ displayConsole.setSize(500, 100);
  *
  * @type {String[]}
  */
- const setSeedFilenames = [
+const setSeedFilenames = [
     "setSeeds/1.csv",
     "setSeeds/2.csv",
     "setSeeds/3.csv"
-  ];
+];
 
 /**
  * Load set seeds from file using papaparse.
@@ -142,14 +196,18 @@ var grantsToShow = [];
 
 
 
-function printToOutput(str) {
-    var con = document.getElementById("consoleOutput");
-    con.innerHTML = con.innerHTML + "\n" + str;
+function printToOutput(str, newLine=true) {
+    if (newLine) {
+        displayConsole.setValue(displayConsole.getValue() + "\n" + str);
+        displayConsole.scrollTo(null, 10000); // scroll down
+        return;
+    }
+    displayConsole.setValue(displayConsole.getValue() + str);
+    displayConsole.scrollTo(null, 10000); // scroll down
 }
 
 function clearConsole() {
-    var con = document.getElementById("consoleOutput");
-    con.innerHTML = ""
+    displayConsole.setValue("");
 }
 
 
@@ -163,15 +221,20 @@ function startGame(readSeed) {
 
     myGrants = [];
     approvedGrants = [];
+    approvedRequests = [];
     movingTexts = [];
     frequencyTexts = [];
     grantsToShow = [];
+    requestList = [];
     isPaused = false;
 
 
     myTime = new component("30px", "Consolas", "black", nowLinePosition, 40, "text");
 
 
+    clearConsole();
+    seedValue != 0 ? printToOutput("Seed "+seedValue+" loaded.", false) : printToOutput("Random Generation Enabled.", false)
+    
 
 
     myGameArea.start();
@@ -202,34 +265,412 @@ var myGameArea = {
     }
 }
 
+// !---------------------- canvas event listeners  -----------------------------!
+
+
+myGameArea.canvas.onmousemove = function (e) {
+    var rect = this.getBoundingClientRect(),
+        x = e.clientX - rect.left,
+        y = e.clientY - rect.top,
+        i = 0,
+        r;
+
+    // Dont do anything if popup box is open
+    if (popupOpened) {
+        // mouseover events during popup can be added here
+        // Note this will only work if canvas is not paused
+
+        // Handle hovering over Accept buttons
+        if (
+            (x > popupBox.x + 20 &&
+                x < popupBox.x + 20 + 112 &&
+                y > popupBox.y + 132 &&
+                y < popupBox.y + 132 + 38)
+            ||
+            ((x > popupBox.x + 20 &&
+                x < popupBox.x + 20 + 112 &&
+                y > popupBox.y + 242 &&
+                y < popupBox.y + 242 + 38) && grantsToShow[popupBoxGrant].frequencyb > 0) // dont hover over freqb if doesnt exist
+        ) {
+            var freq = (y > (popupBox.y + 242) && popupBox.freqText2.length > 0) ?
+                grantsToShow[popupBoxGrant].frequencyb : grantsToShow[popupBoxGrant].frequency;
+            var startFrequency = freq - grantsToShow[popupBoxGrant].bandwidth / 2; // calc start frequency
+            var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
+            var heightOfBlock = bandwidthToComponentHeight(grantsToShow[popupBoxGrant].bandwidth); // calc height of block
+
+            hoveredGrant[0].x = grantsToShow[popupBoxGrant].startTime - myGameArea.frameNo;
+            hoveredGrant[0].y = startPlace;
+            hoveredGrant[0].width = grantsToShow[popupBoxGrant].length;
+            hoveredGrant[0].height = heightOfBlock;
+            hoveredGrant[0].text = (baseFrequency + freq) / 10000 + " GHz";
+            return;
+
+        }
+
+        // Handle hovering over Deny buttons
+        if (x > popupBox.x + 387 &&
+            x < popupBox.x + 387 + 183 &&
+            y > popupBox.y + 83 &&
+            y < popupBox.y + 83 + 183) {
+            var startFrequencya = grantsToShow[popupBoxGrant].frequency - grantsToShow[popupBoxGrant].bandwidth / 2; // calc start frequencya
+            var startFrequencyb = grantsToShow[popupBoxGrant].frequencyb - grantsToShow[popupBoxGrant].bandwidth / 2; // calc start frequencyb
+
+            var startPlacea = frequencyToPixelConversion(startFrequencya); // convert startFrequencya to pixel coordinates
+            var startPlaceb = frequencyToPixelConversion(startFrequencyb); // convert startFrequencyb to pixel coordinates
+
+            var heightOfBlock = bandwidthToComponentHeight(grantsToShow[popupBoxGrant].bandwidth); // calc height of block
+
+
+            hoveredGrant[0].x = grantsToShow[popupBoxGrant].startTime - myGameArea.frameNo;
+            hoveredGrant[0].y = startPlacea;
+            hoveredGrant[0].width = grantsToShow[popupBoxGrant].length;
+            hoveredGrant[0].height = heightOfBlock;
+            hoveredGrant[0].text = "DENY";
+            if (grantsToShow[popupBoxGrant].frequencyb > 0) {
+                hoveredGrant[1].x = grantsToShow[popupBoxGrant].startTime - myGameArea.frameNo;
+                hoveredGrant[1].y = startPlaceb;
+                hoveredGrant[1].width = grantsToShow[popupBoxGrant].length;
+                hoveredGrant[1].height = heightOfBlock;
+                hoveredGrant[1].text = "DENY";
+            }
+
+
+
+            return;
+        }
+
+        hoveredGrant[0].x = 0;
+        hoveredGrant[0].y = 0;
+        hoveredGrant[0].width = 0;
+        hoveredGrant[0].height = 0;
+        hoveredGrant[0].text = "";
+
+        hoveredGrant[1].x = 0;
+        hoveredGrant[1].y = 0;
+        hoveredGrant[1].width = 0;
+        hoveredGrant[1].height = 0;
+        hoveredGrant[1].text = "";
+        return; // all other mousemouse events are ignored when popup box is open
+    }
+    var grantHovered = false;
+
+    queuedGrantRects.forEach(function (r) {
+        if (grantHovered) {
+            return;
+        }
+        if (r.grant.acceptStatus !== 0) {
+            return; // dont check for overlap with denied grants
+        }
+        if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) {
+            hoveredGrant[0].x = r.x;
+            hoveredGrant[0].y = r.y;
+            hoveredGrant[0].width = r.width;
+            hoveredGrant[0].height = r.height;
+            hoveredGrant[0].color = "red";
+            grantHovered = true;
+            return;
+        }
+    });
+
+    if (!grantHovered) {
+        hoveredGrant[0].x = 0;
+        hoveredGrant[0].y = 0;
+        hoveredGrant[0].width = 0;
+        hoveredGrant[0].height = 0;
+        hoveredGrant[0].text = "";
+
+        hoveredGrant[1].x = 0;
+        hoveredGrant[1].y = 0;
+        hoveredGrant[1].width = 0;
+        hoveredGrant[1].height = 0;
+        hoveredGrant[1].text = "";
+
+    }
+
+};
+// Mouseclick event listener attached to canvas
+myGameArea.canvas.onmousedown = function (e) {
+    var rect = this.getBoundingClientRect(),
+        x = e.clientX - rect.left,
+        y = e.clientY - rect.top,
+        i = 0,
+        r;
+    // intercept mouse click on popup box
+    if (popupOpened) {
+        // on clicking [x] close popup
+        if (x > popupBox.x + popupBox.width - 25 &&
+            x < popupBox.x + popupBox.width &&
+            y > popupBox.y &&
+            y < popupBox.y + 25) {
+            popupOpened = false;
+            if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+                play();
+            }
+        }
+
+        // on clicking Accept1 close popup
+        if (x > popupBox.x + 20 &&
+            x < popupBox.x + 20 + 112 &&
+            y > popupBox.y + 132 &&
+            y < popupBox.y + 132 + 38) {
+            popupOpened = false;
+            console.log("Accept 1 Clicked");
+            var overlapCheck = checkOverlap(grantsToShow[popupBoxGrant].startTime, grantsToShow[popupBoxGrant].startTime + grantsToShow[popupBoxGrant].length, grantsToShow[popupBoxGrant].frequency, grantsToShow[popupBoxGrant].bandwidth);
+            approvedGrants.push(grantsToShow[popupBoxGrant]);
+            grantsToShow[popupBoxGrant].acceptStatus = overlapCheck ? 2 : 1;
+
+            convertGrant(
+                grantsToShow[popupBoxGrant],
+                false,
+                overlapCheck ? "red" : "cyan", // ternary operation for color
+                "SU Grant F: " +
+                (baseFrequency + grantsToShow[popupBoxGrant].frequency) / 10000 +
+                "GHz Bandwidth: " +
+                grantsToShow[popupBoxGrant].bandwidth / 10 +
+                "MHz"
+            );
+            printToOutput("Manually accepted " + "SU Grant F: " +
+            (baseFrequency + grantsToShow[popupBoxGrant].frequency) / 10000 +
+            "GHz Bandwidth: " +
+            grantsToShow[popupBoxGrant].bandwidth / 10 +
+            "MHz");
+            if (overlapCheck)
+            {printToOutput("Conflict caused by acceptance!");}
+            if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+                play();
+            }
+        }
+
+        // on clicking Deny
+        if (x > popupBox.x + 387 &&
+            x < popupBox.x + 387 + 183 &&
+            y > popupBox.y + 83 &&
+            y < popupBox.y + 83 + 183) {
+            popupOpened = false;
+            console.log("Deny Clicked");
+            grantsToShow[popupBoxGrant].acceptStatus = 3;
+
+            var denystr = "Manually denied " + "SU Grant F:";
+            var freqstr = (baseFrequency + grantsToShow[popupBoxGrant].frequency) / 10000 + "GHz";
+            freqstr = grantsToShow[i].frequencyb > 0 ? "("+freqstr +", "+ (baseFrequency + grantsToShow[popupBoxGrant].frequencyb) / 10000 + "GHz)" : freqstr;
+            freqstr = freqstr + " Bandwidth: " +
+            grantsToShow[popupBoxGrant].bandwidth / 10 +
+            "MHz";
+            denystr += freqstr;
+            printToOutput(denystr);
+            if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+                play();
+            }
+        }
+        if (popupBox.freqText2.length > 0) {
+            // on clicking Accept2 
+            if (x > popupBox.x + 20 &&
+                x < popupBox.x + 20 + 112 &&
+                y > popupBox.y + 242 &&
+                y < popupBox.y + 242 + 38) {
+                popupOpened = false;
+                console.log("Accept 2 Clicked");
+                var overlapCheck = checkOverlap(grantsToShow[popupBoxGrant].startTime, grantsToShow[popupBoxGrant].startTime + grantsToShow[popupBoxGrant].length, grantsToShow[popupBoxGrant].frequencyb, grantsToShow[popupBoxGrant].bandwidth);
+                approvedGrants.push(grantsToShow[popupBoxGrant]);
+                grantsToShow[popupBoxGrant].acceptStatus = overlapCheck ? 2 : 1;
+
+                convertGrant(
+                    grantsToShow[popupBoxGrant],
+                    true,
+                    overlapCheck ? "red" : "cyan", // ternary operation for color
+                    "SU Grant F: " +
+                    (baseFrequency + grantsToShow[popupBoxGrant].frequencyb) / 10000 +
+                    "GHz Bandwidth: " +
+                    grantsToShow[popupBoxGrant].bandwidth / 10 +
+                    "MHz"
+                );
+                
+                printToOutput("Manually accepted " + "SU Grant F: " +
+                (baseFrequency + grantsToShow[popupBoxGrant].frequency) / 10000 +
+                "GHz Bandwidth: " +
+                grantsToShow[popupBoxGrant].bandwidth / 10 +
+                "MHz");
+                if (overlapCheck)
+                {printToOutput("Conflict caused by acceptance!");}
+                if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+                    play();
+                }
+            }
+
+        }
+
+
+        return; // all other clicks are ignored if popup is open
+    }
+
+    // CHECK REQUESTED GRANTS
+    grantsToShow.forEach(function (grant, idx) {
+        if (grant.acceptStatus !== 0) {
+            return; // skip actioned grants, return == continue within forEach()
+        }
+
+        if (grant.showTime > myGameArea.frameNo) {
+            return; // skip denied grants, return == continue within forEach()
+        }
+
+        var startPlace = grant.frequency - grant.bandwidth / 2;
+        var startPlaceb = grant.frequencyb - grant.bandwidth / 2;  // freq2 startplace
+
+        startPlace = frequencyToPixelConversion(startPlace);
+        startPlaceb = frequencyToPixelConversion(startPlaceb);
+        pixHeight = bandwidthToComponentHeight(grant.bandwidth);
+        if (
+            x > grant.startTime - myGameArea.frameNo &&
+            x < grant.startTime - myGameArea.frameNo + grant.length &&
+            y > startPlace &&
+            y < startPlace + pixHeight
+        ) {
+            //console.log("clicked grant " + grant.id);
+            //console.log("x: " + x + " y: " + y);
+
+            popupBox.title = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
+
+            popupBox.startTime = parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition, false) + " Start Time";
+            popupBox.lenStr = parseMillisecondsIntoReadableTime(grant.length, false) + " Duration";
+
+            popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + " GHz";
+            if (grant.frequencyb > 0) {
+                popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + " GHz";
+            } else {
+                popupBox.freqText2 = "";
+            }
+            if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+                pause();
+            }
+            popupBoxGrant = idx;
+            popupOpened = true;
+            updateGameArea();
+        }
+
+        if (
+            x > grant.startTime - myGameArea.frameNo &&
+            x < grant.startTime - myGameArea.frameNo + grant.length &&
+            y > startPlaceb &&
+            y < startPlaceb + pixHeight
+        ) {
+            popupBox.title = "Bandwidth: " + grant.bandwidth / 10 + "MHz";
+
+            popupBox.startTime = parseMillisecondsIntoReadableTime(grant.startTime - nowLinePosition, false) + " Start Time";
+            popupBox.lenStr = parseMillisecondsIntoReadableTime(grant.length, false) + " Duration";
+
+            popupBox.freqText1 = "Frequency: " + (baseFrequency + grant.frequency) / 10000 + "GHz";
+            popupBox.freqText2 = "Frequency: " + (baseFrequency + grant.frequencyb) / 10000 + "GHz";
+
+
+            if (document.querySelector('input[id="pauseOnPopup"]').checked) {
+                pause();
+            }
+            popupBoxGrant = idx;
+            popupOpened = true;
+            updateGameArea();
+        }
+    });
+};
+
+
+
 function seedChange(value) {
     // clear grants on seed change
-  grantsToShow.forEach(function (grant, idx) {
-    grant.acceptStatus = 3;
-  }
-  );
-  popupOpened = false; // close popup on seed change
-  seedValue = value;
-
+    grantsToShow.forEach(function (grant, idx) {
+        grant.acceptStatus = 3;
+    }
+    );
+    popupOpened = false; // close popup on seed change
     seedValue = value;
-      // ! 0 is being hardcoded to random generation here !
-  value === 0 ? startGame(null) : loadSetSeed(seedValue, startGame);
+
+    // ! 0 is being hardcoded to random generation here !
+    value === 0 ? startGame(null) : loadSetSeed(seedValue, startGame);
 
 }
 
-function loadGrantsAndPUs() {
-    setSeed["PU"].forEach(function (seed) {
+/**
+ * PU's and Requests are loaded from js/setSeeds.js, unless random generation is requested
+ */
+ function loadGrantsAndPUs() {
+    // ! 0 is being hardcoded to random generation here !
+    if (setSeed == null && seedValue !== 0) {
+      return;
+    }
+    if (seedValue !== 0) {
+      setSeed["PU"].forEach(function (seed) {
         makePUGrant(new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime));
-    });
-
-    setSeed["REQ"].forEach(function (seed) {
+      });
+  
+      setSeed["REQ"].forEach(function (seed) {
         grant = new Grant(seed.startTime, seed.length, seed.frequency, seed.bandwidth, seed.frequencyb, seed.showTime);
+        grantsToShow.push(grant);
         requestList.push(grant);
-    });
-
-}
-
-
+      });
+  
+    } else {
+      //RANDOM
+      var maxBandwidth = 500;
+      var minBandwidth = 150;
+      var minLength = 100;
+      var maxLength = 2000;
+      var showTime = 0;
+      var startTime = 0;
+      var length = 0;
+      var frequency = 0;
+      var minST = startTime + 50;
+      var maxST = startTime + 5000;
+  
+      //(startTime, length, frequency, bandwidth, frequencyb, showTime)
+      var bandwidth = 0;
+      for (var i = 0; i < 500; i++) {
+        gStartTime = Math.floor(Math.random() * maxST) + minST;
+        length = Math.floor(Math.random() * maxLength) + minLength;
+        frequency =
+          Math.floor(
+            Math.random() * (baseFrequency + frequencyRange - maxBandwidth / 2)
+          ) +
+          minBandwidth / 2;
+        bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
+        makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
+      }
+  
+      maxLength = 1200; //requests
+      minBandwidth = 20;
+      maxBandwidth = 250;
+      var minDSS = 500; //minimum difference between start time and show time
+      var maxDSS = 1000;
+      var frequencyb = 0;
+      //REQUESTS
+      for (var i = 0; i < 20; i++) {
+        gStartTime = Math.floor(Math.random() * maxST) + minST;
+        showTime =
+          Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
+        length = Math.floor(Math.random() * maxLength) + minLength;
+        frequency =
+          Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
+          minBandwidth / 2;
+        if (Math.floor(Math.random() * 2)) {
+          frequencyb =
+            Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
+            minBandwidth / 2;
+        } else {
+          frequencyb = 0;
+        }
+        bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
+        bandwidth = Math.ceil(bandwidth / 5) * 5; //round to nearest 5
+        grant = new Grant(
+          gStartTime,
+          length,
+          frequency,
+          bandwidth,
+          frequencyb,
+          showTime
+        );
+        grantsToShow.push(grant);
+        requestList.push(grant);
+      }
+    }
+  }
 
 
 
@@ -384,9 +825,60 @@ function updateGameArea() {
     myGameArea.clear();
     myGameArea.frameNo += 1;
 
+
+    for (i = 0; i < grantsToShow.length; i += 1) {
+        if (grantsToShow[i].showTime == myGameArea.frameNo) { // ! if showTime is too low (0), the equality causes it to never show up
+            var startFrequency = grantsToShow[i].frequency - grantsToShow[i].bandwidth / 2; // calc start frequency
+            var startPlace = frequencyToPixelConversion(startFrequency); // convert startFrequency to pixel coordinates
+            var heightOfBlock = bandwidthToComponentHeight(grantsToShow[i].bandwidth); // calc height of block
+
+            // create the grant component
+            var queuingGrant = new component(
+                grantsToShow[i].length,
+                heightOfBlock,
+                "pink",
+                grantsToShow[i].startTime - myGameArea.frameNo,
+                startPlace,
+                "select"
+            );
+            queuingGrant.grant = grantsToShow[i];
+
+
+            queuedGrantRects.push(queuingGrant); // push onto mygrants
+
+            // if multiple freqs
+            if (grantsToShow[i].frequencyb > 0) {
+                var startFrequencyb = grantsToShow[i].frequencyb - grantsToShow[i].bandwidth / 2; // calc start frequency
+                var startPlaceb = frequencyToPixelConversion(startFrequencyb); // convert startFrequency to pixel coordinates
+                queuingGrant = new component(
+                    grantsToShow[i].length,
+                    heightOfBlock,
+                    "pink",
+                    grantsToShow[i].startTime - myGameArea.frameNo,
+                    startPlaceb,
+                    "select"
+                );
+                queuingGrant.grant = grantsToShow[i];
+                queuedGrantRects.push(queuingGrant); // push onto mygrants
+            }
+        }
+    }
+
     for (i = 0; i < myGrants.length; i += 1) {
         myGrants[i].x += -1;
         myGrants[i].update();
+    }
+
+
+    for (i = 0; i < queuedGrantRects.length; i += 1) {
+        // if grant is not accepted nor denied yet  
+        if (queuedGrantRects[i].grant.acceptStatus === 0) {
+            queuedGrantRects[i].x += -1;
+            if (queuedGrantRects[i].grant.showTime <= myGameArea.frameNo) {
+                queuedGrantRects[i].update();
+
+            }
+        }
     }
 
     tempGrantComponent.x += -1;
@@ -407,6 +899,12 @@ function updateGameArea() {
         movingTexts[i].update();
     }
 
+    // draw hovered grant right before bandwidthBox
+    for (i = 0; i < hoveredGrant.length; i += 1) {
+        hoveredGrant[i].x += -1;
+        hoveredGrant[i].update();
+    }
+
     bandwidthBox.update();
 
     for (i = 0; i < frequencyTexts.length; i += 1) {
@@ -414,6 +912,11 @@ function updateGameArea() {
     }
     if (myGameArea.frameNo >= stopTime) {
         clearInterval(myGameArea.interval);
+    }
+
+    // This is last, to draw over all other components
+    if (popupOpened) {
+        popupBox.update();
     }
 
 }
@@ -566,13 +1069,22 @@ function restart() {
 }
 
 function runCode() {
-    var string = editor.getValue();
-    string.replaceAll("rm", "");
-    eval(string);
+    // split user code by line
+    var userCode = editor.getValue().split("\n");
+    // first and last lines are readonly and set by us, ignore them
+    userCode[0] = "";
+    userCode[userCode.length - 1] = "";
+    // join string back
+    userCode = userCode.join("\n");
+
+
+    eval(userCode);
     for (var i = 0; i < finalGrantList.length; i++) {
         makeSUGrant(finalGrantList[i]);
+        requestList.splice(requestList.indexOf(finalGrantList[i]), 1);
     }
+    finalGrantList = []
 
-    displayConsole.setValue(document.getElementById('consoleOutput').value);
+
 }
 

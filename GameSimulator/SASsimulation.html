@@ -14,8 +14,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="css/SAS.css">
   <link rel="stylesheet" href="css/codemirror.css">
-  <link rel="stylesheet" href="css/duotone-dark.css">
-  <link rel="stylesheet" href="css/duotone-light.css">
+  <link rel="stylesheet" href="css/blackboard.css">
   <link rel="stylesheet" href="css/simplescrollbars.css">
 </head>
 
@@ -23,32 +22,42 @@
   <h2>Independent Study Simulation | <a href="SASgame.html">Go To Game</a> | <a href="information.html"
       target="_blank">About The SAS</a></h2>
   <div id="codeBox">
-    <label>function(requestList) {</label>
+    <label>Code Editor</label>
     <br>
     <textarea id="code" name="code" rows="7" cols="80">
+function(requestList) {
+
+// Edit the following function:
 printToOutput(requestList.length + ' Grant Requests');
 for (var i in requestList) {
   if (!checkOverlap(requestList[i].startTime, requestList[i].endTime, requestList[i].frequency, requestList[i].bandwidth)) {
       finalGrantList.push(requestList[i]);
     }
   }
-    </textarea>
-    <br>Console Output (call 'printToOutput(output);' to output):
+}</textarea>
+    <br>Console Output
     <textarea id="consoleOutput" name="code" rows="7" cols="50" readonly></textarea>
     <br>
     <div>
-    <input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)" >
-    <label>Seed 1</label><br>
-    <input type="radio" id="2" name="seed" value="2" onchange="seedChange(2)">
-    <label>Seed 2</label><br>
-    <input type="radio" id="3" name="seed" value="0" onchange="seedChange(3)" checked="1">
-    <label>Seed 3</label>
-  </div>
+      <input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)">
+      <label>Seed 1</label><br>
+      <input type="radio" id="2" name="seed" value="2" onchange="seedChange(2)">
+      <label>Seed 2</label><br>
+      <input type="radio" id="3" name="seed" value="0" onchange="seedChange(3)" checked="1">
+      <label>Seed 3</label>
+      <input type="radio" id="4" name="seed" value="4" onchange="seedChange(0)">
+    <label>Random</label>
+    </div>
+    <br>
+    <div>
+      <input type="checkbox" name="pauseOnPopup" id="pauseOnPopup" onchange="">
+      <label>Pause on Pop-Up</label>
+    </div>
     <button type="button" onclick="runCode()">Run</button> <button type="button"
       onclick="displayConsole.setValue('');clearConsole()">Clear
       Console</button>
   </div>
-  
+
 
   </div>
   <script src="js/codemirror.js"></script>

@@ -6,7 +6,8 @@
   height: 300px;
   color: black;
   direction: ltr;
-  border: 1px solid #eee;
+  border: 3px solid rgb(156, 156, 156);
+  resize: both;
 }
 
 /* PADDING */
