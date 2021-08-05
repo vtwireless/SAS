@@ -46,7 +46,23 @@ for (var i in requestList) {
       <input type="radio" id="3" name="seed" value="0" onchange="seedChange(3)" checked="1">
       <label>Seed 3</label>
       <input type="radio" id="4" name="seed" value="4" onchange="seedChange(0)">
-    <label>Random</label>
+      <label>Random</label>
+      <div id="randomFactors" hidden=true>
+        Random Generation Factors:<br>
+        <label>Number of PU's</label>
+        <input type="number" id="punum" min="1" value="50"><br>
+        <label>Number of REQ's</label>
+        <input type="number" id="reqnum" min="1" value="20"><br>
+        <label>Minimum Bandwidth</label>
+        <input type="number" id="minband" min="0" value="20"><br>
+        <label>Maximum Bandwidth</label>
+        <input type="number" id="maxband" min="0" value="50"><br>
+        <label>Minimum Length</label>
+        <input type="number" id="minlen" min="0" value="100"><br>
+        <label>Maximum Length</label>
+        <input type="number" id="maxlen" min="0" value="1000"><br>
+        <button onclick="seedChange(0)">REGENERATE</button>
+      </div>
     </div>
     <br>
     <div>
