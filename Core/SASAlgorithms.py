@@ -5,6 +5,9 @@ import threading
 import numpy
 
 class SASAlgorithms:
+    """
+    This class determines the parameters and algorithms used by the SAS
+    """
     MINCBRSFREQ = 3550000000
     MAXCBRSFREQ = 3700000000
     TENMHZ = 10000000
@@ -389,17 +392,11 @@ class SASAlgorithms:
             return True
         else:
             return False
-
-
-
-
         
-                
-
-
+        
     def trustedREMAlgorithm(self, remData):
         #Only use if trust score is high enough
-       #Trust scores with threshold parameter, no location, all parameters
+        #Trust scores with threshold parameter, no location, all parameters
         count = 0
         total = 0.0
         trustCutoff = 7.0 #don't count if less than score
