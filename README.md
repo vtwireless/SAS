@@ -1,18 +1,19 @@
 # Spectrum Access System (SAS)
 ## What is this?
-This is the code for the SAS and a client. The role of the SAS is to allow
+This is the code for the Virginia Tech Open Source SAS and Virginia Tech CORNET client. The role of the SAS is to allow
 for remote and autonomous operation of the USRPs in Kelly Hall. The SAS is
 to adhere to WinnForum and FCC regulations on SAS operations.
 
-## File Structure (Needs to be updated as of 01/24/2021)
+## File Structure
+### Core
 The Core/ folder contains everything required to launch the SAS Core
-Server. This is the true SAS. It may have connections to N number of
+Server. This is the true SAS. It may have connections to N number of socketio
 clients. Regardess of your institution, this contians the code that is of
 primary interet for SAS researchers.
 
 An example of starting up the SAS server server.py:
 ```python3 server.py```
-
+### Cornet
 The cornet/ folder contains everything required to launch the CORNET SAS
 client. This connects to the SAS server, so ensure the sever is running
 before attempting to launch this. If you are a Wireless@VT user with
