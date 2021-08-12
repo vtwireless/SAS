@@ -14,7 +14,7 @@ import json
 import SASAlgorithms
 import SASREM
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import Server_WinnForum as WinnForum
 import CBSD
 import threading
@@ -321,7 +321,7 @@ def heartbeat(sid, data):
         except KeyError:
             print("no measure report")
         response = SASAlgorithms.runHeartbeatAlgorithm(grants, REM, hb, grant)
-        grant.heartbeatTime = datetime.now(time.timezone.utc)
+        grant.heartbeatTime = datetime.now(timezone.utc)
         grant.heartbeatInterval = response.heartbeatInterval
         hbrArray.append(response.asdict())
     responseDict = {"heartbeatResponse":hbrArray}
@@ -568,7 +568,7 @@ def resetRadioStatuses(radios):
         radio.justChangedParams = False
 
 def cancelGrant(grant):
-    now = datetime.now(time.timezone.utc)
+    now = datetime.now(timezone.utc)
     if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now:
         removeGrant(grant.id, grant.cbsdId)
         print('grant ' + grant.id + ' canceled')
