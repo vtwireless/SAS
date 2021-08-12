@@ -101,3 +101,7 @@ input[type="number"] {
   padding: 10px;
   border-radius: 10px;
 }
+
+.subopts {
+  border-right: 2px solid grey;
+}

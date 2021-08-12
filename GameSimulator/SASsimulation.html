@@ -21,59 +21,76 @@
 <body onload="loadSetSeed(seedValue, startGame)">
   <h2>Independent Study Simulation | <a href="SASgame.html">Go To Game</a> | <a href="information.html"
       target="_blank">About The SAS</a></h2>
-  <div id="codeBox">
-    <label style="font-size:x-large;font-weight: bold;">Code Editor</label>
-    <br>
-    <textarea id="code" name="code" rows="7" cols="80">
-function(requestList) {
-
-// Edit the following function:
-printToOutput(requestList.length + ' Grant Requests');
-for (var i in requestList) {
-  if (!checkOverlap(requestList[i].startTime, requestList[i].endTime, requestList[i].frequency, requestList[i].bandwidth)) {
-      finalGrantList.push(requestList[i]);
+  <label style="font-size:x-large;font-weight: bold;">Code Editor</label>
+  <div id="codeIO" style="display: flex;">
+    <div id="editor">
+      <textarea id="code" name="code" rows="7" cols="80">
+    function(requestList) {
+    
+    // Edit the following function:
+    printToOutput(requestList.length + ' Grant Requests');
+    for (var i in requestList) {
+      if (!checkOverlap(requestList[i].startTime, requestList[i].endTime, requestList[i].frequency, requestList[i].bandwidth)) {
+          finalGrantList.push(requestList[i]);
+        }
+      }
     }
-  }
-}</textarea>
-    <div class="randomopts"><button type="button" onclick="runCode()">Run</button> <button type="button"
-        onclick="displayConsole.setValue('');clearConsole()">Clear
-        Console</button></div>
+      </textarea>
 
-    <br><label style="font-size:x-large;font-weight: bold;">Console Output</label>
-    <textarea id="consoleOutput" name="code" rows="7" cols="50" readonly></textarea>
-    <div>
-      <div class="randomopts"><input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)">
-        <label>Seed 1</label><br>
-        <input type="radio" id="2" name="seed" value="2" onchange="seedChange(2)">
-        <label>Seed 2</label><br>
-        <input type="radio" id="3" name="seed" value="0" onchange="seedChange(3)" checked="1">
-        <label>Seed 3</label>
-        <input type="radio" id="4" name="seed" value="4" onchange="seedChange(0)">
-        <label>Random</label>
-      </div><br>
-
-      <div id="randomFactors" class="randomopts" hidden=true>
-        <label>Random Generation Factors:</label><br>
-        <label>Number of PU's</label>
-        <input type="number" id="punum" min="1" max="999" value="100" class="randfields"><br>
-        <label>Number of REQ's</label>
-        <input type="number" id="reqnum" min="1" max="999" value="20" class="randfields"><br>
-        <label>Minimum Bandwidth</label>
-        <input type="number" id="minband" min="0" max="999" value="20" class="randfields">MHz<br>
-        <label>Maximum Bandwidth</label>
-        <input type="number" id="maxband" min="0" max="999" value="50" class="randfields">MHz<br>
-        <label>Minimum Length</label>
-        <input type="number" id="minlen" min="0" max="999" value="100" class="randfields">ms<br>
-        <label>Maximum Length</label>
-        <input type="number" id="maxlen" min="0" max="9999" value="1000" class="randfields">ms<br>
-        <button class="button buttonrand" onclick="seedChange(0)"
-          style="width: -webkit-fill-available;">REGENERATE</button>
-      </div>
     </div>
+    <div id="output">
+      <textarea id="consoleOutput" name="code" rows="7" cols="50" readonly></textarea>
+    </div>
+
+  </div>
+  <div class="randomopts" style="display: flex;">
+    <div id="consolecontrols" class="subopts">
+      <button type="button" onclick="runCode()">Run</button>
+      <button type="button" onclick="displayConsole.setValue('');clearConsole()">ClearConsole</button>
+    </div>
+
+    <div id="canvascontrols" class="subopts">
+      <button onclick="play()">PLAY</button>
+      <button onclick="pause()">PAUSE</button>
+      <button onclick="restart()">REFRESH</button>
+      <button onclick="setFrameInterval(4.0)">1/4X SPEED</button>
+      <button onclick="setFrameInterval(2.0)">1/2X SPEED</button>
+      <button onclick="setFrameInterval(0.5)">2X SPEED</button>
+      <br>
+      <input type="checkbox" name="pauseOnPopup" id="pauseOnPopup" onchange="">
+      <label>Pause on Pop-Up</label>
+    </div>
+
+    <div id="seedcontrols" class="subopts" style="border-right: 0px">
+      <input type="radio" id="1" name="seed" value="1" onchange="seedChange(1)">
+      <label>Seed 1</label><br>
+      <input type="radio" id="2" name="seed" value="2" onchange="seedChange(2)">
+      <label>Seed 2</label><br>
+      <input type="radio" id="3" name="seed" value="0" onchange="seedChange(3)" checked="1">
+      <label>Seed 3</label>
+      <input type="radio" id="4" name="seed" value="4" onchange="seedChange(0)">
+      <label>Random</label>
+    </div>
+    <div id="randomFactors" class="randomopts" hidden=true>
+      <label>Random Generation Factors:</label><br>
+      <label>Number of PU's</label>
+      <input type="number" id="punum" min="1" max="999" value="100" class="randfields"><br>
+      <label>Number of REQ's</label>
+      <input type="number" id="reqnum" min="1" max="999" value="20" class="randfields"><br>
+      <label>Minimum Bandwidth</label>
+      <input type="number" id="minband" min="0" max="999" value="20" class="randfields">MHz<br>
+      <label>Maximum Bandwidth</label>
+      <input type="number" id="maxband" min="0" max="999" value="50" class="randfields">MHz<br>
+      <label>Minimum Length</label>
+      <input type="number" id="minlen" min="0" max="999" value="100" class="randfields">ms<br>
+      <label>Maximum Length</label>
+      <input type="number" id="maxlen" min="0" max="9999" value="1000" class="randfields">ms<br>
+      <button class="button buttonrand" onclick="seedChange(0)"
+        style="width: -webkit-fill-available;">REGENERATE</button>
+    </div>
+
   </div>
 
-
-  </div>
   <script src="js/codemirror.js"></script>
   <script src="js/javascript.js"></script>
   <script src="js/papaparse.min.js"></script>
@@ -88,15 +105,6 @@ for (var i in requestList) {
   <input type="radio" id="2" name="seed" value="3" onchange="seedChange(3)">
   <label for="3">Random</label>
 </div-->
-  <div class="randomopts"> <button onclick="play()">PLAY</button>
-    <button onclick="pause()">PAUSE</button>
-    <button onclick="setFrameInterval(4.0)">1/4X SPEED</button>
-    <button onclick="setFrameInterval(2.0)">1/2X SPEED</button>
-    <button onclick="setFrameInterval(0.5)">2X SPEED</button>
-    <button onclick="restart()">REFRESH</button>
-    <input type="checkbox" name="pauseOnPopup" id="pauseOnPopup" onchange="">
-    <label>Pause on Pop-Up</label>
-  </div>
 
 
 </body>

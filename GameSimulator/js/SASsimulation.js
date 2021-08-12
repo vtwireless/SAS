@@ -91,8 +91,8 @@ var displayConsole = CodeMirror.fromTextArea(
 );
 
 // resize 
-editor.setSize(1000, 200);
-displayConsole.setSize(500, 130);
+editor.setSize(800, 200);
+displayConsole.setSize(500, 200);
 
 
 /**
@@ -247,7 +247,7 @@ var myGameArea = {
         this.canvas.width = canvasWidth;
         this.canvas.height = canvasHeight;
         this.context = this.canvas.getContext("2d");
-        document.body.insertBefore(this.canvas, document.body.childNodes[5]);
+        document.body.insertBefore(this.canvas, document.body.childNodes[8]);
         this.frameNo = 0;
         loadGrantsAndPUs();
 
