@@ -1,10 +1,30 @@
+/**
+ * Text component holding current 'time' based off tickrate
+ *
+ * @type {component}
+ */
 var myTime;
+/**
+ * Rect component representing current time line indicator
+ *
+ * @type {component}
+ */
 var nowLine;
 var canvasWidth = 1200;
 var canvasHeight = 700;
+/**
+ * COMPONENT RECTS OF THE GRANTS TO DRAW
+ *
+ * @type {component[]}
+ */
 var myGrants = [];
 var requestList = [];
 var finalGrantList = [];
+/**
+ * GRANTS OF THE GRANTS TO DRAW, SAME IDX AS myGrants
+ *
+ * @type {Grant[]}
+ */
 var approvedGrants = [];
 var approvedRequests = [];
 
@@ -19,8 +39,28 @@ var frequencyRange = 1500;//35500-37000
 var titleOffset = 50;
 var baseFrequency = 35500;
 var nowLinePosition = 200;
+
+/**
+ * Similar to frequencyTexts, an array of text components being drawn over rect
+ * components in the canvas
+ *
+ * @type {component[]}
+ */
 var movingTexts = [];
+
+/**
+ * Similar to movingTexts, an array of text components being drawn over rect
+ * components in the canvas
+ *
+ * @type {component[]}
+ */
 var frequencyTexts = [];
+
+/**
+ * Maximum total runtime in ticks(iterations of draw loop)
+ *
+ * @type {int}
+ */
 var stopTime = 5000;
 
 var seedValue = 3;
@@ -42,6 +82,8 @@ var popupBox = new component(
     150,
     "popup"
 );
+
+// default popup box values
 popupBox.title = "popupBox";
 popupBox.freqText1 = "Freq1";
 popupBox.freqText2 = "Freq2";
@@ -51,49 +93,6 @@ popupBox.lenStr = "lenStr";
 var popupBoxGrant;
 
 var popupOpened = false;
-
-// ! codemirror
-var editor = CodeMirror.fromTextArea(
-    document.getElementById("code"), {
-    lineNumbers: true,
-    styleActiveLine: true,
-    matchBrackets: true,
-    spellcheck: true,
-    autocorrect: true,
-    autocapitalize: true,
-    rtlMoveVisually: true,
-    scrollbarStyle: "overlay",
-    theme: "blackboard",
-    resize: "vertical",
-    mode: { name: "javascript", globalVars: true }
-}
-);
-
-// listen for the beforeChange event, test the changed line number, and cancel
-editor.on('beforeChange', function (cm, change) {
-    if (~[0, editor.getDoc().size - 1].indexOf(change.from.line)) {
-        change.cancel();
-    }
-});
-
-// ! codemirror
-var displayConsole = CodeMirror.fromTextArea(
-    document.getElementById("consoleOutput"), {
-    styleActiveLine: false,
-    matchBrackets: false,
-    lineNumbers: false,
-    scrollbarStyle: "overlay",
-    readOnly: "nocursor",
-    theme: "blackboard",
-    resize: "vertical",
-    mode: { name: "javascript", globalVars: true }
-}
-);
-
-// resize 
-editor.setSize(800, 200);
-displayConsole.setSize(500, 200);
-
 
 /**
  * Array of rect components representing the requested grants
@@ -115,6 +114,55 @@ hoveredGrant.push(new component(0, 0, "rgba(0, 128, 255)", 0, 0, "select"));
 hoveredGrant.push(new component(0, 0, "rgba(0, 128, 255)", 0, 0, "select"));
 hoveredGrant[0].text = "";
 hoveredGrant[1].text = "";
+
+
+// !---------------------- code mirror  -----------------------------!
+
+// codemirror settings for code input
+var editor = CodeMirror.fromTextArea(
+    document.getElementById("code"), {
+    lineNumbers: true,
+    styleActiveLine: true,
+    matchBrackets: true,
+    spellcheck: true,
+    autocorrect: true,
+    autocapitalize: true,
+    rtlMoveVisually: true,
+    scrollbarStyle: "overlay",
+    theme: "blackboard",
+    resize: "vertical",
+    mode: { name: "javascript", globalVars: true }
+}
+);
+
+// listen for the beforeChange event, test the changed line number, and cancel
+// used to make first and last lines in editor read-only
+editor.on('beforeChange', function (cm, change) {
+    if (~[0, editor.getDoc().size - 1].indexOf(change.from.line)) {
+        change.cancel();
+    }
+});
+
+// codemirror settings for console output
+var displayConsole = CodeMirror.fromTextArea(
+    document.getElementById("consoleOutput"), {
+    styleActiveLine: false,
+    matchBrackets: false,
+    lineNumbers: false,
+    scrollbarStyle: "overlay",
+    readOnly: "nocursor",
+    theme: "blackboard",
+    resize: "vertical",
+    mode: { name: "javascript", globalVars: true }
+}
+);
+
+// resize editor and output
+editor.setSize(800, 200);
+displayConsole.setSize(500, 200);
+
+
+
 
 
 // !---------------------- dynamic loading of grant data  -----------------------------!
@@ -609,13 +657,15 @@ function loadGrantsAndPUs() {
         });
 
     } else {
-        // RANDOM GENERATION
+        // ! RANDOM GENERATION
+        // TODO: 8 channels, periodic requests's with randomization
         var showTime = 0;
         var startTime = 0;
         var length = 0;
         var frequency = 0;
         var minST = startTime + 50;
         var maxST = startTime + 5000;
+
 
         // * Random generation values from user input
         var randNumPUs = document.getElementById("punum").value;
