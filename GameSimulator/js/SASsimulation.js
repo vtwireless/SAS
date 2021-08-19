@@ -28,10 +28,6 @@ var finalGrantList = [];
 var approvedGrants = [];
 var approvedRequests = [];
 
-var approvedGrantCount = 0;
-var deniedGrantCount = 0;
-var cancelledGrantCount = 0;
-var movedGrantCount = 0;
 var grantSummaryText;
 var summaryTextHeight = 100;
 var bandwidthBox;
@@ -938,8 +934,28 @@ function updateGameArea() {
 
     tempGrantComponent.x += -1;
 
+    // quick count of current grant statuses
+    // acceptstatus: 0 = not yet accepted, 1 = accepted, 2 = conflicting, 3 = denied
+    var numRequestsAccepted = 0;
+    var numRequestsDenied = 0;
+    var numRequestsConflicting = 0;
+    for (i = 0; i < grantsToShow.length; i += 1) {
+        switch (grantsToShow[i].acceptStatus) {
+            case 1:
+                numRequestsAccepted += 1;
+                break;
+            case 2:
+                numRequestsConflicting += 1;
+                break;
+            case 3:
+                numRequestsDenied += 1;
+                break;
+        }
+    }
+
     myTime.text = "Now Time: " + parseMillisecondsIntoReadableTime(myGameArea.frameNo);
-    grantSummaryText.text = "Grants Approved: " + approvedGrantCount + " ";
+    grantSummaryText.text = "Grants Approved: " + numRequestsAccepted +
+    " Conflicting Grants: " + numRequestsConflicting + " Denied: " + numRequestsDenied;
     grantSummaryBox.update();
     grantSummaryText.update();
     myTime.update();
@@ -1089,14 +1105,6 @@ function convertGrant(grant, b, color, text) {
     }
 }
 
-function moveGrant(grant) {
-    movedGrantCount++;
-}
-
-function cancelGrant(grant) {
-    cancelledGrantCount++;
-}
-
 function pause() {
     isPaused = true;
     clearInterval(myGameArea.interval);
@@ -1140,7 +1148,6 @@ function runCode() {
         } else {
             finalGrantList[i].acceptStatus = 1;
         }
-        approvedGrantCount += 1;
     }
     finalGrantList = []
 
