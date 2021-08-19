@@ -939,10 +939,7 @@ function updateGameArea() {
     tempGrantComponent.x += -1;
 
     myTime.text = "Now Time: " + parseMillisecondsIntoReadableTime(myGameArea.frameNo);
-    grantSummaryText.text = ""/*"Grants Approved: " + approvedGrantCount + " " +
-    "Grants Denied: " + deniedGrantCount + " " +
-    "Grants Moved: " + movedGrantCount + " " + 
-    "Grants Missed: " + cancelledGrantCount;*/
+    grantSummaryText.text = "Grants Approved: " + approvedGrantCount + " ";
     grantSummaryBox.update();
     grantSummaryText.update();
     myTime.update();
@@ -1143,6 +1140,7 @@ function runCode() {
         } else {
             finalGrantList[i].acceptStatus = 1;
         }
+        approvedGrantCount += 1;
     }
     finalGrantList = []
 
