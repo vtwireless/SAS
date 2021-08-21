@@ -59,7 +59,7 @@ var frequencyTexts = [];
  */
 var stopTime = 5000;
 
-var seedValue = 3;
+var seedValue = 2;
 var isPaused = false;
 
 // holds array of grant data
@@ -987,7 +987,8 @@ function updateGameArea() {
         popupBox.update();
     }
 
-    finalGrantList = []; // reset user buffer of accepted grants
+    finalGrantList = []; // reset user buffer of accepted grants, done each tick
+                         // the buffer must be loaded into acceptedgrants before this is called
 
 }
 
