@@ -987,6 +987,8 @@ function updateGameArea() {
         popupBox.update();
     }
 
+    finalGrantList = []; // reset user buffer of accepted grants
+
 }
 
 
@@ -1019,7 +1021,19 @@ function parseMillisecondsIntoReadableTime(minutes) {
     return d + 'd:' + h + 'h:' + m + 'm ' + myGameArea.speed;
 }
 
+
+/**
+ * checkOverlap has been modified to check for overlaps within approvedGrants AND finalGrantList, 
+ * the latter being the user's array 'buffer' of accepted grants. This is done to simplify the code for 
+ *
+ */
 function checkOverlap(startTime, endTime, frequency, bandwidth) {
+    return checkApprovedOverlap(startTime, endTime, frequency, bandwidth) || checkFinalGrantOverlap(startTime, endTime, frequency, bandwidth);
+}
+
+function checkApprovedOverlap(startTime, endTime, frequency, bandwidth) {
+    // ! checkFrequency should be moved to the outer level to minimize code
+
     for (i = 0; i < approvedGrants.length; i += 1) {
         if (approvedGrants[i].startTime <= startTime && (approvedGrants[i].startTime + approvedGrants[i].length) >= startTime) {
             if (checkFrequency(approvedGrants[i].frequency, approvedGrants[i].bandwidth, frequency, bandwidth)) {
@@ -1037,7 +1051,33 @@ function checkOverlap(startTime, endTime, frequency, bandwidth) {
             if (checkFrequency(approvedGrants[i].frequency, approvedGrants[i].bandwidth, frequency, bandwidth)) {
                 return true;
             }
-        }
+        } 
+    }
+    return false;
+
+}
+
+function checkFinalGrantOverlap(startTime, endTime, frequency, bandwidth) {
+    // ! checkFrequency should be moved to the outer level to minimize code
+
+    for (i = 0; i < finalGrantList.length; i += 1) {
+        if (finalGrantList[i].startTime <= startTime && (finalGrantList[i].startTime + finalGrantList[i].length) >= startTime) {
+            if (checkFrequency(finalGrantList[i].frequency, finalGrantList[i].bandwidth, frequency, bandwidth)) {
+                return true;
+            }
+        } else if ((startTime <= finalGrantList[i].startTime) && (endTime >= (finalGrantList[i].startTime + finalGrantList[i].length))) {
+            if (checkFrequency(finalGrantList[i].frequency, finalGrantList[i].bandwidth, frequency, bandwidth)) {
+                return true;
+            }
+        } else if ((finalGrantList[i].startTime >= startTime) && (finalGrantList[i].startTime <= endTime)) {
+            if (checkFrequency(finalGrantList[i].frequency, finalGrantList[i].bandwidth, frequency, bandwidth)) {
+                return true;
+            }
+        } else if ((finalGrantList[i].startTime <= startTime) && ((finalGrantList[i].startTime + finalGrantList[i].length) >= endTime)) {
+            if (checkFrequency(finalGrantList[i].frequency, finalGrantList[i].bandwidth, frequency, bandwidth)) {
+                return true;
+            }
+        } 
     }
     return false;
 }
@@ -1149,8 +1189,6 @@ function runCode() {
             finalGrantList[i].acceptStatus = 1;
         }
     }
-    finalGrantList = []
-
 
 }
 

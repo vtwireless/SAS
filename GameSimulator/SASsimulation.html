@@ -25,16 +25,18 @@
   <div id="codeIO" style="display: flex;">
     <div id="editor">
       <textarea id="code" name="code" rows="7" cols="80">
-    function(requestList) {
-    
-    // Edit the following function:
-    printToOutput(requestList.length + ' Grant Requests');
-    for (var i in requestList) {
-      if (!checkOverlap(requestList[i].startTime, requestList[i].endTime, requestList[i].frequency, requestList[i].bandwidth)) {
-          finalGrantList.push(requestList[i]);
-        }
-      }
-    }</textarea>
+function(requestList) {
+  // Edit the following function:
+  for (var i in requestList) {
+    if (!checkOverlap(requestList[i].startTime,
+                      requestList[i].startTime + requestList[i].length,
+                      requestList[i].frequency,
+                      requestList[i].bandwidth)) {
+        finalGrantList.push(requestList[i]);
+    }
+  }
+  printToOutput(finalGrantList.length + ' Grant Requests Accepted');
+}</textarea>
 
     </div>
     <div id="output">
