@@ -31,7 +31,7 @@ var approvedRequests = [];
 var grantSummaryText;
 var summaryTextHeight = 100;
 var bandwidthBox;
-var frequencyRange = 1500;//35500-37000
+var frequencyRange = 1500; // 35500-37000
 var titleOffset = 50;
 var baseFrequency = 35500;
 var nowLinePosition = 200;
@@ -655,12 +655,12 @@ function loadGrantsAndPUs() {
     } else {
         // ! RANDOM GENERATION
         // TODO: 8 channels, periodic requests's with randomization
+        // frequencyRange = 1500;
+        
         var showTime = 0;
         var startTime = 0;
         var length = 0;
         var frequency = 0;
-        var minST = startTime + 50;
-        var maxST = startTime + 5000;
 
 
         // * Random generation values from user input
@@ -670,16 +670,18 @@ function loadGrantsAndPUs() {
         var minBandwidth = parseInt(document.getElementById("minband").value) * 10;
         var minLength = parseInt(document.getElementById("minlen").value);
         var maxLength = parseInt(document.getElementById("maxlen").value);
+        var minStart = parseInt(document.getElementById("minstart").value);
+        var maxStart = parseInt(document.getElementById("maxstart").value);
 
         //(startTime, length, frequency, bandwidth, frequencyb, showTime)
         var bandwidth = 0;
         for (var i = 0; i < randNumPUs; i++) {
-            gStartTime = Math.floor(Math.random() * maxST) + minST;
+            gStartTime = Math.floor(Math.random() * maxStart) + minStart;
             length = Math.floor(Math.random() * maxLength) + minLength;
             frequency =
                 Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
                 minBandwidth / 2;
-            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
+            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth));
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
         }
 
@@ -688,7 +690,7 @@ function loadGrantsAndPUs() {
         var frequencyb = 0;
         //REQUESTS
         for (var i = 0; i < randNumREQs; i++) {
-            gStartTime = Math.floor(Math.random() * maxST) + minST;
+            gStartTime = Math.floor(Math.random() * maxStart) + minStart;
             showTime =
                 Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
             length = Math.floor(Math.random() * maxLength) + minLength;
@@ -702,7 +704,7 @@ function loadGrantsAndPUs() {
             } else {
                 frequencyb = 0;
             }
-            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
+            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth));
             grant = new Grant(
                 gStartTime,
                 length,
