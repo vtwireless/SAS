@@ -664,12 +664,12 @@ function loadGrantsAndPUs() {
 
 
         // * Random generation values from user input
-        var randNumPUs = document.getElementById("punum").value;
-        var randNumREQs = document.getElementById("reqnum").value;
-        var maxBandwidth = document.getElementById("maxband").value * 10;
-        var minBandwidth = document.getElementById("minband").value * 10;
-        var minLength = document.getElementById("minlen").value;
-        var maxLength = document.getElementById("maxlen").value;
+        var randNumPUs = parseInt(document.getElementById("punum").value);
+        var randNumREQs = parseInt(document.getElementById("reqnum").value);
+        var maxBandwidth = parseInt(document.getElementById("maxband").value) * 10;
+        var minBandwidth = parseInt(document.getElementById("minband").value) * 10;
+        var minLength = parseInt(document.getElementById("minlen").value);
+        var maxLength = parseInt(document.getElementById("maxlen").value);
 
         //(startTime, length, frequency, bandwidth, frequencyb, showTime)
         var bandwidth = 0;
@@ -677,9 +677,7 @@ function loadGrantsAndPUs() {
             gStartTime = Math.floor(Math.random() * maxST) + minST;
             length = Math.floor(Math.random() * maxLength) + minLength;
             frequency =
-                Math.floor(
-                    Math.random() * (baseFrequency + frequencyRange - maxBandwidth / 2)
-                ) +
+                Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
                 minBandwidth / 2;
             bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
