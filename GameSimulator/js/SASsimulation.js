@@ -59,7 +59,7 @@ var frequencyTexts = [];
  */
 var stopTime = 5000;
 
-var seedValue = 2;
+var seedValue = 2; // Default seed
 var isPaused = false;
 
 // holds array of grant data
@@ -656,7 +656,7 @@ function loadGrantsAndPUs() {
         // ! RANDOM GENERATION
         // TODO: 8 channels, periodic requests's with randomization
         // frequencyRange = 1500;
-        
+
         var showTime = 0;
         var startTime = 0;
         var length = 0;
@@ -673,6 +673,8 @@ function loadGrantsAndPUs() {
         var minStart = parseInt(document.getElementById("minstart").value);
         var maxStart = parseInt(document.getElementById("maxstart").value);
 
+        var bandwidthRange = maxBandwidth - minBandwidth;
+
         //(startTime, length, frequency, bandwidth, frequencyb, showTime)
         var bandwidth = 0;
         for (var i = 0; i < randNumPUs; i++) {
@@ -681,7 +683,7 @@ function loadGrantsAndPUs() {
             frequency =
                 Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
                 minBandwidth / 2;
-            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth));
+            bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
         }
 
@@ -704,7 +706,7 @@ function loadGrantsAndPUs() {
             } else {
                 frequencyb = 0;
             }
-            bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth));
+            bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
             grant = new Grant(
                 gStartTime,
                 length,
