@@ -663,6 +663,7 @@ function loadGrantsAndPUs() {
         var frequency = 0;
 
 
+
         // * Random generation values from user input
         var randNumPUs = parseInt(document.getElementById("punum").value);
         var randNumREQs = parseInt(document.getElementById("reqnum").value);
@@ -672,6 +673,9 @@ function loadGrantsAndPUs() {
         var maxLength = parseInt(document.getElementById("maxlen").value);
         var minStart = parseInt(document.getElementById("minstart").value);
         var maxStart = parseInt(document.getElementById("maxstart").value);
+        var numChannels = parseInt(document.getElementById("channum").value);
+
+        var chanSize = frequencyRange / numChannels;
 
         var bandwidthRange = maxBandwidth - minBandwidth;
 
@@ -680,9 +684,8 @@ function loadGrantsAndPUs() {
         for (var i = 0; i < randNumPUs; i++) {
             gStartTime = Math.floor(Math.random() * maxStart) + minStart;
             length = Math.floor(Math.random() * maxLength) + minLength;
-            frequency =
-                Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-                minBandwidth / 2;
+            var channelNum = Math.floor(Math.random() * numChannels) + 1;
+            frequency = channelNum * chanSize;
             bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
         }
@@ -696,13 +699,11 @@ function loadGrantsAndPUs() {
             showTime =
                 Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
             length = Math.floor(Math.random() * maxLength) + minLength;
-            frequency =
-                Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-                minBandwidth / 2;
+            var channelNum = Math.floor(Math.random() * numChannels) + 1;
+            frequency = channelNum * chanSize;
             if (Math.floor(Math.random() * 2)) {
-                frequencyb =
-                    Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-                    minBandwidth / 2;
+                channelNum = Math.floor(Math.random() * numChannels) + 1;
+                frequencyb = channelNum * chanSize;
             } else {
                 frequencyb = 0;
             }

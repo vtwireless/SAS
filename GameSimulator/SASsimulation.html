@@ -77,18 +77,15 @@ function(requestList) {
       <input type="number" id="channum" min="1" max="99" value="8" class="randfields"><label>Channels</label><br>
       <input type="number" id="punum" min="1" max="999" value="10" class="randfields"><label>PUs</label><br>
       <input type="number" id="reqnum" min="1" max="999" value="10" class="randfields"><label>REQs</label><br>
-      <label>Min BW</label>
-      <input type="number" id="minband" min="0" max="999" value="20" class="randfields"><label>MHz</label><br>
-      <label>Max BW</label>
-      <input type="number" id="maxband" min="0" max="999" value="50" class="randfields"><label>MHz</label><br>
-      <label>Min Len</label>
-      <input type="number" id="minlen" min="0" max="999" value="100" class="randfields"><label>ms</label><br>
-      <label>Max Len</label>
-      <input type="number" id="maxlen" min="0" max="9999" value="1000" class="randfields"><label>ms</label><br>
-      <label>Min StartTime</label>
-      <input type="number" id="minstart" min="0" max="9999" value="50" class="randfields"><label>ms</label><br>
-      <label>Max StartTime</label>
-      <input type="number" id="maxstart" min="0" max="9999" value="5000" class="randfields"><label>ms</label><br>
+      <label>Bandwidth (MHz)</label><br>
+      <label>Min</label><input type="number" id="minband" min="0" max="999" value="20" class="randfields">
+      <label>Max</label><input type="number" id="maxband" min="0" max="999" value="20" class="randfields"><br>
+      <label>Length (ms)</label><br>
+      <label>Min</label><input type="number" id="minlen" min="0" max="999" value="100" class="randfields">
+      <label>Max</label><input type="number" id="maxlen" min="0" max="9999" value="1000" class="randfields"><br>
+      <label>StartTime (ms)</label><br>
+      <label>Min</label><input type="number" id="minstart" min="0" max="9999" value="50" class="randfields">
+      <label>Max</label><input type="number" id="maxstart" min="0" max="9999" value="5000" class="randfields"><br>
       <button class="button buttonrand" onclick="seedChange(0)"
         style="width: -webkit-fill-available;">REGENERATE</button>
     </div>
