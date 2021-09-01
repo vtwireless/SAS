@@ -677,11 +677,12 @@ function loadGrantsAndPUs() {
         var maxStart = parseInt(document.getElementById("maxstart").value);
         var numChannels = parseInt(document.getElementById("channum").value);
 
+        // calculate size per channel
         var chanSize = frequencyRange / numChannels;
-
+        // calculate bandwidth range
         var bandwidthRange = maxBandwidth - minBandwidth;
 
-        //(startTime, length, frequency, bandwidth, frequencyb, showTime)
+        // * Random generation of PU's
         var bandwidth = 0;
         for (var i = 0; i < randNumPUs; i++) {
             gStartTime = Math.floor(Math.random() * maxStart) + minStart;
@@ -689,9 +690,10 @@ function loadGrantsAndPUs() {
             var channelNum = Math.floor(Math.random() * numChannels) + 1;
             frequency = channelNum * chanSize;
             bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
+            // Check if grant overlaps with existing grant
             if (checkOverlap(gStartTime, gStartTime + length, frequency, bandwidth))
             {
-                i--;
+                i--; // try again
                 continue;
             }
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
@@ -700,7 +702,8 @@ function loadGrantsAndPUs() {
         var minDSS = 500; //minimum difference between start time and show time
         var maxDSS = 1000;
         var frequencyb = 0;
-        //REQUESTS
+
+        // * Random generation of Requests
         for (var i = 0; i < randNumREQs; i++) {
             gStartTime = Math.floor(Math.random() * maxStart) + minStart;
             showTime =
@@ -879,7 +882,7 @@ function createFrequencyTexts() {
     }
 }
 
-
+// drawloop
 function updateGameArea() {
     var x, height, gap, minHeight, maxHeight, minGap, maxGap;
 
