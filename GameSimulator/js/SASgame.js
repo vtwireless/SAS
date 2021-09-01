@@ -623,33 +623,44 @@ function loadGrantsAndPUs() {
     });
 
   } else {
-    //RANDOM
+    // ! RANDOM GENERATION
+
     var showTime = 0;
     var startTime = 0;
     var length = 0;
     var frequency = 0;
-    var minST = startTime + 50;
-    var maxST = startTime + 5000;
+
+
 
     // * Random generation values from user input
-    var randNumPUs = document.getElementById("punum").value;
-    var randNumREQs = document.getElementById("reqnum").value;
-    var maxBandwidth = document.getElementById("maxband").value * 10;
-    var minBandwidth = document.getElementById("minband").value * 10;
-    var minLength = document.getElementById("minlen").value;
-    var maxLength = document.getElementById("maxlen").value;
+    var randNumPUs = parseInt(document.getElementById("punum").value);
+    var randNumREQs = parseInt(document.getElementById("reqnum").value);
+    var maxBandwidth = parseInt(document.getElementById("maxband").value) * 10;
+    var minBandwidth = parseInt(document.getElementById("minband").value) * 10;
+    var minLength = parseInt(document.getElementById("minlen").value);
+    var maxLength = parseInt(document.getElementById("maxlen").value);
+    var minStart = parseInt(document.getElementById("minstart").value);
+    var maxStart = parseInt(document.getElementById("maxstart").value);
+    var numChannels = parseInt(document.getElementById("channum").value);
 
-    //(startTime, length, frequency, bandwidth, frequencyb, showTime)
+    // calculate size per channel
+    var chanSize = frequencyRange / numChannels;
+    // calculate bandwidth range
+    var bandwidthRange = maxBandwidth - minBandwidth;
+
+    // * Random generation of PU's
     var bandwidth = 0;
     for (var i = 0; i < randNumPUs; i++) {
-      gStartTime = Math.floor(Math.random() * maxST) + minST;
+      gStartTime = Math.floor(Math.random() * maxStart) + minStart;
       length = Math.floor(Math.random() * maxLength) + minLength;
-      frequency =
-        Math.floor(
-          Math.random() * (baseFrequency + frequencyRange - maxBandwidth / 2)
-        ) +
-        minBandwidth / 2;
-      bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
+      var channelNum = Math.floor(Math.random() * numChannels) + 1;
+      frequency = channelNum * chanSize;
+      bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
+      // Check if grant overlaps with existing grant
+      if (checkOverlap(gStartTime, gStartTime + length, frequency, bandwidth)) {
+        i--; // try again
+        continue;
+      }
       makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
     }
 
@@ -658,21 +669,19 @@ function loadGrantsAndPUs() {
     var frequencyb = 0;
     //REQUESTS
     for (var i = 0; i < randNumREQs; i++) {
-      gStartTime = Math.floor(Math.random() * maxST) + minST;
+      gStartTime = Math.floor(Math.random() * maxStart) + minStart;
       showTime =
         Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
       length = Math.floor(Math.random() * maxLength) + minLength;
-      frequency =
-        Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-        minBandwidth / 2;
+      var channelNum = Math.floor(Math.random() * numChannels) + 1;
+      frequency = channelNum * chanSize;
       if (Math.floor(Math.random() * 2)) {
-        frequencyb =
-          Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-          minBandwidth / 2;
+        channelNum = Math.floor(Math.random() * numChannels) + 1;
+        frequencyb = channelNum * chanSize;
       } else {
         frequencyb = 0;
       }
-      bandwidth = Math.floor(((Math.random() * maxBandwidth) + minBandwidth) / 50) * 50;
+      bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
       grant = new Grant(
         gStartTime,
         length,

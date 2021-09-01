@@ -656,8 +656,6 @@ function loadGrantsAndPUs() {
 
     } else {
         // ! RANDOM GENERATION
-        // TODO: 8 channels, periodic requests's with randomization
-        // frequencyRange = 1500;
 
         var showTime = 0;
         var startTime = 0;
@@ -691,8 +689,7 @@ function loadGrantsAndPUs() {
             frequency = channelNum * chanSize;
             bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
             // Check if grant overlaps with existing grant
-            if (checkOverlap(gStartTime, gStartTime + length, frequency, bandwidth))
-            {
+            if (checkOverlap(gStartTime, gStartTime + length, frequency, bandwidth)) {
                 i--; // try again
                 continue;
             }
@@ -968,7 +965,7 @@ function updateGameArea() {
 
     myTime.text = "Now Time: " + parseMillisecondsIntoReadableTime(myGameArea.frameNo);
     grantSummaryText.text = "Grants Approved: " + numRequestsAccepted +
-    " Conflicting Grants: " + numRequestsConflicting + " Denied: " + numRequestsDenied;
+        " Conflicting Grants: " + numRequestsConflicting + " Denied: " + numRequestsDenied;
     grantSummaryBox.update();
     grantSummaryText.update();
     myTime.update();
@@ -1001,7 +998,7 @@ function updateGameArea() {
     }
 
     finalGrantList = []; // reset user buffer of accepted grants, done each tick
-                         // the buffer must be loaded into acceptedgrants before this is called
+    // the buffer must be loaded into acceptedgrants before this is called
 
 }
 
@@ -1065,7 +1062,7 @@ function checkApprovedOverlap(startTime, endTime, frequency, bandwidth) {
             if (checkFrequency(approvedGrants[i].frequency, approvedGrants[i].bandwidth, frequency, bandwidth)) {
                 return true;
             }
-        } 
+        }
     }
     return false;
 
@@ -1091,7 +1088,7 @@ function checkFinalGrantOverlap(startTime, endTime, frequency, bandwidth) {
             if (checkFrequency(finalGrantList[i].frequency, finalGrantList[i].bandwidth, frequency, bandwidth)) {
                 return true;
             }
-        } 
+        }
     }
     return false;
 }
