@@ -1,3 +1,5 @@
+// SASsimulation.js: scripting for SASsimulation.html
+
 /**
  * Text component holding current 'time' based off tickrate
  *
@@ -687,6 +689,11 @@ function loadGrantsAndPUs() {
             var channelNum = Math.floor(Math.random() * numChannels) + 1;
             frequency = channelNum * chanSize;
             bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
+            if (checkOverlap(gStartTime, gStartTime + length, frequency, bandwidth))
+            {
+                i--;
+                continue;
+            }
             makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
         }
 
