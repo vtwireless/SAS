@@ -186,7 +186,8 @@ var myGameArea = {
  */
 const setSeedFilenames = [
   "setSeeds/1.csv",
-  "setSeeds/2.csv"
+  "setSeeds/2.csv",
+  "setSeeds/3.csv"
 ];
 
 /**
@@ -592,8 +593,15 @@ function seedChange(value) {
   );
   popupOpened = false; // close popup on seed change
   seedValue = value;
+
   // ! 0 is being hardcoded to random generation here !
-  value === 0 ? startGame(null) : loadSetSeed(seedValue, startGame);
+  if (value === 0) {
+    document.getElementById("randomFactors").hidden = false;
+    startGame(null);
+  } else {
+    document.getElementById("randomFactors").hidden = true;
+    loadSetSeed(seedValue, startGame);
+  }
 }
 
 /**
@@ -615,56 +623,65 @@ function loadGrantsAndPUs() {
     });
 
   } else {
-    //RANDOM
-    var maxBandwidth = 500;
-    var minBandwidth = 150;
-    var minLength = 100;
-    var maxLength = 2000;
+    // ! RANDOM GENERATION
+
     var showTime = 0;
     var startTime = 0;
     var length = 0;
     var frequency = 0;
-    var minST = startTime + 50;
-    var maxST = startTime + 5000;
 
-    //(startTime, length, frequency, bandwidth, frequencyb, showTime)
+
+
+    // * Random generation values from user input
+    var randNumPUs = parseInt(document.getElementById("punum").value);
+    var randNumREQs = parseInt(document.getElementById("reqnum").value);
+    var maxBandwidth = parseInt(document.getElementById("maxband").value) * 10;
+    var minBandwidth = parseInt(document.getElementById("minband").value) * 10;
+    var minLength = parseInt(document.getElementById("minlen").value);
+    var maxLength = parseInt(document.getElementById("maxlen").value);
+    var minStart = parseInt(document.getElementById("minstart").value);
+    var maxStart = parseInt(document.getElementById("maxstart").value);
+    var numChannels = parseInt(document.getElementById("channum").value);
+
+    // calculate size per channel
+    var chanSize = frequencyRange / numChannels;
+    // calculate bandwidth range
+    var bandwidthRange = maxBandwidth - minBandwidth;
+
+    // * Random generation of PU's
     var bandwidth = 0;
-    for (var i = 0; i < 500; i++) {
-      gStartTime = Math.floor(Math.random() * maxST) + minST;
+    for (var i = 0; i < randNumPUs; i++) {
+      gStartTime = Math.floor(Math.random() * maxStart) + minStart;
       length = Math.floor(Math.random() * maxLength) + minLength;
-      frequency =
-        Math.floor(
-          Math.random() * (baseFrequency + frequencyRange - maxBandwidth / 2)
-        ) +
-        minBandwidth / 2;
-      bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
+      var channelNum = Math.floor(Math.random() * numChannels) + 1;
+      frequency = channelNum * chanSize;
+      bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
+      // Check if grant overlaps with existing grant
+      if (checkOverlap(gStartTime, gStartTime + length, frequency, bandwidth)) {
+        i--; // try again
+        continue;
+      }
       makePUGrant(new Grant(gStartTime, length, frequency, bandwidth, 0, 0));
     }
 
-    maxLength = 1200; //requests
-    minBandwidth = 20;
-    maxBandwidth = 250;
     var minDSS = 500; //minimum difference between start time and show time
     var maxDSS = 1000;
     var frequencyb = 0;
     //REQUESTS
-    for (var i = 0; i < 20; i++) {
-      gStartTime = Math.floor(Math.random() * maxST) + minST;
+    for (var i = 0; i < randNumREQs; i++) {
+      gStartTime = Math.floor(Math.random() * maxStart) + minStart;
       showTime =
         Math.floor(Math.random() * (startTime - minDSS)) + (startTime - maxDSS);
       length = Math.floor(Math.random() * maxLength) + minLength;
-      frequency =
-        Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-        minBandwidth / 2;
+      var channelNum = Math.floor(Math.random() * numChannels) + 1;
+      frequency = channelNum * chanSize;
       if (Math.floor(Math.random() * 2)) {
-        frequencyb =
-          Math.floor(Math.random() * (frequencyRange - maxBandwidth / 2)) +
-          minBandwidth / 2;
+        channelNum = Math.floor(Math.random() * numChannels) + 1;
+        frequencyb = channelNum * chanSize;
       } else {
         frequencyb = 0;
       }
-      bandwidth = Math.floor(Math.random() * maxBandwidth) + minBandwidth;
-      bandwidth = Math.ceil(bandwidth / 5) * 5; //round to nearest 5
+      bandwidth = Math.floor(((Math.random() * bandwidthRange) + minBandwidth) / 50) * 50;
       grant = new Grant(
         gStartTime,
         length,
