@@ -1,0 +1,15 @@
+.page-wrapper {
+    margin: 100px auto 100px;
+    text-align: center;
+}
+
+.message {
+    font-weight: 700;
+    font-size: 20px;
+}
+
+.glass {
+    font-weight: 700;
+    font-size: 20px;
+    margin-right: 10px;
+}

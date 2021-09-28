@@ -1,0 +1,35 @@
+﻿<h1 *ngIf="active">Active Grants</h1>
+<h1 *ngIf="logged">Logged Grants</h1>
+
+
+<p *ngIf="!SpectrumGrants"><em>Loading...</em></p>
+
+<table class='table' *ngIf="SpectrumGrants">
+    <thead>
+        <tr>
+            <th>Tier</th>
+            <th>Grant ID</th>
+            <th>Secondary User Name</th>
+            <th>Frequency</th>
+            <th>Bandwidth</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Status</th>
+            <th>Location</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let SG of SpectrumGrants">
+            <td>{{ SG.tier }}</td>
+            <td *ngIf="active"><a routerLink="/grant-details/active/{{SG.grantID}}">{{ SG.grantID }}</a></td>
+            <td *ngIf="logged"><a routerLink="/grant-details/logged/{{SG.grantID}}">{{ SG.grantID }}</a></td>
+            <td>{{ SG.secondaryUserName }}</td>
+            <td>{{ SG.frequency }}</td>
+            <td>{{ SG.bandwidth }}</td>
+            <td>{{ SG.startTime }}</td>
+            <td>{{ SG.endTime }}</td>
+            <td>{{ SG.status }}</td>
+            <td>{{ SG.requestLocation }}</td>
+        </tr>
+    </tbody>
+</table>

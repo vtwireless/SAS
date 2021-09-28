@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>SAS</title>
+        <base href="/">
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" type="image/x-icon" href="favicon.ico">
+        <style>
+			#loader { 
+				border: 12px solid #dadada; 
+				border-radius: 50%; 
+                border-top: 12px solid #00000000; 
+				width: 70px; 
+				height: 70px; 
+				animation: spin 1s linear infinite; 
+			} 
+
+			#loading { 
+                text-shadow: 1px 1px 3px black;
+				color: #dadada;
+				width: 70px; 
+				height: 70px; 
+				font-size: 30px;
+				transform: translate(-33px, 120px);
+				font-weight: 900;
+			} 
+			
+			@keyframes spin { 
+				100% { 
+					transform: rotate(360deg); 
+				} 
+			} 
+			
+			.center { 
+				position: absolute; 
+				top: 0; 
+				bottom: 0; 
+				left: 0; 
+				right: 0; 
+				margin: auto; 
+			} 
+
+			.content {
+				animation: fadeInAnimation ease-out 3s; 
+				animation-iteration-count: 1; 
+				animation-fill-mode: forwards; 
+			} 
+			@keyframes fadeInAnimation { 
+				0% { 
+					opacity: 0; 
+				} 
+				100% { 
+					opacity: 1; 
+				} 
+			} 
+        </style>
+	    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB28QzXE3VjSNS-pT_sJIr45IG5z9t8r5Q&libraries=places"></script>
+
+    </head>
+    <body>
+		<div id="loader" class="center"></div> 
+		<div id="loading" class="center">LOADING</div> 
+
+        <app-root></app-root>
+    </body>
+	<script> 
+		document.onreadystatechange = function() { 
+			if (document.readyState !== "complete") { 
+				document.querySelector( 
+				  "body").style.visibility = "hidden"; 
+				document.querySelector( 
+				  "#loader").style.visibility = "visible"; 
+				  document.querySelector( 
+				  "#loading").style.visibility = "visible"; 
+			} else { 
+				document.querySelector( 
+				  "#loader").style.display = "none"; 
+				  document.querySelector( 
+				  "#loading").style.display = "none"; 
+				  document.querySelector( 
+				  "body").style.visibility = "visible"; 
+			} 
+		}; 
+	</script> 
+</html>

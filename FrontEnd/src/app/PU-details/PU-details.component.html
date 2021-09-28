@@ -1,0 +1,37 @@
+﻿<h1 *ngIf="PrimaryUser"> Primary User: {{ PrimaryUser.primaryUserName }} </h1>
+<h3 *ngIf="PrimaryUser"> ID: {{ PrimaryUser.primaryUserID }} </h3>
+
+
+<h3>Activity</h3>
+
+<p *ngIf="!activities"><em>No Acivity...</em></p>
+
+<table class='table' *ngIf="activities">
+    <thead>
+        <tr>
+            <th>PUActivityID</th>
+            <th>Frequency</th>
+            <th>Bandwidth</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Expected End Time</th>
+            <th>Location</th>
+            <th>Location Confidence</th>
+            <th>Activity Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let activity of activities">
+
+            <td>{{ activity.PUActivityID }}</td>
+            <td>{{ activity.frequency }}</td>
+            <td>{{ activity.bandwidth }}</td>
+            <td>{{ activity.startTime }}</td>
+            <td>{{ activity.endTime }}</td>
+            <td>{{ activity.expectedEndTime }}</td>
+            <td>{{ activity.location }}</td>
+            <td>{{ activity.locationConfidence }}</td>
+            <td>{{ activity.activityStatus }}</td>
+        </tr>
+    </tbody>
+</table>

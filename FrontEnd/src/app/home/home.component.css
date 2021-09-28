@@ -1,0 +1,41 @@
+.page {
+    padding: 80px 50px;
+    text-align: center;
+}
+
+.page-header {
+    font-size: 30px;
+    color: rgb(0, 0, 0);
+    /* text-shadow: 1px 1px 5px rgb(110, 110, 110); */
+    text-decoration: none;
+    font-weight: 900;
+}
+
+.options {
+    padding: 10px;
+    width: 100%;
+    text-align: left;
+
+}
+
+.login-btn {
+    display: block;
+    font-size: 25px;
+    color: rgb(97, 97, 97);
+    /* text-shadow: 1px 1px 5px rgb(139, 139, 139); */
+    text-decoration: none;
+    font-weight: 900;
+}
+
+@media (max-width: 700px) {
+    .page {
+        padding: 50px 20px;
+    }
+    .page-header {
+        font-size: 20px
+    }
+    .login-btn {
+        font-size: 15px;
+    }
+    
+}

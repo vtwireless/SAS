@@ -1,0 +1,212 @@
+﻿<div *ngIf="isNewTierClass">
+<h1>Create a New Tier Class</h1>
+<div class="container">
+    <div [hidden]="submitted">
+        <form (ngSubmit)="onSubmitNew()" #createTierClassForm="ngForm" style="max-width:500px;">
+            <div class="form-group">
+                <label for="tierClassName">Tier Class Name</label>
+                <input type="text" class="form-control" id="tierClassName"
+                       required
+                       [(ngModel)]="model.tierClassName" name="tierClassName"
+                       #tierClassName="ngModel">
+                <div [hidden]="tierClassName.valid || tierClassName.pristine"
+                     class="alert alert-danger">
+                    Please name this tier
+                </div>
+            </div>
+          <div class="form-group">
+              <label for="tierPriorityLevel">Tier Priority Level (0 is the highest Priority)</label>
+              <select class="form-control" id="tierPriorityLevel"
+                      required
+                      [(ngModel)]="model.tierPriorityLevel" name="tierPriorityLevel"
+                      #tierPriorityLevel="ngModel">
+                  <option *ngFor="let tierPriorityLevel of tierPriorityLevels" [value]="tierPriorityLevel">{{tierPriorityLevel}}</option>
+              </select>
+              <div [hidden]="tierPriorityLevel.valid || tierPriorityLevel.pristine" class="alert alert-danger">
+                  Please select a trust level, 0 being the highest priority.
+              </div>
+          </div>
+
+          <div class="form-group">
+              <label for="maxTierNumber">Max Tier Number (How Many Tiers Within This Class)</label>
+              <select class="form-control" id="maxTierNumber"
+                      required
+                      [(ngModel)]="model.maxTierNumber" name="maxTierNumber"
+                      #maxTierNumber="ngModel">
+                  <option *ngFor="let maxTierNumber of maxTierNumbers" [value]="maxTierNumber">{{maxTierNumber}}</option>
+              </select>
+              <div [hidden]="maxTierNumber.valid || maxTierNumber.pristine" class="alert alert-danger">
+                  Please select the number of tiers within this class.
+              </div>
+          </div>
+
+          <div class="form-group" style="float:left;padding-right:20px;width:200px;">
+              <label for="tierLowerBand">Tier Lower Band</label>
+              <input type="number" class="form-control" id="tierLowerBand"
+                       required
+                       (change)="updateBands();"
+                       [(ngModel)]="model.tierLowerBand" name="tierLowerBand"
+                       #tierLowerBand="ngModel" min="1" max="9999">
+              <div [hidden]="tierLowerBand.valid || tierLowerBand.pristine" class="alert alert-danger">
+                  Select a minimum frequency
+              </div>
+              <div *ngIf="model.tierLowerBand" [hidden]="model.tierLowerBand > 0" class="alert alert-danger">
+                  Frequency must be at least 1
+              </div>
+              <div *ngIf="model.tierLowerBand" [hidden]="model.tierLowerBand <= 9999" class="alert alert-danger">
+                  Frequency must be at most 9999
+              </div>
+          </div>
+          <div class="form-group" style="float:left;padding-right:20px;width:200px;">
+              <label for="tierUpperBand">Tier Upper Band</label>
+              <input type="number" class="form-control" id="tierUpperBand"
+                       required
+                       (change)="updateBands();"
+                       [(ngModel)]="model.tierUpperBand" name="tierUpperBand"
+                       #tierUpperBand="ngModel" min="1" max="9999">
+              <div [hidden]="tierUpperBand.valid || tierUpperBand.pristine || tierLowerBand <= tierUpperBand" class="alert alert-danger">
+                  Select a maximum frequency
+              </div>
+              <div *ngIf="model.tierUpperBand" [hidden]="model.tierUpperBand > 0" class="alert alert-danger">
+                  Frequency must be at least 1
+              </div>
+              <div *ngIf="model.tierUpperBand" [hidden]="model.tierUpperBand <= 9999" class="alert alert-danger">
+                  Frequency must be at most 9999
+              </div>
+          </div>
+            <div class="form-group" style="float:left;width:80px;">
+              <label for="range">(MHz, GHz)</label>
+              <select class="form-control" id="range"
+                      required
+                      [(ngModel)]="model.range" name="range"
+                      #range="ngModel">
+                  <option *ngFor="let range of ranges" [value]="range">{{range}}</option>
+              </select>
+              <div [hidden]="range.valid || range.pristine" class="alert alert-danger">
+                  Please select range for the bands.
+              </div>
+          </div>
+
+
+          <div class="form-group">
+              <label for="tierClassDescription">Description (Optional)</label>
+              <input type="text" class="form-control" id="tierClassDescription"
+                     [(ngModel)]="model.tierClassDescription" name="tierClassDescription"
+                     #tierClassDescription="ngModel">
+
+          </div>
+
+            <button type="submit" class="btn btn-success" [disabled]="!createTierClassForm.form.valid">Submit</button>
+            <button type="button" class="btn btn-default" (click)="newTierClass(); createTierClassForm.reset()">Clear Form</button>
+
+        </form>
+    </div>
+    </div>
+  </div>
+
+
+  <div *ngIf="isExistingTier">
+<h1>Update Tier With ID: {{ tierID }}</h1>
+<div class="container">
+    <div [hidden]="submitted">
+        <form (ngSubmit)="onSubmitExisting()" #createTierClassForm="ngForm" style="max-width:500px;">
+            <div class="form-group">
+                <label for="tierClassName">Tier Class Name</label>
+                <input type="text" class="form-control" id="tierClassName"
+                       required
+                       [(ngModel)]="model.tierClassName" name="tierClassName"
+                       #tierClassName="ngModel">
+                <div [hidden]="tierClassName.valid || tierClassName.pristine"
+                     class="alert alert-danger">
+                    Please name this tier
+                </div>
+            </div>
+          <div class="form-group">
+              <label for="tierPriorityLevel">Tier Priority Level (0 is the highest Priority)</label>
+              <select class="form-control" id="tierPriorityLevel"
+                      required
+                      [(ngModel)]="model.tierPriorityLevel" name="tierPriorityLevel"
+                      #tierPriorityLevel="ngModel">
+                  <option *ngFor="let tierPriorityLevel of tierPriorityLevels" [value]="tierPriorityLevel">{{tierPriorityLevel}}</option>
+              </select>
+              <div [hidden]="tierPriorityLevel.valid || tierPriorityLevel.pristine" class="alert alert-danger">
+                  Please select a trust level, 0 being the highest priority.
+              </div>
+          </div>
+
+          <div class="form-group">
+              <label for="maxTierNumber">Max Tier Number (How Many Tiers Within This Class)</label>
+              <select class="form-control" id="maxTierNumber"
+                      required
+                      [(ngModel)]="model.maxTierNumber" name="maxTierNumber"
+                      #maxTierNumber="ngModel">
+                  <option *ngFor="let maxTierNumber of maxTierNumbers" [value]="maxTierNumber">{{maxTierNumber}}</option>
+              </select>
+              <div [hidden]="maxTierNumber.valid || maxTierNumber.pristine" class="alert alert-danger">
+                  Please select the number of tiers within this class.
+              </div>
+          </div>
+
+          <div class="form-group" style="float:left;padding-right:20px;width:200px;">
+              <label for="tierLowerBand">Tier Lower Band</label>
+              <input type="number" class="form-control" id="tierLowerBand"
+                       required
+                       (change)="updateBands();"
+                       [(ngModel)]="model.tierLowerBand" name="tierLowerBand"
+                       #tierLowerBand="ngModel" min="1" max="9999">
+              <div [hidden]="tierLowerBand.valid || tierLowerBand.pristine" class="alert alert-danger">
+                  Select a minimum frequency
+              </div>
+              <div *ngIf="model.tierLowerBand" [hidden]="model.tierLowerBand > 0" class="alert alert-danger">
+                  Frequency must be at least 1
+              </div>
+              <div *ngIf="model.tierLowerBand" [hidden]="model.tierLowerBand <= 9999" class="alert alert-danger">
+                  Frequency must be at most 9999
+              </div>
+          </div>
+          <div class="form-group" style="float:left;padding-right:20px;width:200px;">
+              <label for="tierUpperBand">Tier Upper Band</label>
+              <input type="number" class="form-control" id="tierUpperBand"
+                       required
+                       (change)="updateBands();"
+                       [(ngModel)]="model.tierUpperBand" name="tierUpperBand"
+                       #tierUpperBand="ngModel" min="1" max="9999">
+              <div [hidden]="tierUpperBand.valid || tierUpperBand.pristine || tierLowerBand <= tierUpperBand" class="alert alert-danger">
+                  Select a maximum frequency
+              </div>
+              <div *ngIf="model.tierUpperBand" [hidden]="model.tierUpperBand > 0" class="alert alert-danger">
+                  Frequency must be at least 1
+              </div>
+              <div *ngIf="model.tierUpperBand" [hidden]="model.tierUpperBand <= 9999" class="alert alert-danger">
+                  Frequency must be at most 9999
+              </div>
+          </div>
+            <div class="form-group" style="float:left;width:80px;">
+              <label for="range">(MHz, GHz)</label>
+              <select class="form-control" id="range"
+                      required
+                      [(ngModel)]="model.range" name="range"
+                      #range="ngModel">
+                  <option *ngFor="let range of ranges" [value]="range">{{range}}</option>
+              </select>
+              <div [hidden]="range.valid || range.pristine" class="alert alert-danger">
+                  Please select range for the bands.
+              </div>
+          </div>
+
+
+          <div class="form-group">
+              <label for="tierClassDescription">Description (Optional)</label>
+              <input type="text" class="form-control" id="tierClassDescription"
+                     [(ngModel)]="model.tierClassDescription" name="tierClassDescription"
+                     #tierClassDescription="ngModel">
+
+          </div>
+
+            <button type="submit" class="btn btn-success" [disabled]="!createTierClassForm.form.valid">Submit</button>
+            <button type="button" class="btn btn-default" (click)="cancel()">Cancel</button>
+
+        </form>
+    </div>
+    </div>
+  </div>

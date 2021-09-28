@@ -1,0 +1,137 @@
+<h2>Regions and Schedules</h2>
+<p *ngIf="!regionSchedules"><em>None...</em></p>
+
+<table class='table' *ngIf="regionSchedules" style="max-height:400px;overflow-x:scroll;overflow-y:scroll;">
+    <thead>
+        <tr>
+            <th>Region ID</th>
+            <th *ngIf="!showingAll && !addingRS"><button type="button" class="btn btn-default" (click)="showAll()">Show All</button></th>
+            <th *ngIf="showingAll && !addingRS"><button type="button" class="btn btn-default" (click)="hideAll()">Hide All</button></th>
+            <th *ngIf="addingRS">Show/Hide</th>
+            <th>Region Name</th>
+            <th>Scheduling Algorithm</th>
+            <th>Use SU Tiers</th>
+            <th>Use Class Tiers</th>
+            <th>Use Inner Class Tiers</th>
+            <th>Active RS</th>
+            <th>Edit</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let RS of regionSchedules">
+            <td>{{ RS.regionID }}</td>
+            <td *ngIf="RS.isShowing=='1' && RS.isEditing=='0' && !addingRS"><button type="button" class="btn btn-default" (click)="removeShape(RS)" style="background-color: #ADD8E6;">Hide</button></td>
+            
+            <td *ngIf="RS.isShowing=='0' && RS.isEditing=='0' && !addingRS"><button type="button" class="btn btn-default" (click)="drawShape(RS)" style="background-color: white;">View</button></td>
+            
+            <td *ngIf="RS.isEditing=='1'">Showing</td>
+            <td *ngIf="RS.isEditing=='0' && addingRS"></td>
+            <td>{{ RS.regionName }}</td>
+            <td>{{ RS.schedulingAlgorithm }}</td>
+            <td *ngIf="RS.useSUTiers">YES</td>
+            <td *ngIf="!RS.useSUTiers">NO</td>
+            <td *ngIf="RS.useClassTiers">YES</td>
+            <td *ngIf="!RS.useClassTiers">NO</td>
+            <td *ngIf="RS.useInnerClassTiers">YES</td>
+            <td *ngIf="!RS.useInnerClassTiers">NO</td>
+            <td *ngIf="RS.isActive">YES</td>
+            <td *ngIf="!RS.isActive">NO</td>
+            <td *ngIf="RS.isDefault=='0' && !RS.isEditing"><button type="button" class="btn btn-default" (click)="editRS(RS);">Edit</button></td>
+            <td *ngIf="RS.isDefault=='1'">Default</td>
+            <td *ngIf="RS.isDefault=='0' && RS.isEditing">Editing...</td>
+        </tr>
+    </tbody>
+</table>
+<button *ngIf="!addingRS" type="button" class="btn btn-default" (click)="addRS()">Create New Region Schedule</button>
+
+<div *ngIf="addingRS || updatingRS">
+    <br>
+        <div class="form-group" style="max-width:900px;float:left;padding-right:20px;">
+                <label for="regionName">Region/Schedule Name</label>
+                <input type="text" class="form-control" id="regionName"
+                       required
+                       [(ngModel)]="model.regionName" name="regionName"
+                       #regionName="ngModel">
+                <div [hidden]="regionName.valid || regionName.pristine"
+                     class="alert alert-danger">
+                    Please name this region/schedule.
+                </div>
+            </div>
+              <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="schedulingAlgorithm">Scheduling Algorithm</label>
+              <select class="form-control" id="schedulingAlgorithm"
+                      required
+                      [(ngModel)]="model.schedulingAlgorithm" name="schedulingAlgorithm"
+                      #schedulingAlgorithm="ngModel">
+                  <option *ngFor="let SA of schedulingAlgorithmArray" [value]="SA">{{SA}}</option>
+              </select>
+              <div [hidden]="schedulingAlgorithm.valid || schedulingAlgorithm.pristine" class="alert alert-danger">
+                  Please select a scheduling algorithm.
+              </div>
+          </div>
+          <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="useSUTiers">Use SU Tiers?</label>
+              <input type="checkbox" class="form-control" id="useSUTiers"
+                       [(ngModel)]="model.useSUTiers" name="useSUTiers"
+                       #useSUTiers="ngModel">
+          </div>
+
+          <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="useClassTiers">Use Class Tiers?</label>
+              <input type="checkbox" class="form-control" id="useClassTiers"
+                       [(ngModel)]="model.useClassTiers" name="useClassTiers"
+                       #useClassTiers="ngModel">
+          </div>
+          <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="useInnerClassTiers">Use Inner Class Tiers?</label>
+              <input type="checkbox" class="form-control" id="useInnerClassTiers"
+                       [(ngModel)]="model.useInnerClassTiers" name="useInnerClassTiers"
+                       #useInnerClassTiers="ngModel">
+          </div>
+          <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="isActive">Activate?</label>
+              <input type="checkbox" class="form-control" id="isActive"
+                       [(ngModel)]="model.isActive" name="isActive"
+                       #isActive="ngModel">
+          </div>
+
+          <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="regionShape">Shape</label>
+              <select class="form-control" id="regionShape"
+                      required
+                      (change)="changeShape();"
+                      [(ngModel)]="model.regionShape" name="regionShape"
+                      #regionShape="ngModel">
+                  <option *ngFor="let shape of shapeArray" [value]="shape">{{shape}}</option>
+              </select>
+              <div [hidden]="regionShape.valid || regionShape.pristine" class="alert alert-danger">
+                  Please select a shape.
+          </div>
+        </div>
+
+          <div *ngIf="model.regionShape=='circle'" class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="shapeRadius">Radius</label>
+              <select class="form-control" id="shapeRadius"
+                      required
+                      (change)="updateCircleRadius();"
+                      [(ngModel)]="model.shapeRadius" name="shapeRadius"
+                      #shapeRadius="ngModel">
+                  <option *ngFor="let radius of radiusArray" [value]="radius">{{radius}}m</option>
+              </select>
+              <div [hidden]="shapeRadius.valid || shapeRadius.pristine" class="alert alert-danger">
+                  Please select a radius.
+              </div>
+            </div>
+          <div *ngIf="model.regionShape=='polygon'">
+            <button *ngIf="addingRS || updatingRS" type="button" class="btn btn-default" (click)="removePoint();" style="background-color:#DDDDDD;float:left;">Remove A Point</button>
+          </div>
+          <br>
+
+<button *ngIf="addingRS" type="button" class="btn btn-default" (click)="createRegionSchedule();" style="background-color:#ADD8EC;float:left;">Create Region</button>
+<button *ngIf="addingRS" type="button" class="btn btn-default" (click)="cancelAddRS();" style="background-color:#EEDDDD;float:left;">Cancel</button>
+<button *ngIf="updatingRS" type="button" class="btn btn-default" (click)="updateRegionSchedule();" style="background-color:#ADD8EC;float:left;">Update Region</button>
+
+
+</div>
+<br>
+<div #mapContainer id="mapContainer" style="height: 500px; width: 100%;"></div>

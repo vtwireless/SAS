@@ -1,0 +1,178 @@
+﻿<h1 *ngIf="secondaryUser"> {{ secondaryUser.secondaryUserName }}</h1>
+
+<ul *ngIf="secondaryUser">
+  <li><strong>ID: </strong>{{ secondaryUser.secondaryUserID }}</li>
+  <li><strong>Email: </strong> {{ secondaryUser.secondaryUserEmail }}</li>
+  <li><strong>Tier: </strong> {{ secondaryUser.tier }}</li>
+  <li><strong>Node ID: </strong> <span *ngIf="secondaryUser.nodeID">{{ secondaryUser.nodeID }}</span><span *ngIf="!secondaryUser.nodeID">No Node</span></li>
+  <li><strong>Device ID: </strong> {{ secondaryUser.deviceID }}</li>
+</ul>
+
+<h3>Grant Requests</h3>
+
+<p *ngIf="!grantRequests"><em>No Grants Requests...</em></p>
+<table class='table' *ngIf="grantRequests">
+    <thead>
+        <tr>
+            <th>Delete</th>
+            <th>GRID</th>
+            <th>Freq Range</th>
+            <th>Preferred Freq</th>
+            <th>Freq Absolute</th>
+            <th>Min Bandwidth</th>
+            <th>Preferred Bandwidth</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Approx. Byte Size</th>
+            <th>Data Type</th>
+            <th>Power Level</th>
+            <th>Location</th>
+            <th>Mobile</th>
+            <th>Max Velocity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let GR of grantRequests">
+            <td style="border-right: 2px solid #DDDDDD;"><button class="btn btn-primary" type="button" (click)="deleteGrantRequest(GR)">Delete</button></td>
+            <td>{{ GR.requestID }}</td>
+            <td>{{ GR.minFrequency }}-{{ GR.maxFrequency }}Hz</td>
+            <td>{{ GR.preferredFrequency }}Hz</td>
+            <td *ngIf="GR.frequencyAbsolute">YES</td>
+            <td *ngIf="!GR.frequencyAbsolute">NO</td>
+            <td>{{ GR.minBandwidth }}</td>
+            <td>{{ GR.preferredBandwidth }}</td>
+            <td>{{ GR.startTime }}</td>
+            <td>{{ GR.endTime }}</td>
+            <td>{{ GR.approximateByteSize }}</td>
+            <td>{{ GR.dataType }}</td>
+            <td>{{ GR.powerLevel }}dB</td>
+            <td>{{ GR.location }}</td>
+            <td *ngIf="GR.mobility">Yes</td>
+            <td *ngIf="!GR.mobility">No</td>
+            <td>{{ GR.maxVelocity }}mph</td>
+        </tr>
+    </tbody>
+</table>
+<h3>Active Grants</h3>
+
+<p *ngIf="!spectrumGrants"><em>No Active Grants</em></p>
+
+<table class='table' *ngIf="spectrumGrants" style="width:100%; overflow-x: auto;">
+    <thead>
+        <tr>
+            <th>SGID</th>
+            <th>Approved</th>
+            <th>Freq</th>
+            <th>Bandwidth</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Min Bandwidth</th>
+            <th>Status</th>
+            <th>Req. Min Freq</th>
+            <th>Req. Max Freq</th>
+            <th>Req. Preferred Freq</th>
+            <th>Req. Freq Absolute</th>
+            <th>Preferred Bandwidth</th>
+            <th>Req. Start Time</th>
+            <th>Req. End Time</th>
+            <th>Approx. Byte Size</th>
+            <th>Req. Data Type</th>
+            <th>Req. Power Level</th>
+            <th>Location</th>
+            <th>Mobile</th>
+            <th>Max Velocity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let SG of spectrumGrants">
+            <td><a href="grant-details/active/{{ SG.grantID }}">{{ SG.grantID }}</a></td>
+            <td *ngIf="SG.approved">APPROVED</td>
+            <td *ngIf="!SG.approved">DENIED</td>
+            <td>{{ SG.frequency }}Hz</td>
+            <td>{{ SG.bandwidth }}Hz</td>
+            <td>{{ SG.startTime }}</td>
+            <td>{{ SG.endTime }}</td>
+            <td>{{ SG.minBandwidth }}</td>
+            <td>{{ SG.status }}</td>
+            <td>{{ SG.requestMinFrequency }}</td>
+            <td>{{ SG.requestMaxFrequency }}</td>
+            <td>{{ SG.requestPreferredFrequency }}</td>
+            <td *ngIf="SG.requestFrequencyAbsolute">YES</td>
+            <td *ngIf="!SG.requestFrequencyAbsolute">NO</td>
+            <td>{{ SG.preferredBandwidth }}</td>
+            <td>{{ SG.requestStartTime }}</td>
+            <td>{{ SG.requestEndTime }}</td>
+            <td>{{ SG.requestApproximateByteSize }}</td>
+            <td>{{ SG.requestDataType }}</td>
+            <td>{{ SG.requestPowerLevel }}dB</td>
+            <td>{{ SG.requestLocation }}</td>
+            <td *ngIf="SG.requestMobility">Yes</td>
+            <td *ngIf="!SG.requestMobility">No</td>
+            <td>{{ SG.requestMaxVelocity }}mph</td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Logged/Past Grants</h3>
+
+<p *ngIf="!grantLogs"><em>No Past Grants...</em></p>
+
+<table class='table' *ngIf="grantLogs" style="width:100%; overflow-x: auto;">
+    <thead>
+        <tr>
+            <th>LGID</th>
+            <th>Approved</th>
+            <th>Freq</th>
+            <th>Bandwidth</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Min Bandwidth</th>
+            <th>Status</th>
+            <th>Req. Min Freq</th>
+            <th>Req. Max Freq</th>
+            <th>Req. Preferred Freq</th>
+            <th>Req. Freq Absolute</th>
+            <th>Preferred Bandwidth</th>
+            <th>Req. Start Time</th>
+            <th>Req. End Time</th>
+            <th>Approx. Byte Size</th>
+            <th>Req. Data Type</th>
+            <th>Req. Power Level</th>
+            <th>Location</th>
+            <th>Mobile</th>
+            <th>Max Velocity</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let LG of grantLogs">
+
+            <td><a href="grant-details/logged/{{ LG.grantLogID }}">{{ LG.grantLogID }}</a></td>
+            <td *ngIf="LG.approved">APPROVED</td>
+            <td *ngIf="!LG.approved">DENIED</td>
+            <td>{{ LG.frequency }}Hz</td>
+            <td>{{ LG.bandwidth }}Hz</td>
+            <td>{{ LG.startTime }}</td>
+            <td>{{ LG.endTime }}</td>
+            <td>{{ LG.minBandwidth }}</td>
+            <td>{{ LG.status }}</td>
+            <td>{{ LG.requestMinFrequency }}</td>
+            <td>{{ LG.requestMaxFrequency }}</td>
+            <td>{{ LG.requestPreferredFrequency }}</td>
+            <td *ngIf="LG.requestFrequencyAbsolute">YES</td>
+            <td *ngIf="!LG.requestFrequencyAbsolute">NO</td>
+            <td>{{ LG.preferredBandwidth }}</td>
+            <td>{{ LG.requestStartTime }}</td>
+            <td>{{ LG.requestEndTime }}</td>
+            <td>{{ LG.requestApproximateByteSize }}</td>
+            <td>{{ LG.requestDataType }}</td>
+            <td>{{ LG.requestPowerLevel }}dB</td>
+            <td>{{ LG.requestLocation }}</td>
+            <td *ngIf="LG.requestMobility">Yes</td>
+            <td *ngIf="!LG.requestMobility">No</td>
+            <td>{{ LG.requestMaxVelocity }}mph</td>
+        </tr>
+    </tbody>
+</table>
+    <br><br><div *ngIf="isSU">
+    <a href="create-request"><button class="btn btn-primary">Add New Grant Request</button></a><br><br>
+    </div>

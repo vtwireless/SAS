@@ -1,0 +1,226 @@
+/* Keep the nav menu independent of scrolling and on top of other items */
+.main-nav {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 1;
+	/* box-shadow: 1px 1px 3px white; */
+}
+
+.banner { 
+	padding: 20px 0px 10px;
+	text-align: center;
+}
+
+.sas-title {
+    font-weight: 900;
+    color: rgb(194, 194, 194);
+    text-shadow: 8px 8px 10px black;
+    transition: 0.3s;
+	font-size: 30px;
+	line-height: 10px;
+}
+
+.sas-title:hover {
+	text-shadow: 5px 5px 10px black;    
+}
+
+.navbar {
+	background-color:#770000
+}
+
+.navbar li a {
+	font-size: 16px;
+}
+
+li .glyphicon {
+	margin-right: 10px;
+}
+
+.nav {
+    width: 100%;
+    padding: 25px 0 0 0;
+}
+
+.nav li {
+	width: 100%;
+	margin: 0px;
+	padding: 0px 0px 10px 0px;
+}
+
+.nav li a {
+	background-color: rgb(58, 58, 58);
+	width: 75%;
+	text-align: center;
+    margin: 10px auto;
+    border-radius: 10px;
+    opacity: 0.8;
+    transition: 0.3s;
+    font-weight: 550;
+}
+
+.nav li a:hover {
+    opacity: 1;
+    border: 0.5px solid white;
+	animation: glowing 5000ms infinite;
+}
+
+/* Highlighting rules for nav menu items */
+li.link-active a,
+li.link-active a:hover,
+li.link-active a:focus {
+	background-color: #cc5500;
+	color: white;
+}
+
+@media (max-width: 1800px) {
+	.sas-title {
+		font-size: 26px;
+	}
+}
+
+@media (max-width: 1600px) {
+	.sas-title {
+		font-size: 24px;
+	}
+}
+
+@media (max-width: 1400px) {
+	.sas-title {
+		font-size: 20px;
+	}
+}
+
+@media (max-width: 1200px) {
+	.sas-title {
+		font-size: 18px;
+	}
+}
+
+@media (max-width: 1100px) {
+	.sas-title {
+		font-size: 16px;
+	}
+	.navbar li a {
+		font-size: 12px;
+	}
+}
+
+
+@media (max-width: 1000px) {
+	.sas-title {
+		font-size: 14px;
+	}
+}
+
+
+@media (max-width: 900px) {
+	.sas-title {
+		font-size: 12px;
+	}
+	.navbar li a {
+		font-size: 10px;
+	}
+}
+
+@media (max-width: 850px) {
+	.navbar li a {
+		font-size: 9px;
+	}
+}
+
+@media (max-width: 800px) {
+	.sas-title {
+		font-size: 10px;
+	}
+	.navbar li a {
+		font-size: 8px;
+	}
+}
+
+@media (max-width: 769px) {
+	.sas-title {
+		font-size: 20px;
+	}
+	.navbar li a {
+		font-size: 14px;
+	}
+	.nav {
+		width: 100vw;
+	}
+}
+
+
+@media (max-width: 350px) {
+	.sas-title {
+		font-size: 14px;
+	}
+	.navbar li a {
+		font-size: 12px;
+	}
+}
+
+
+@keyframes glowing {
+	0% {
+		box-shadow: 0px 0px 20px #888888;
+	}
+	25% {
+		box-shadow: 0px 5px 40px #777777;
+    }
+    50% {
+		box-shadow: 0px 0px 60px #666666;
+    }
+    75% {
+        box-shadow: 0px -5px 40px #777777;
+    }
+	100% {
+        box-shadow: 0px 0px 20px #888888;
+	}
+}
+
+@media (min-width: 769px) {
+	/* On small screens, convert the nav menu to a vertical sidebar */
+	.main-nav {
+		height: 100%;
+		width: calc(25% - 20px);
+	}
+
+	.navbar {
+		border-radius: 0px;
+		border-width: 0px;
+		height: 100%;
+	}
+
+	.navbar-header {
+		float: none;
+	}
+
+	.navbar-collapse {
+		border-top: 1px solid #cc5500;
+		padding: 0px;
+	}
+
+	.navbar ul {
+		float: none;
+	}
+
+	.navbar li {
+		float: none;
+		font-size: 15px;
+	}
+
+	.navbar li a {
+		padding: 10px 16px;
+		border-radius: 4px;
+	}
+
+	.navbar a {
+		/* If a menu item's text is too long, truncate it */
+		width: 100%;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}

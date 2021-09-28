@@ -1,0 +1,56 @@
+﻿<h1 *ngIf="spectrumGrant&&active">Active Grant ID: {{ spectrumGrant.grantID }} </h1>
+<h1 *ngIf="spectrumGrant&&logged">Logged Grant ID: {{ spectrumGrant.grantID }} </h1>
+<h3>Details:</h3>
+<h3 *ngIf="!spectrumGrant">No Grant</h3>
+<table class="table" style = "display:table; max-width:500px" border=1>
+
+<tr *ngIf="spectrumGrant&&spectrumGrant.approved"><td>Approved:</td><td> YES </td></tr>
+<tr *ngIf="spectrumGrant&&!spectrumGrant.approved"><td>Approved:</td><td> NO </td></tr>
+<tr *ngIf="spectrumGrant"><td>SU ID:</td><td> <a href="SU-details/{{ spectrumGrant.secondaryUserID}}">{{ spectrumGrant.secondaryUserID }}</a></td></tr>
+<tr *ngIf="spectrumGrant"><td>Tier:</td><td>{{ spectrumGrant.tier }}</td></tr>
+<tr *ngIf="spectrumGrant"><td>SU UserName:</td><td> <a href="SU-details/{{ spectrumGrant.secondaryUserID}}">{{ spectrumGrant.secondaryUserName }}</a></td></tr>
+<tr *ngIf="spectrumGrant && spectrumGrant.nodeID"><td>Node ID:</td><td><a href="node-details/{{ spectrumGrant.nodeID}}"> {{ spectrumGrant.nodeID }}{{ spectrumGrant.nodeID }}</a></td></tr>
+<tr *ngIf="spectrumGrant && !spectrumGrant.nodeID"><td>Node ID:</td><td> No Node</td></tr>
+<tr *ngIf="spectrumGrant"><td>Device ID:</td><td> {{ spectrumGrant.deviceID }}</td></tr>
+<tr *ngIf="spectrumGrant"><td>Frequency:</td><td> {{ spectrumGrant.frequency }}Hz</td></tr>
+<tr *ngIf="spectrumGrant"><td>Bandwidth:</td><td> {{ spectrumGrant.bandwidth }}Hz</td></tr>
+<tr *ngIf="spectrumGrant"><td>Time:</td><td> {{ spectrumGrant.startTime }}-{{ spectrumGrant.endTime }}</td>
+<tr *ngIf="spectrumGrant"><td>Status:</td><td> {{ spectrumGrant.status }}</td>
+<tr *ngIf="spectrumGrant"><td>Frequency Range:</td><td> {{ spectrumGrant.requestMinFrequency }}-{{ spectrumGrant.requestMaxFrequency }}, {{ spectrumGrant.frequencyAbsolute }}Hz</td>
+<tr *ngIf="spectrumGrant"><td>Min BW:</td><td> {{ spectrumGrant.minBandwidth }}Hz</td>
+<tr *ngIf="spectrumGrant"><td>Preferred BW:</td><td> {{ spectrumGrant.preferredBandwidth }}</td>
+<tr *ngIf="spectrumGrant"><td>Requested Time:</td><td> {{ spectrumGrant.requestStartTime }}-{{ spectrumGrant.requestEndTime }}</td>
+<tr *ngIf="spectrumGrant"><td>Approx. Byte Size:</td><td> {{ spectrumGrant.requestApproximateByteSize }}</td>
+<tr *ngIf="spectrumGrant"><td>Data Type:</td><td> {{ spectrumGrant.requestDataType }}</td>
+<tr *ngIf="spectrumGrant"><td>Power Level:</td><td> {{ spectrumGrant.requestPowerLevel }}</td>
+<tr *ngIf="spectrumGrant"><td>Location:</td><td> {{ spectrumGrant.requestLocation }}</td>
+<tr *ngIf="spectrumGrant && spectrumGrant.requestMobility"><td>Mobility:</td><td>YES</td>
+	<tr *ngIf="spectrumGrant && !spectrumGrant.requestMobility"><td>Mobility:</td><td>NO</td>
+<tr *ngIf="spectrumGrant"><td>Max Velocity:</td><td> {{ spectrumGrant.requestMaxVelocity }}</td></tr>
+
+</table>
+
+<table *ngIf="Heartbeats" class="table">
+
+<thead>
+	<tr *ngIf="spectrumGrant">
+	<th>Hearbeat ID</th>
+	<th>Hearbeat Time</th>
+	<th>SU Location</th>
+	<th>SU Velocity</th>
+	<th>Status</th>
+	<th>HB Bandwidth</th>
+	</tr>
+</thead>
+
+<tbody style="overflow:auto;">
+        <tr *ngFor="let HB of Heartbeats">
+            <td>{{ HB.heartbeatID }}</td>
+            <td>{{ HB.heartbeatTime }}</td>
+            <td>{{ HB.secondaryUserLocation }}</td>
+            <td>{{ HB.secondaryUserVelocity }}</td>
+            <td>{{ HB.heartbeatGrantStatus }}</td>
+            <td>{{ HB.heartbeatBandwidth }}Hz</td>
+        </tr>
+</tbody>
+</table>

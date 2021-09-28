@@ -1,0 +1,84 @@
+/* You can add global styles to this file, and also import other style files */
+/*@import '~@angular/material/prebuilt-themes/deeppurple-amber.css';*/
+
+table{
+	display:block;
+	overflow:auto;
+}
+
+.vt-loading-screen {
+    background-image:url(./assets/img/hokie-stone-fall.jpg);
+    background-position:center center;
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+    background-size:cover;
+    height:100%;
+	width:100%;
+	min-height:100%;
+    margin-bottom:60px;
+}
+
+@media (max-width: 769px) {
+    /* On small screens, the nav menu spans the full width of the screen. Leave a space for it. */
+    .body-content {
+        padding-top: 50px;
+    }
+}
+
+
+.root {
+	width: 500px;
+	margin: 80px auto 100px;
+	padding: 0px;
+	transform: translateX(-10px);
+}
+
+.card {
+	padding: 30px 50px;
+	border: 1px solid grey;
+	border-radius: 20px;
+	box-shadow: 0px 0px 15px rgb(0, 0, 0);
+	background-color: rgba(255, 255, 255, 0.9);
+    transition: 700ms;
+}
+
+.card:hover {
+	box-shadow: 1px 1px 10px black;
+}
+
+.card-title {
+	font-weight: 800;
+	border-radius: 10px;
+	padding: 10px 0px;
+	width: 100%;
+	text-align: center;
+	color: rgb(255, 255, 255);
+	box-shadow: 3px 3px 10px black;
+    text-shadow: 3px 3px 5px rgb(49, 49, 49);
+    cursor: default;
+	transition: 500ms;
+}
+
+card-title:hover {
+	box-shadow: 1px 1px 10px black;
+}
+
+.card-message {
+	margin: 30px 0px 40px;
+	font-style: italic;
+	color:rgba(0, 0, 0, 0.6)
+}
+
+.responseMessage {
+	color: #ee2020;
+	margin: 15px 0px 20px;
+}
+
+@media (max-width: 700px) {
+    .root {
+        width: 80vw;
+	}
+	.card {
+		padding: 20px 40px;
+	}
+}

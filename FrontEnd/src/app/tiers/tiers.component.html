@@ -1,0 +1,110 @@
+﻿<div *ngIf="showAll">
+<h1>Tier Classes</h1>
+<p *ngIf="!TierClasses"><em>None...</em></p>
+
+<table class='table' *ngIf="TierClasses" style="overflow-x:scroll;">
+    <thead>
+        <tr>
+            <th>Tier Class ID</th>
+            <th>Class Name</th>
+            <th>SAS Priority Level</th>
+            <th>Description</th>
+            <th>Max Inner Tier Number</th>
+            <th>Band Range</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let tier of TierClasses">
+            <td><a routerLink="/tiers/{{tier.tierClassID}}">{{ tier.tierClassID }}</a></td>
+            <td><a routerLink="/tiers/{{tier.tierClassID}}">{{ tier.tierClassName }}</a></td>
+            <td>{{ tier.tierPriorityLevel }}</td>
+            <td>{{ tier.tierClassDescription }}</td>
+            <td>{{ tier.maxTierNumber }}</td>
+            <td>{{ tier.tierLowerBand }}-{{ tier.tierUpperBand }}{{ tier.range }}</td>
+        </tr>
+    </tbody>
+</table>
+<a routerLink="/tier/newTierClass"><button type="button" class="btn btn-default">Create New Tier Class</button></a>
+</div>
+<div *ngIf="showIndividual">
+<h1>{{ tier.tierClassName }}</h1>
+            <h4>Priority Level: {{ tier.tierPriorityLevel }}</h4>
+            <h4>Class Description: {{ tier.tierClassDescription }}</h4>
+            <h4>Max Tier Number: {{ tier.maxTierNumber }}</h4>
+            <h4>Band Range: {{ tier.tierLowerBand }}-{{ tier.tierUpperBand }}{{ tier.range }}</h4>
+            <a *ngIf="!dissassociate&&!addSUs" routerLink="/tier/{{tier.tierClassID}}"><button type="button" class="btn btn-default" style="background-color:#90EE90">Edit This Class</button></a>
+            <h2>Secondary Users in {{ tier.tierClassName }}</h2>
+            <button *ngIf="!dissassociate&&!addSUs" type="button" class="btn btn-default" (click)="toggleDissassociate();" style="background-color:#FFC6C4">Dissassociate Members</button>
+            <button *ngIf="dissassociate" type="button" class="btn btn-default" (click)="toggleDissassociate();">Stop Dissassociating</button>
+<br>
+<br>
+            <button *ngIf="!addSUs&&!dissassociate" type="button" class="btn btn-default" (click)="toggleAddSU();" style="background-color:#ADD8EC">Add Members</button>
+            <button *ngIf="addSUs" type="button" class="btn btn-default" (click)="toggleAddSU();">Stop Adding Members</button>
+
+<div *ngIf="addSUs">
+    <br>
+        <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="secondaryUsersID">Secondary User</label>
+              <select class="form-control" id="secondaryUsersID"
+                      required
+                      [(ngModel)]="model.secondaryUserID" name="secondaryUserID"
+                      #secondaryUserID="ngModel">
+                  <option *ngFor="let SU of secondaryUsersToAdd" [value]="SU.secondaryUserID">{{SU.secondaryUserName}} {{ SU.secondaryUserEmail }}</option>
+              </select>
+              <div [hidden]="secondaryUserID.valid || secondaryUserID.pristine" class="alert alert-danger">
+                  Please select a secondary user to add to {{ tier.tierClassName }}.
+              </div>
+        </div>
+              <div class="form-group" style="max-width:350px;float:left;padding-right:20px;">
+              <label for="innerTierLevel">Inner Tier Level (0 Is Highest Priority)</label>
+              <select class="form-control" id="innerTierLevel"
+                      required
+                      [(ngModel)]="model.innerTierLevel" name="innerTierLevel"
+                      #innerTierLevel="ngModel">
+                  <option *ngFor="let innerTierLevel of innerTierLevelArray" [value]="innerTierLevel">{{innerTierLevel}}</option>
+              </select>
+              <div [hidden]="innerTierLevel.valid || innerTierLevel.pristine" class="alert alert-danger">
+                  Please select the tier for this user.
+              </div>
+          </div>
+          <br>
+<button *ngIf="addSUs" type="button" class="btn btn-default" (click)="createTierAssignment();" style="background-color:#ADD8EC">Add This Secondary User</button>
+<br>
+</div>
+
+
+
+
+<p *ngIf="!SecondaryUsers"><em>Loading...</em></p>
+
+<table class='table' *ngIf="SecondaryUsers" style="overflow-x: auto;overflow-y: auto;">
+    <thead>
+        <tr>
+            <th>SUID</th>
+            <th>Secondary User Name</th>
+            <th>Email</th>
+            <th>Inner Tier Level</th>
+            <th *ngIf="dissassociate">Remove Association</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let secondaryUser of SecondaryUsers">
+            <td><a routerLink="/SU-details/{{secondaryUser.secondaryUserID}}">{{ secondaryUser.secondaryUserID }}</a></td>
+            <td><a routerLink="/SU-details/{{secondaryUser.secondaryUserID}}">{{ secondaryUser.secondaryUserName }}</a></td>
+            <td>{{ secondaryUser.secondaryUserEmail }}</td>
+
+
+
+            <td *ngIf="addSUs || dissassociate">{{ secondaryUser.innerTierLevel }}</td>
+        <td *ngIf="!addSUs&&!dissassociate">
+              <select class="form-control" name="innerTierLevel" [value]="secondaryUser.innerTierLevel" (change)="updateTierAssignment(secondaryUser, $event.target.value);">
+                  <option *ngFor="let innerTierLevel of innerTierLevelArray" [value]="innerTierLevel">{{innerTierLevel}}</option>
+              </select>
+        </td>
+
+            <td *ngIf="dissassociate"><button type="button" class="btn btn-default" style="background-color:#FFC6C4"(click)="dissassociateSU(secondaryUser);">Dissassociate</button></td>
+        </tr>
+    </tbody>
+</table>
+<a routerLink="/tiers/showAll"><button type="button" class="btn btn-default">Show All Tier Classes</button></a>
+</div>

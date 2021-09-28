@@ -1,0 +1,103 @@
+﻿<div class='main-nav'>
+    <div class='navbar navbar-inverse'>
+        <div class='navbar-header banner'>
+            <button type='button' class='navbar-toggle' data-toggle='collapse' data-target='.navbar-collapse' [attr.aria-expanded]='isExpanded' (click)='toggle()'>
+                <span class='sr-only'>Toggle navigation</span>
+                <span class='icon-bar'></span>
+                <span class='icon-bar'></span>
+                <span class='icon-bar'></span>
+            </button>
+            <a class='navbar-brand sas-title' [routerLink]='["/"]'>Spectrum Access System</a>
+        </div>
+        <div class='clearfix'></div>
+        <div class='navbar-collapse collapse' [ngClass]='{ "in": isExpanded }'>
+            <ul class='nav navbar-nav'>
+                <li *ngIf="userType == 'ADMIN'" [routerLinkActive]='["link-active"]' [routerLinkActiveOptions]='{ exact: true }'>
+                    <a [routerLink]='["/"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-home'></span> Home
+                    </a>
+                </li>
+                <li *ngIf="userType == 'ADMIN' || userType == 'SU'" [routerLinkActive]='["link-active"]' [routerLinkActiveOptions]='{ exact: true }'>
+                    <a [routerLink]='["/map"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-picture'></span> SAS/REM Map
+                    </a>
+                </li>
+                <li *ngIf="userType == 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/contact"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-earphone'></span> Contact
+                    </a>
+                </li>
+                <li *ngIf="userType == 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/tiers/showAll"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-equalizer'></span> View Tier Classes
+                    </a>
+                </li>
+                <li *ngIf="userType == 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/schedules"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-map-marker'></span> View Region Schedules
+                    </a>
+                </li>
+                <li *ngIf="userType == 'SU'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/SU-details/0"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-earphone'></span> My Info/Requests
+                    </a>
+                </li>
+                <li *ngIf="userType == 'SU' || userType == 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/create-request"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-edit'></span> Make a SAS Request
+                    </a>
+                </li>
+                <!--li *ngIf="userType== 'DIRECTOR'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/student-form"]' (click)='collapse();clearStudent();' >
+                        <span class='glyphicon glyphicon-education'></span>Add Student
+                    </a>
+                </li-->
+                <li *ngIf="loggedIn==false"[routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/login"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-education'></span> SU Login
+                    </a>
+                </li>
+                <li *ngIf="loggedIn==false"[routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/admin-login"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-education'></span> Admin Login
+                    </a>
+                </li>
+                <li *ngIf="userType== 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/node-list"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-cd'></span> View SAS Nodes
+                    </a>
+                </li>
+                <li *ngIf="userType== 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/grant-list/requests"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-pencil'></span> View Grant Requests
+                    </a>
+                </li>
+                <li *ngIf="userType== 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/grant-list/active"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-hourglass'></span> View Active Grants
+                    </a>
+                </li>
+                <li *ngIf="userType== 'ADMIN'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/grant-list/logged"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-saved'></span> View Logged Grants
+                    </a>
+                </li>
+                <li *ngIf="userType== 'ADMIN' || userType =='SU'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/create-node"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-ok-circle'></span> Add a Node
+                    </a>
+                </li>
+                <li *ngIf="userType== 'ADMIN' || userType =='SU'" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/socket"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-ok-circle'></span> Socket Test
+                    </a>
+                </li>
+                <li *ngIf="loggedIn==true" [routerLinkActive]='["link-active"]'>
+                    <a [routerLink]='["/logout"]' (click)='collapse()'>
+                        <span class='glyphicon glyphicon-eject'></span> Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

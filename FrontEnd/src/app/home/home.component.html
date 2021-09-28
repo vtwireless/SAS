@@ -1,0 +1,13 @@
+﻿<div class='page'>
+
+<div class='page-header'>Welcome to the Virginia Tech Spectrum Access System</div>
+<div class='page-header' *ngIf="loggedIn">Hello, {{ name }}!</div>
+
+<div class='options'>
+    <a routerLink="/login" class='login-btn su-login' *ngIf="!loggedIn">Secondary User Login/Register</a>
+    <a  routerLink="/admin-login" class='login-btn admin-login' *ngIf="!loggedIn">Admin Login</a>
+</div>
+<br><br>
+
+<img style="width:100%;" src="assets/img/fake-map.png">
+</div>

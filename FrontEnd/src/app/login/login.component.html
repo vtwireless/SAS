@@ -1,0 +1,69 @@
+﻿<div class="root">
+	<div class="card">
+		<h1 *ngIf="successfullyRegistered">
+			You have successfully registered!
+		</h1>
+		<h1 class="card-title login-title">Login</h1>
+		<h4 class='card-message'>Sign in to your Secondary User account.</h4>
+		<form
+			(ngSubmit)="onSubmit()"
+			#loginForm="ngForm"
+			style="max-width: 600px"
+		>
+			<div class="form-group">
+				<label for="username">Email</label>
+				<input
+					type="text"
+					class="form-control"
+					id="username"
+					required
+					[(ngModel)]="model.username"
+					name="username"
+					#username="ngModel"
+				/>
+				<div
+					[hidden]="username.valid || username.pristine"
+					class="alert alert-danger"
+				>
+					Email is required
+				</div>
+			</div>
+			<div class="form-group">
+				<label for="password">Password</label>
+				<input
+					type="password"
+					class="form-control"
+					id="password"
+					required
+					[(ngModel)]="model.password"
+					name="password"
+					#password="ngModel"
+				/>
+				<div
+					[hidden]="password.valid || password.pristine"
+					class="alert alert-danger"
+				>
+					Password is required
+				</div>
+			</div>
+			<div class='responseMessage'>{{ responseMessage }}</div>
+			<div class="form-group">
+				<button
+					[disabled]="!loginForm.form.valid"
+					class="btn btn-primary"
+				>
+					Sign In
+				</button>
+
+				<div class='register-btn'>
+					<p class='register-message'>First time logging in?</p>
+					<a
+						[routerLink]="['/create-su']"
+						class="register-link btn btn-link"
+						>Register as a Secondary User</a
+					>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>

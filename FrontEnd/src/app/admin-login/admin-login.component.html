@@ -1,0 +1,34 @@
+﻿<div class='root'>
+  <div class='card'>
+    <h1 class='card-title admin-login-title'>Admin Login</h1>
+    <h4 class='card-message'>If you do not have access, please contact your system administrator.</h4>
+    <form (ngSubmit)="onSubmit()" #loginForm="ngForm" style="max-width:600px;">
+      <div class="form-group">
+        <label for="username">Admin Email</label>
+        <input type="text" class="form-control" id="username"
+              required
+              [(ngModel)]="model.username" name="username"
+              #username="ngModel">
+        <div [hidden]="username.valid || username.pristine"
+            class="alert alert-danger">
+          Username or email is required
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" class="form-control" id="password"
+              required
+              [(ngModel)]="model.password" name="password"
+              #password="ngModel">
+        <div [hidden]="password.valid || password.pristine"
+            class="alert alert-danger">
+          Password is required
+        </div>
+      </div>
+      <div class='responseMessage'>{{ responseMessage }}</div>
+      <div class="form-group">
+        <button [disabled]="!loginForm.form.valid" class="btn btn-primary">Login</button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,9 @@
+﻿<h1>Socket Stuff</h1>
+<h2  *ngIf="loggedIn">Hello, {{ name }}!</h2>
+
+<div style="text-align:center;">
+{{ socketText }}
+</div>
+<br><br>
+<button (click)="startSocket()">Start Socket</button>
+<button (click)="closeSocket()">Close Socket</button>

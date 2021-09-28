@@ -1,0 +1,33 @@
+﻿<h1>Registered SAS Nodes</h1>
+<button type="button" class="btn btn-default"><a routerLink="/create-node">Register New Node</a></button>
+
+<p *ngIf="!Nodes"><em>Loading...</em></p>
+<table class='table' *ngIf="Nodes">
+    <thead>
+        <tr>
+            <th>Node ID</th>
+            <th>Node Name</th>
+            <th>Location</th>
+            <th>Trust Level</th>
+            <th>Frequency Range</th>
+            <th>Sample Rate Range</th>
+            <th>Node Type</th>
+            <th>Mobile</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let node of Nodes">
+            <td><a routerLink="/node-details/{{node.nodeID}}">{{ node.nodeID }}</a></td>
+            <td><a routerLink="/node-details/{{node.nodeID}}">{{ node.nodeName }}</a></td>
+            <td>{{ node.location }}</td>
+            <td>{{ node.trustLevel }}</td>
+            <td>{{ node.minFrequency }}-{{ node.maxFrequency }}</td>
+            <td>{{ node.minSampleRate }}-{{ node.maxSampleRate }}</td>
+            <td>{{ node.nodeType }}</td>
+            <td *ngIf="node.mobility">Yes</td>
+            <td *ngIf="!node.mobility">No</td>
+            <td>{{ node.status }}</td>
+        </tr>
+    </tbody>
+</table>
