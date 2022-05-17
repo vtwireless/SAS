@@ -2,7 +2,7 @@
 	"0":[
 			{
 				"createNode":[{
-					"address":"192.168.40.101",
+					"address":"192.168.40.205",
 					"mode":"TXRX",
 					"tx_fc":"3565000000",
 					"tx_gain":"31.5",
@@ -17,7 +17,7 @@
 	"5":[
 			{
 				"registrationRequest":[{
-					"nodeIp":"192.168.40.101",
+					"nodeIp":"192.168.40.205",
 					"userId":"CamUserId",
 					"fccId":"FCCIDEXAMPLE123",
 					"callSign":"RANDOMCS",
@@ -60,7 +60,7 @@
 	"10":[
 			{
 				"spectrumInquiryRequest":[{
-					"nodeIp":"192.168.40.101",
+					"nodeIp":"192.168.40.205",
 					"inquiredSpectrum":[{
 						"lowFreq":"3560000000",
 						"highFreq":"3570000000"
@@ -71,7 +71,7 @@
 	"15":[
 			{
 				"grantRequest":[{
-					"nodeIp":"192.168.40.101",
+					"nodeIp":"192.168.40.205",
 					"operationParam":{
 						"maxEirp":"0",
 						"operationFrequencyRange":{
@@ -86,7 +86,7 @@
 	"20":[
 			{
 			"heartbeatRequest":[{
-					"nodeIp":"192.168.40.101"
+					"nodeIp":"192.168.40.205"
 				}]
 			}
 	]
