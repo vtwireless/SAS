@@ -42,7 +42,7 @@ GNURadio and UHD Setup:
     * `sudo apt-cache policy gnuradio`
 3. The step above displays available gnuradio packages and their sources. Check if v3.8.5.0 is available.
     * If v3.8.5.0 is available, then install that specific version:
-      * `sudo apt-get install gnuradio=3.8.5.0~gnuradio~focal-4`
+      * `sudo apt-get install gnuradio=3.8.5.0-0~gnuradio~focal-4`
       * NOTE: The name of the version of GNURadio (`~gnuradio~focal-4`) may be different in your case. Please substitute the name appropiately.
     * If v3.8.5.0 is not available, then update linux source repository:
       * `sudo add-apt-repository ppa:gnuradio/gnuradio-releases-3.8`
