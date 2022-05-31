@@ -1,7 +1,7 @@
 <?php
 define('DB_SERVER', 'localhost');
 define('DB_USERNAME', 'root');
-define('DB_PASSWORD', '');
+define('DB_PASSWORD', 'root');
 define('DB_DATABASE', 'spectrumGrant');
 
 //define('DB_SERVER', 'honorbanddb.cutyx9bw06ul.us-east-1.rds.amazonaws.com');

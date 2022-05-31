@@ -69,6 +69,15 @@ anywhere, this specific one needs to be run from the location where the **packag
 resides, which should be ./.../SAS/FrontEnd
    * `npm install`
 
+### Database Setup
+TODO: Mention the following:
+   * phpmyadmin setup
+   * mariadb setup
+   * securing db and changing root credentials
+   * hosting db files on apache
+   * database and table creation
+   * verification of successfull setup
+
 ## File Structure
 ### Core
 The Core/ folder contains everything required to launch the SAS Core

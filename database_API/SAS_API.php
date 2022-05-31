@@ -2,7 +2,8 @@
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: * ");
 header("Access-Control-Allow-Headers: Content-Type");
-   include '../incSAS/database.php';//include 'database.php';
+   //include '../incSAS/database.php';
+   include 'database.php';
    $connection = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD);
    if (mysqli_connect_errno()){
      echo "Failed to connect to MySQL: " . mysqli_connect_error();
