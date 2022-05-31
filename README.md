@@ -57,6 +57,17 @@ This application needs **python 3.6 or above**.
 3. Activate the environment and install required packages:
    * Activate environment: `source lib/bin/activate`.
    * Install packages: `pip install -r requirements.txt`.
+   
+### FrontEnd Dev Environment Setup
+1. Install nodejs and npm.
+   * `sudo apt-get install nodejs` and `sudo apt-get install npm`.
+   * Currently, we are using nodejs v10.19.0 and npm v6.14.4
+2. Install AngularJs 8.2.0 \[as suggested in the package.json\].
+   * `sudo npm install -g @angular/cli@8.2.0`
+3. Install the rest of the dependencies. While the 2 commands above can be run from
+anywhere, this specific one needs to be run from the location where the **package.json**
+resides, which should be ./.../SAS/FrontEnd
+   * `npm install`
 
 ## File Structure
 ### Core
