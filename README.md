@@ -11,7 +11,7 @@ to the `requirements.txt [WIP]` file.
 
 GNURadio: **3.8.5.0**, UHD: **3.15.0.0-2build5**
 
-### GNURadio and UHD Setup:
+## GNURadio and UHD Setup:
 1. Uninstall any previous existing conflicting versions of GNURadio and UHD:
    * `sudo apt-get -y autoremove --purge gnuradio uhd-host`
    * `sudo apt-get update`
@@ -45,7 +45,7 @@ GNURadio: **3.8.5.0**, UHD: **3.15.0.0-2build5**
      * `uhd.find_devices()`
    * If we don't see errors at this stage, installation is complete and successful.
 
-### Python Dev Environment Setup
+## Python Dev Environment Setup
 Once gnuradio and uhd-host packages are successfully installed, we can move on to setting up the python environment. 
 This application needs **python 3.6 or above**.
 1. Verify that python3.X is installed in your system.
@@ -58,7 +58,7 @@ This application needs **python 3.6 or above**.
    * Activate environment: `source lib/bin/activate`.
    * Install packages: `pip install -r requirements.txt`.
    
-### FrontEnd Dev Environment Setup
+## FrontEnd Dev Environment Setup
 1. Install nodejs and npm.
    * `sudo apt-get install nodejs` and `sudo apt-get install npm`.
    * Currently, we are using nodejs v10.19.0 and npm v6.14.4
@@ -69,14 +69,36 @@ anywhere, this specific one needs to be run from the location where the **packag
 resides, which should be ./.../SAS/FrontEnd
    * `npm install`
 
-### Database Setup
-TODO: Mention the following:
-   * phpmyadmin setup
-   * mariadb setup
-   * securing db and changing root credentials
-   * hosting db files on apache
-   * database and table creation
-   * verification of successfull setup
+## Database Setup
+### Install phpmyadmin
+1. Install the software using the following commands: 
+   1. `sudo apt update`.
+   2. `sudo apt install phpmyadmin php-mbstring php-zip php-gd php-json php-curl`
+   3. `sudo phpenmod mbstring`
+   4. `sudo systemctl restart apache2`
+
+### Install Mariadb
+https://www.digitalocean.com/community/tutorials/how-to-install-mariadb-on-ubuntu-20-04
+1. Install the database:
+   1. `sudo apt update` 
+   2. `sudo apt install mariadb-server` 
+   3. `sudo systemctl start mariadb.service`
+2. Configure database:
+   1. `sudo mysql_secure_installation`
+   2. Follow the prompt and setup root password. Root password can be modified in the following way:
+      1. `sudo mysql`
+      2. `ALTER USER 'root'@'localhost' IDENTIFIED BY 'password';`
+      3. `exit`.
+      4. Subsequent logins for root should now be available with password: `mysql -u root -p`.
+   3. Create a database: `CREATE DATABASE spectrumGrant;`.
+3. Create tables using the `.sql` file available in `database_API` folder.
+   1. In the folder's location, execute `mysql -u root -p < spectrumGrant\ v1.0.sql`.
+   2. Verify that the tables are created in the database.
+
+### Setup Database files
+We need to host database API files on APACHE. To do this, move the `.php` files from 
+`database_API` and place them inside `SASAPI` folder. This folder needs to be created
+inside `\var\www\html\ `.
 
 ## File Structure
 ### Core
