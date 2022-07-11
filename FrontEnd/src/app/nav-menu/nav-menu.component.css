@@ -1,11 +1,19 @@
-/* Keep the nav menu independent of scrolling and on top of other items */
-.main-nav {
+.sidenav {
+	padding-left: 2px;
+}
+
+.mat-button {
+	padding: 2px 16px;
+}
+
+
+/* .main-nav {
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
 	z-index: 1;
-	/* box-shadow: 1px 1px 3px white; */
+	overflow-y: scroll;
 }
 
 .banner { 
@@ -66,7 +74,6 @@ li .glyphicon {
 	animation: glowing 5000ms infinite;
 }
 
-/* Highlighting rules for nav menu items */
 li.link-active a,
 li.link-active a:hover,
 li.link-active a:focus {
@@ -181,7 +188,6 @@ li.link-active a:focus {
 }
 
 @media (min-width: 769px) {
-	/* On small screens, convert the nav menu to a vertical sidebar */
 	.main-nav {
 		height: 100%;
 		width: calc(25% - 20px);
@@ -217,10 +223,9 @@ li.link-active a:focus {
 	}
 
 	.navbar a {
-		/* If a menu item's text is too long, truncate it */
 		width: 100%;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-}
+} */

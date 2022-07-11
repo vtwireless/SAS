@@ -1,7 +1,86 @@
-﻿<div class='main-nav'>
+﻿<div class="sidenav">
+    <!-- <ul class='nav navbar-nav'> -->
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/">
+            <mat-icon>home</mat-icon>
+            <span> HOME</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN' || userType == 'SU'" mat-button class="menu-button" routerLink="/map">
+            <mat-icon>map</mat-icon>
+            <span> SAS/REM Map</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/contact">
+            <mat-icon>phone</mat-icon>
+            <span> CONTACT</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/tiers/showAll">
+            <mat-icon>equalizer</mat-icon>
+            <span> TIER CLASSES</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/schedules">
+            <mat-icon>room</mat-icon>
+            <span> REGION SCHEDULES</span>
+        </button>
+
+        <button *ngIf="userType == 'SU'" mat-button class="menu-button" routerLink="/SU-details/0">
+            <mat-icon>book</mat-icon>
+            <span> INFO/REQUESTS</span>
+        </button>
+
+        <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-request">
+            <mat-icon>edit</mat-icon>
+            <span> SAS REQUEST</span>
+        </button>
+
+        <button *ngIf="loggedIn==false" mat-button class="menu-button" routerLink="/login">
+            <mat-icon>login</mat-icon>
+            <span> SU LOGIN</span>
+        </button>
+
+        <button *ngIf="loggedIn==false" mat-button class="menu-button" routerLink="/admin-login">
+            <mat-icon>login</mat-icon>
+            <span> ADMIN LOGIN</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/node-list">
+            <mat-icon>list</mat-icon>
+            <span> NODES</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/requests">
+            <mat-icon>note_add</mat-icon>
+            <span> GRANT REQUESTS</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/active">
+            <mat-icon>hourglass_empty</mat-icon>
+            <span> ACTIVE GRANTS</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/logged">
+            <mat-icon>hourglass_full</mat-icon>
+            <span> LOGGED GRANTS</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-node">
+            <mat-icon>add_location</mat-icon>
+            <span> ADD NODE</span>
+        </button>
+
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/socket">
+            <mat-icon>settings_application</mat-icon>
+            <span> SOCKET TEST</span>
+        </button>
+</div>
+
+<!-- <div class='main-nav'>
     <div class='navbar navbar-inverse'>
         <div class='navbar-header banner'>
-            <button type='button' class='navbar-toggle' data-toggle='collapse' data-target='.navbar-collapse' [attr.aria-expanded]='isExpanded' (click)='toggle()'>
+            <button type='button' class='navbar-toggle' data-toggle='collapse' data-target='.navbar-collapse'
+                [attr.aria-expanded]='isExpanded' (click)='toggle()'>
                 <span class='sr-only'>Toggle navigation</span>
                 <span class='icon-bar'></span>
                 <span class='icon-bar'></span>
@@ -12,12 +91,14 @@
         <div class='clearfix'></div>
         <div class='navbar-collapse collapse' [ngClass]='{ "in": isExpanded }'>
             <ul class='nav navbar-nav'>
-                <li *ngIf="userType == 'ADMIN'" [routerLinkActive]='["link-active"]' [routerLinkActiveOptions]='{ exact: true }'>
+                <li *ngIf="userType == 'ADMIN'" [routerLinkActive]='["link-active"]'
+                    [routerLinkActiveOptions]='{ exact: true }'>
                     <a [routerLink]='["/"]' (click)='collapse()'>
                         <span class='glyphicon glyphicon-home'></span> Home
                     </a>
                 </li>
-                <li *ngIf="userType == 'ADMIN' || userType == 'SU'" [routerLinkActive]='["link-active"]' [routerLinkActiveOptions]='{ exact: true }'>
+                <li *ngIf="userType == 'ADMIN' || userType == 'SU'" [routerLinkActive]='["link-active"]'
+                    [routerLinkActiveOptions]='{ exact: true }'>
                     <a [routerLink]='["/map"]' (click)='collapse()'>
                         <span class='glyphicon glyphicon-picture'></span> SAS/REM Map
                     </a>
@@ -47,17 +128,17 @@
                         <span class='glyphicon glyphicon-edit'></span> Make a SAS Request
                     </a>
                 </li>
-                <!--li *ngIf="userType== 'DIRECTOR'" [routerLinkActive]='["link-active"]'>
+                <li *ngIf="userType== 'DIRECTOR'" [routerLinkActive]='["link-active"]'>
                     <a [routerLink]='["/student-form"]' (click)='collapse();clearStudent();' >
                         <span class='glyphicon glyphicon-education'></span>Add Student
                     </a>
-                </li-->
-                <li *ngIf="loggedIn==false"[routerLinkActive]='["link-active"]'>
+                </li>
+                <li *ngIf="loggedIn==false" [routerLinkActive]='["link-active"]'>
                     <a [routerLink]='["/login"]' (click)='collapse()'>
                         <span class='glyphicon glyphicon-education'></span> SU Login
                     </a>
                 </li>
-                <li *ngIf="loggedIn==false"[routerLinkActive]='["link-active"]'>
+                <li *ngIf="loggedIn==false" [routerLinkActive]='["link-active"]'>
                     <a [routerLink]='["/admin-login"]' (click)='collapse()'>
                         <span class='glyphicon glyphicon-education'></span> Admin Login
                     </a>
@@ -100,4 +181,4 @@
             </ul>
         </div>
     </div>
-</div>
+</div> -->

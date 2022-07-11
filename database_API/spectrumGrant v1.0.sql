@@ -253,6 +253,26 @@ INSERT INTO `secondaryUser` (`secondaryUserID`, `secondaryUserEmail`, `secondary
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `adminID` int(10) NOT NULL,
+  `adminEmail` varchar(255) COLLATE utf8_bin NOT NULL,
+  `adminPassword` varchar(255) COLLATE utf8_bin NOT NULL,
+  `adminName` varchar(255) COLLATE utf8_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+--
+-- Dumping data for table `secondaryUser`
+--
+
+INSERT INTO `admin` (`adminID`, `adminEmail`, `adminPassword`, `adminName`) VALUES
+(1, 'admin@sas.com', 'admin', 'Administrator');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `spectrumGrant`
 --
 
@@ -340,6 +360,12 @@ ALTER TABLE `primaryUserLog`
 --
 ALTER TABLE `secondaryUser`
   ADD PRIMARY KEY (`secondaryUserID`);
+
+--
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`adminID`);
 
 --
 -- Indexes for table `spectrumGrant`

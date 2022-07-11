@@ -5,6 +5,8 @@
     public static GETURL = `${AppConstants.ROOTURL}SAS_API_GET.php`;
     public static POSTURL = `${AppConstants.ROOTURL}SAS_API.php`;
     public static SAS_KEY = "qowpe029348fuqw9eufhalksdjfpq3948fy0q98ghefqi";
+
+    public static BACKEND = "http://localhost:8000/";
 }
 
 export class SecondaryUser {

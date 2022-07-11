@@ -10,17 +10,18 @@ export class NavMenuComponent {
   isExpanded = false;
   userType = '';
   loggedIn = false;
-  constructor(){
+  constructor() {
     this.reload();
   }
-  reload(){
-    if(localStorage.getItem('currentUser')){
-        let user = new User('', '', '');
-        user = JSON.parse(localStorage.getItem('currentUser'));
-        this.userType = user.userType;
-        this.loggedIn = true;
+  
+  reload() {
+    if (localStorage.getItem('currentUser')) {
+      let user = new User('', '', '');
+      user = JSON.parse(localStorage.getItem('currentUser'));
+      this.userType = user.userType;
+      this.loggedIn = true;
     }
-    else{
+    else {
       this.loggedIn = false;
     }
   }
@@ -32,8 +33,8 @@ export class NavMenuComponent {
   toggle() {
     this.isExpanded = !this.isExpanded;
   }
-  
+
   clearStudent() {
-                localStorage.removeItem('studentID');
+    localStorage.removeItem('studentID');
   }
 }

@@ -21,33 +21,22 @@ export class HttpRequestsService {
 	POSTAPI = AppConstants.POSTURL;
 	GETAPI = AppConstants.GETURL;
 
-	constructor(private httpClient: HttpClient) {
-		/*this.httpClient.options('localhost', {
-			headers: new HttpHeaders({	
-			observe: 'response',
-			  'Content-Type': 'application/json'
-			})
-		  }
-		);*/
+	SERVER = AppConstants.BACKEND;
+	HEEADERS = new HttpHeaders({
+		'Content-Type':'application/json',
+		'Access-Control-Allow-Origin': '*'
+	});
 
-		// const httpOptions = {
-		// 	headers: new HttpHeaders({
-		// 	  'Content-Type':  'application/json',
-		// 	})
-		//   };
-	}
+	constructor(private httpClient: HttpClient) {}
 
 	public adminLogin(model: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'adminLogin');
-		params = params.set('password', model.password);
-		params = params.set('username', model.username);
-		return this.httpClient.post<any>(this.POSTAPI, params).catch(this.handleError);
-	}
+		var body = JSON.stringify({
+			password: model.password,
+			username: model.username
+		});
 
-	// public getPrimaryUsers2(): Observable<any> {
-	// 	return this.httpClient.get(this.GETAPI + '?action=getPrimaryUsers');
-	// }
+		return this.httpClient.post(this.SERVER + "adminLogin", body, {headers: this.HEEADERS});
+	}
 
 	public getPrimaryUsers(): Observable<any> {
 		let params = new HttpParams();
@@ -56,10 +45,6 @@ export class HttpRequestsService {
 
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
-
-	// public getSecondaryUsers2(): Observable<any> {
-	// 	return this.httpClient.get(this.GETAPI + '?action=getSecondaryUsers');
-	// }
 
 	public getSecondaryUsers(): Observable<any> {
 		let params = new HttpParams();
@@ -71,23 +56,8 @@ export class HttpRequestsService {
 			headers: { 'Content-Type': 'application/json' }, });
 	}
 
-	/*public getSasKey(): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getPrimaryUsers');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-		return this.httpClient.post(this.GETAPI, params);
-	}*/
-
-	// public getAllNodes(): Observable<any> {
-	// 	return this.httpClient.get(this.GETAPI + '?action=getNodes');
-	// }
-
 	public getAllNodes(): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getAllNodes');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.httpClient.get(this.SERVER + "nodes", {headers: this.HEEADERS});
 	}
 
 	public getMyNodes(SUId: string): Observable<any> {
@@ -236,7 +206,6 @@ export class HttpRequestsService {
 		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
-
 	public checkEmail(model: any): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'checkEmailAvail');
@@ -260,16 +229,6 @@ export class HttpRequestsService {
 
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
-
-	// public getGrantById(nodeID: any): Observable<any> {
-	// 	return this.httpClient.get(
-	// 		this.GETAPI + '?action=getSpectrumGrant&grantID=' + nodeID
-	// 	);
-	// }
-
-	// public getGrantLogs2(): Observable<any> {
-	// 	return this.httpClient.get(this.GETAPI + '?action=getGrantLogs');
-	// }
 	
 	public getGrantLogs(): Observable<any> {
 		let params = new HttpParams();
@@ -278,12 +237,6 @@ export class HttpRequestsService {
 
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
-
-	// public getGrandLogByID2(){
-	// 	return this.httpClient.get(
-	// 		this.GETAPI + '?action=getGrantLog&grantLogID=' + nodeID
-	// 		);
-	// }
 
 	public getGrantLogByID(grantID: any): Observable<any> {
 		let params = new HttpParams();
@@ -301,10 +254,6 @@ export class HttpRequestsService {
 
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
-
-	// public getSpectrumGrants2(): Observable<any> {
-	// 	return this.httpClient.get(this.GETAPI + '?action=getSpectrumGrants');
-	// }
 	
 	public getGrantRequests(): Observable<any> {
 		let params = new HttpParams();
@@ -315,18 +264,13 @@ export class HttpRequestsService {
 	}
 	
 	public suLogin(model: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'SULogin');
-		params = params.set('password', model.password);
-		params = params.set('username', model.username);
-		return this.httpClient.post<any>(this.POSTAPI, params).catch(this.handleError);
-	}
+		var body = JSON.stringify({
+			password: model.password,
+			username: model.username
+		});
 
-	// public getNodeByID2(nodeID: any): Observable<any> {
-	// 	return this.httpClient.get<Node>(
-	// 		this.GETAPI + '?action=getNode&nodeID=' + nodeID
-	// 	);
-	// }
+		return this.httpClient.post(this.SERVER + "suLogin", body, {headers: this.HEEADERS});
+	}
 
 	public getNodeByID(nodeID: any): Observable<any> {
 		let params = new HttpParams();
@@ -414,12 +358,6 @@ export class HttpRequestsService {
 		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
-	// public getPrimaryUserByID(userID: any): Observable<any> {
-	// 	return this.httpClient.get<PrimaryUser>(
-	// 		this.GETAPI + '?action=getPrimaryUser&primaryUserID=' + userID
-	// 	);
-	// }
-
 	public getPrimaryUserByID(userID: any): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getPrimaryUser');
@@ -428,14 +366,6 @@ export class HttpRequestsService {
 
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
-
-	// public getPrimaryUserActivityByID2(userID: any): Observable<any> {
-	// 	return this.httpClient.get(
-	// 		this.GETAPI +
-	// 			'?action=getPrimaryUserActivitiesByPUID&primaryUserID=' +
-	// 			userID
-	// 	);
-	// }
 	
 	public getPrimaryUserActivityByID(userID: any): Observable<any> {
 		let params = new HttpParams();
@@ -446,12 +376,6 @@ export class HttpRequestsService {
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
-	/*public getSecondaryUserByID(userID: any): Observable<any> {
-		return this.httpClient.get<SecondaryUser>(
-			this.GETAPI + '?action=getSecondaryUser&secondaryUserID=' + userID
-		);
-	}*/
-
 	public getSecondaryUserByID(userID: any): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getSecondaryUser');
@@ -460,8 +384,6 @@ export class HttpRequestsService {
 
 		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
-
-
 
 	public createTierClass(
 		model: any,
@@ -545,12 +467,6 @@ export class HttpRequestsService {
 		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
-	// public getAllGrantsBySUID(userID: any): Observable<any> {
-	// 	return this.httpClient.get(
-	// 		this.GETAPI + '?action=getAllGrantsBySUID&SUID=' + userID
-	// 	);
-	// }
-
 	public getAllGrantsBySUID(userID: any): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getAllGrantsBySUID');
@@ -570,5 +486,5 @@ export class HttpRequestsService {
 
 	private handleError(error: Response) {
 		return Observable.throw(error);
-	  }
+	}
 }

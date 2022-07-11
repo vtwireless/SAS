@@ -4,3 +4,8 @@ eventlet==0.33.1
 greenlet==1.1.2
 python-engineio==4.3.2
 python-socketio==5.6.0
+mysqlclient==2.1.1
+requests==2.22.0
+numpy==1.17.4
+flask==2.0.3
+flask-cors==3.0.10

@@ -6,9 +6,13 @@
 .page-header {
     font-size: 30px;
     color: rgb(0, 0, 0);
-    /* text-shadow: 1px 1px 5px rgb(110, 110, 110); */
-    text-decoration: none;
     font-weight: 900;
+}
+
+.page-subheader {
+    font-size: 15px;
+    color: rgb(0, 0, 0);
+    font-weight: 500;
 }
 
 .options {
