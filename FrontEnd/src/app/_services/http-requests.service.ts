@@ -79,20 +79,16 @@ export class HttpRequestsService {
 	}
 
 	public createSecondaryAccount(model: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'createSU');
-		params = params.set('secondaryUserName', model.secondaryUserName);
-		params = params.set('secondaryUserEmail', model.secondaryUserEmail);
-		params = params.set(
-			'secondaryUserPassword',
-			model.secondaryUserPassword
-		);
-		params = params.set('nodeID', model.nodeID);
-		params = params.set('deviceID', model.deviceID);
-		params = params.set('location', model.location);
-		const body = new FormData();
-		body.append('action', 'createSU');
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		var body = JSON.stringify({
+			secondaryUserName: model.secondaryUserName,
+			secondaryUserEmail: model.secondaryUserEmail,
+			secondaryUserPassword: model.secondaryUserPassword,
+			nodeID: model.nodeID,
+			deviceID: model.deviceID,
+			location: model.location,
+		});
+
+		return this.httpClient.post(this.SERVER + "createSU", body, {headers: this.HEEADERS});
 	}
 
 	public createJudge(model: any): Observable<any> {
@@ -108,21 +104,21 @@ export class HttpRequestsService {
 	}
 
 	public createNode(model: any) {
-		let params = new HttpParams();
-		params = params.set('action', 'createNode');
-		params = params.set('nodeName', model.nodeName.toString());
-		params = params.set('location', model.location);
-		params = params.set('IPAddress', model.IPAddress);
-		params = params.set('trustLevel', model.trustLevel.toString());
-		params = params.set('minFrequency', model.minFrequency.toString());
-		params = params.set('maxFrequency', model.maxFrequency.toString());
-		params = params.set('minSampleRate', model.minSampleRate.toString());
-		params = params.set('maxSampleRate', model.maxSampleRate.toString());
-		params = params.set('nodeType', model.nodeType);
-		params = params.set('mobility', model.mobility.toString());
-		params = params.set('status', model.status);
-		params = params.set('comment', model.comment.toString());
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		var body = JSON.stringify({
+			nodeName: model.nodeName.toString(),
+			location: model.location,
+			IPAddress: model.IPAddress,
+			trustLevel: model.trustLevel.toString(),
+			minFrequency: model.minFrequency.toString(),
+			maxFrequency: model.maxFrequency.toString(),
+			minSampleRate: model.minSampleRate.toString(),
+			maxSampleRate: model.maxSampleRate.toString(),
+			nodeType: model.nodeType,
+			mobility: model.mobility.toString(),
+			status: model.status,
+			comment: model.comment.toString()
+		});
+		return this.httpClient.post(this.SERVER + "createNode", body, {headers: this.HEEADERS});
 	}
 
 	public createRequest(model: GrantRequest, isAdmin: boolean): Observable<any> {
@@ -207,10 +203,11 @@ export class HttpRequestsService {
 	}
 
 	public checkEmail(model: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'checkEmailAvail');
-		params = params.set('email', model.secondaryUserEmail);
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		var body = JSON.stringify({
+			email: model.secondaryUserEmail
+		});
+
+		return this.httpClient.post(this.SERVER + "checkEmailAvail", body, {headers: this.HEEADERS});
 	}
 
 	public getSpectrumGrants(): Observable<any> {

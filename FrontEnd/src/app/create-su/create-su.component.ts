@@ -68,17 +68,10 @@ export class CreateSUComponent implements OnInit, OnDestroy{
 		);
 	}
 
-	// TODO: Remove this when we're done
-	get diagnostic() {
-		return JSON.stringify(this.model);
-	}
-
 	newSU() {
 		this.model = new SecondaryUser('', '', '', '', '', '', '', '0,0', '');
 		console.log('New SU ');
 	}
-
-	//////// NOT SHOWN IN DOCS ////////
 
 	showFormControls(form: any) {
 		return (

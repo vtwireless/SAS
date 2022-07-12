@@ -2,7 +2,7 @@
 <button type="button" class="btn btn-default"><a routerLink="/create-node">Register New Node</a></button>
 
 <p *ngIf="!Nodes"><em>Loading...</em></p>
-<table class='table' *ngIf="Nodes">
+<!-- <table class='table' *ngIf="Nodes">
     <thead>
         <tr>
             <th>Node ID</th>
@@ -30,4 +30,61 @@
             <td>{{ node.status }}</td>
         </tr>
     </tbody>
-</table>
+</table> -->
+
+
+<div class="mat-elevation-z8">
+    <table mat-table [dataSource]="dataSource">
+
+        <ng-container matColumnDef="nodeID">
+            <th mat-header-cell *matHeaderCellDef> ID </th>
+            <td mat-cell *matCellDef="let element"> {{element.nodeID}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nodeName">
+            <th mat-header-cell *matHeaderCellDef> Name </th>
+            <td mat-cell *matCellDef="let element"> {{element.nodeName}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="location">
+            <th mat-header-cell *matHeaderCellDef> Location </th>
+            <td mat-cell *matCellDef="let element"> {{element.location}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="trustLevel">
+            <th mat-header-cell *matHeaderCellDef> Trust Level </th>
+            <td mat-cell *matCellDef="let element"> {{element.trustLevel}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="freqRange">
+            <th mat-header-cell *matHeaderCellDef> Frequency Range [MHz]</th>
+            <td mat-cell *matCellDef="let element"> {{element.freqRange}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="sampleRange">
+            <th mat-header-cell *matHeaderCellDef> Sample Rate Range [MHz]</th>
+            <td mat-cell *matCellDef="let element"> {{element.sampleRange}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nodeType">
+            <th mat-header-cell *matHeaderCellDef> Node Type </th>
+            <td mat-cell *matCellDef="let element"> {{element.nodeType}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="mobility">
+            <th mat-header-cell *matHeaderCellDef> Mobile </th>
+            <td mat-cell *matCellDef="let element"> {{element.mobility}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <td mat-cell *matCellDef="let element"> {{element.status}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons aria-label="Select page of periodic elements">
+    </mat-paginator>
+</div>

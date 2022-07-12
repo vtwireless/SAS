@@ -1,13 +1,9 @@
 ﻿<div class='page'>
-
-    <div class='page-header'>Spectrum Access System</div>
-    <div class='page-subheader' *ngIf="loggedIn">Welcome {{ name }}!</div>
-
     <div class='options' *ngIf="!loggedIn">
         <a routerLink="/login" class='login-btn su-login'>Secondary User Login/Register</a>
         <a routerLink="/admin-login" class='login-btn admin-login'>Admin Login</a>
+        <br><br>
     </div>
-    <br><br>
 
     <img style="width:100%;" src="assets/img/fake-map.png">
 </div>

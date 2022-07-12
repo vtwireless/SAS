@@ -1,11 +1,16 @@
 .sidenav {
-	padding-left: 2px;
+	padding-left: 3%;
+	overflow-y: auto;
+	overflow-x: hidden;
 }
 
 .mat-button {
-	padding: 2px 16px;
+	padding: 2% 30% 2% 2%;
 }
 
+.icon-name {
+	padding-left: 5%;
+}
 
 /* .main-nav {
 	position: fixed;
