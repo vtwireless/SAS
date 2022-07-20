@@ -12,6 +12,7 @@ import {
 	SecondaryUser,
 	GrantRequest,
 } from '../_models/models';
+import { SocketService } from './socket.service';
 
 @Injectable({
 	providedIn: 'root',
@@ -27,7 +28,8 @@ export class HttpRequestsService {
 		'Access-Control-Allow-Origin': '*'
 	});
 
-	constructor(private httpClient: HttpClient) {}
+	// constructor(private httpClient: HttpClient) {}
+	constructor(private httpClient: HttpClient, private socketClient: SocketService) {}
 
 	public adminLogin(model: any): Observable<any> {
 		var body = JSON.stringify({
@@ -266,7 +268,12 @@ export class HttpRequestsService {
 			username: model.username
 		});
 
-		return this.httpClient.post(this.SERVER + "suLogin", body, {headers: this.HEEADERS});
+		this.socketClient.configure('http://localhost', "8000");
+		this.socketClient.emit('suLogin', body);
+
+		return this.socketClient.listen('suLoginResponse');
+
+		// return this.httpClient.post(this.SERVER + "suLogin", body, {headers: this.HEEADERS});
 	}
 
 	public getNodeByID(nodeID: any): Observable<any> {
