@@ -38,7 +38,7 @@ isSimulating = True
 NUM_OF_CHANNELS = 15
 puDetections = {}
 
-socket = socketio.Server()
+socket = socketio.Server(cors_allowed_origins='*')
 app = socketio.WSGIApp(socket, static_files={
     '/': {'content_type': 'text/html', 'filename': 'index.html'}
 })
@@ -430,6 +430,16 @@ def printPuDetections(sid):
     global puDetections
     socket.emit("detections", json.dumps(puDetections))
     puDetections = {}
+
+@socket.on('suLogin')
+def suLogin(sid, data):
+    response = {
+        'id': 'saurav',
+        'userType': 'SU',
+        'name': 'saurav',
+        'status': '1'
+    }
+    socket.emit('suLoginResponse', to=sid, data=response)
 
 # IIC Functions ---------------------------------------
 def getRandBool():

@@ -1,7 +1,12 @@
+import threading
+import uuid
+
 from flask import request, Blueprint
 
 from .models import database, Node
 from ..library.Utility import Utility
+from ..library import SASREM
+from ..library.SASAlgorithms import SASAlgorithms
 
 node_routes = Blueprint('node_routes', __name__)
 
@@ -70,8 +75,9 @@ def create_node():
         database.session.commit()
 
         if measCapability:
-            # TODO: Send assignments to Radio
-            pass
+            sid = ''  # TODO: implementation
+            radio = SASREM.CBSDSocket(fccId, sid, False)  # TODO: move to models
+            send_assignment_to_radio(radio)
 
         return Utility.success_message("Node has been added.")
 
@@ -80,4 +86,24 @@ def create_node():
 
 
 def send_assignment_to_radio(radio):
-    pass
+    # todo: Maintain all radios
+
+    # 3.5 GHz CBRS Band is 150 MHz wide
+    freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
+    blocks = freqRange / SASAlgorithms.TENMHZ
+
+    for i in range(int(blocks)):
+        low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
+        high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
+        result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
+        if result == 2:
+            # if there is no spectrum data available for that frequency range assign radio to it
+            changeParams = dict()
+            changeParams["lowFrequency"] = str((SASAlgorithms.TENMHZ * i) + SASAlgorithms.MINCBRSFREQ)
+            changeParams["highFrequency"] = str((SASAlgorithms.TENMHZ * (i + 1)) + SASAlgorithms.MINCBRSFREQ)
+            changeParams["cbsdId"] = radio.cbsdId
+            radio.justChangedParams = True
+            socket.emit("changeRadioParams", to=radio.sid, data=changeParams)
+            break
+
+    threading.Timer(3.0, resetRadioStatuses, [[radio]]).start()
