@@ -31,15 +31,6 @@ export class HttpRequestsService {
 	// constructor(private httpClient: HttpClient) {}
 	constructor(private httpClient: HttpClient, private socketClient: SocketService) {}
 
-	public adminLogin(model: any): Observable<any> {
-		var body = JSON.stringify({
-			password: model.password,
-			username: model.username
-		});
-
-		return this.httpClient.post(this.SERVER + "adminLogin", body, {headers: this.HEEADERS});
-	}
-
 	public getPrimaryUsers(): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getPrimaryUsers');
@@ -81,16 +72,19 @@ export class HttpRequestsService {
 	}
 
 	public createSecondaryAccount(model: any): Observable<any> {
-		var body = JSON.stringify({
+		var body = {
 			secondaryUserName: model.secondaryUserName,
 			secondaryUserEmail: model.secondaryUserEmail,
 			secondaryUserPassword: model.secondaryUserPassword,
 			nodeID: model.nodeID,
 			deviceID: model.deviceID,
 			location: model.location,
-		});
+		};
+		
+		this.socketClient.configure('http://localhost', "8000");
+		this.socketClient.emit('createSU', body);
 
-		return this.httpClient.post(this.SERVER + "createSU", body, {headers: this.HEEADERS});
+		return this.socketClient.listen('createSUResponse');
 	}
 
 	public createJudge(model: any): Observable<any> {
@@ -263,17 +257,27 @@ export class HttpRequestsService {
 	}
 	
 	public suLogin(model: any): Observable<any> {
-		var body = JSON.stringify({
+		var body = {
 			password: model.password,
 			username: model.username
-		});
+		};
 
 		this.socketClient.configure('http://localhost', "8000");
 		this.socketClient.emit('suLogin', body);
 
 		return this.socketClient.listen('suLoginResponse');
+	}
 
-		// return this.httpClient.post(this.SERVER + "suLogin", body, {headers: this.HEEADERS});
+	public adminLogin(model: any): Observable<any> {
+		var body = {
+			password: model.password,
+			username: model.username
+		};
+
+		this.socketClient.configure('http://localhost', "8000");
+		this.socketClient.emit('adminLogin', body);
+
+		return this.socketClient.listen('adminLoginResponse');
 	}
 
 	public getNodeByID(nodeID: any): Observable<any> {
