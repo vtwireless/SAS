@@ -126,6 +126,7 @@ def createSU(payload):
 
     return formatReturnable(1, {"message": "Secondary User has been added."})
 
+
 def checkEmailAvailability(payload):
     email = payload['email']
 
