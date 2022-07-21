@@ -5,4 +5,4 @@ FrontEnd/node_modules/
 
 
 # Database files
-Core/*.db
+core/*.db
