@@ -46,6 +46,8 @@ export class CreateSUComponent implements OnInit, OnDestroy{
 				} else {
 					if (data['exists'] == '1') {
 						this.message = 'Email Already In Use';
+					} else {
+						this.message = data['message'];
 					}
 				}
 			},

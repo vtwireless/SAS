@@ -36,7 +36,6 @@
 						[(ngModel)]="model.secondaryUserEmail"
 						name="secondaryUserEmail"
 						#secondaryUserEmail="ngModel"
-						(change)="checkEmailAvail()"
 					/>
 					<div
 						[hidden]="
@@ -52,7 +51,7 @@
 					</div>
 				</div>
 
-				<div class="form-group">
+				<!-- <div class="form-group">
 					<label for="nodeID">Node ID (Optional)</label>
 					<input
 						type="text"
@@ -66,7 +65,7 @@
 						[hidden]="nodeID.valid || nodeID.pristine"
 						class="alert alert-danger"
 					></div>
-				</div>
+				</div> -->
 
 				<div class="form-group">
 					<label for="deviceID">Device ID (Optional)</label>
