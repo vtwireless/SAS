@@ -7,19 +7,22 @@ Advised by Dr. Carl Dietrich (cdietric@vt.edu)
 For Wireless@VT
 """
 
-import eventlet #pip install eventlet
-import socketio #pip install socketio
+import eventlet
+import socketio
 import requests
 import json
-import SASAlgorithms
-import SASREM
-import time
-from datetime import datetime, timedelta, timezone
-import Server_WinnForum as WinnForum
-import CBSD
 import threading
 import uuid
 import random
+import sqlalchemy
+import time
+from datetime import datetime, timedelta, timezone
+
+import SASAlgorithms
+import SASREM
+import Server_WinnForum as WinnForum
+import CBSD
+import DatabaseController
 
 GETURL = "http://localhost/SASAPI/SAS_API_GET.php"
 POSTURL = "http://localhost/SASAPI/SAS_API.php"
@@ -42,6 +45,7 @@ socket = socketio.Server(cors_allowed_origins='*')
 app = socketio.WSGIApp(socket, static_files={
     '/': {'content_type': 'text/html', 'filename': 'index.html'}
 })
+db = DatabaseController.DatabaseController()
 
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
@@ -433,13 +437,31 @@ def printPuDetections(sid):
 
 @socket.on('suLogin')
 def suLogin(sid, data):
-    response = {
-        'id': 'saurav',
-        'userType': 'SU',
-        'name': 'saurav',
-        'status': '1'
-    }
+    response = db.user_authentication(data, False)
     socket.emit('suLoginResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+@socket.on('adminLogin')
+def adminLogin(sid, data):
+    response = db.user_authentication(data, True)
+    socket.emit('adminLoginResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+@socket.on('createSU')
+def createSecondaryUser(sid, data):
+    response = db.user_creation(data, False)
+    socket.emit('createSUResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+@socket.on('createAdminUserINsas')
+def createAdminUser(sid, data):
+    response = db.user_creation(data, True)
+    socket.emit('createAdminUserINsasResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
 
 # IIC Functions ---------------------------------------
 def getRandBool():
@@ -709,4 +731,5 @@ if __name__ == '__main__':
     getSettings()
     if(not isSimulating):
         threading.Timer(3.0, checkPUAlert).start()
+    # TODO: move to gunicorn
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
