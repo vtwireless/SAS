@@ -5,4 +5,4 @@ FrontEnd/node_modules/
 
 
 # Database files
-backend/mdsas/sas_app.db
+*/*.db
