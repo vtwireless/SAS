@@ -12,15 +12,15 @@ class DatabaseController:
     SU_TABLE = None
 
     def __init__(self):
-        self.delete_db_file()
+        self._delete_db_file()
 
         if settings.ENVIRONMENT == 'DEVELOPMENT':
-            self.connect_to_dev_db()
+            self._connect_to_dev_db()
         else:
-            self.connect_to_prod_db()
+            self._connect_to_prod_db()
 
         # Initialize tables
-        self.create_tables()
+        self._create_tables()
 
         # Create Admin User
         admin_user = {
@@ -32,45 +32,45 @@ class DatabaseController:
         }
         self.user_creation(admin_user, True)
 
-    def connect_to_dev_db(self):
+    def _connect_to_dev_db(self):
         self.ENGINE = db.create_engine(settings.DEVELOPMENT_DATABASE_URI)
         self.CONNECTION = self.ENGINE.connect()
         self.METADATA = db.MetaData()
 
-    def connect_to_prod_db(self):
+    def _connect_to_prod_db(self):
         self.ENGINE = db.create_engine(settings.PRODUCTION_DATABASE_URI)
         self.CONNECTION = self.ENGINE.connect()
         self.METADATA = db.MetaData()
 
-    def execute_query(self, query):
+    def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
         queryResult = resultProxy.fetchall()
         rows = [row._asdict() for row in queryResult]
 
         return rows
 
-    def delete_table(self, table: db.Table):
+    def _delete_table(self, table: db.Table):
         table.drop(self.ENGINE)
 
-    def delete_all_tables(self):
+    def _delete_all_tables(self):
         self.METADATA.drop_all(self.ENGINE)
 
     @staticmethod
-    def delete_db_file():
+    def _delete_db_file():
         try:
             os.remove(settings.SQLITE_FILE)
         except Exception as exception:
             print(str(exception))
 
-    def disconnect_from_db(self):
+    def _disconnect_from_db(self):
         self.CONNECTION.close()
-        self.delete_db_file()
+        self._delete_db_file()
 
     # ################ CREATE TABLES ################
-    def create_tables(self):
-        self.set_secondaryUser_table()
+    def _create_tables(self):
+        self._set_secondaryUser_table()
 
-    def set_secondaryUser_table(self):
+    def _set_secondaryUser_table(self):
         secondaryUser = db.Table(
             settings.SECONDARY_USER_TABLE, self.METADATA,
             db.Column('username', db.String(80), nullable=False),
@@ -99,7 +99,7 @@ class DatabaseController:
             self.SU_TABLE.columns.password == password,
             self.SU_TABLE.columns.admin == isAdmin
         ))
-        rows = self.execute_query(query)
+        rows = self._execute_query(query)
 
         if len(rows) < 1:
             return {
@@ -131,7 +131,7 @@ class DatabaseController:
             raise Exception("Password not provided")
 
         query = db.select([self.SU_TABLE]).where(self.SU_TABLE.columns.email == email)
-        rows = self.execute_query(query)
+        rows = self._execute_query(query)
         if len(rows) > 0:
             message = f"Email '{email}' already exists. Contact an administrator to recover or reset password."
             return {
@@ -145,7 +145,7 @@ class DatabaseController:
         )
         ResultProxy = self.CONNECTION.execute(insert)
 
-        rows = self.execute_query(query)
+        rows = self._execute_query(query)
         if len(rows) < 1:
             return {
                 "status": 0,
