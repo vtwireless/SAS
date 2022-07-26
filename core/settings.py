@@ -18,3 +18,4 @@ PRODUCTION_DATABASE_URI = f"dialect+driver://{DATABASE['username']}:{DATABASE['p
 
 # Tables Settings
 SECONDARY_USER_TABLE = 'secondaryUser'
+NODE_TABLE = 'node'

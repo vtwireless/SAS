@@ -53,7 +53,7 @@ export class NodeListComponent implements AfterViewInit {
                         node_model.freqRange = node.minFrequency.toString() + "-" + node.maxFrequency.toString();
                         node_model.sampleRange = node.minSampleRate.toString() + "-" + node.maxSampleRate.toString();
                         node_model.nodeType = node.nodeType;
-                        node_model.mobility = node.mobility == 1 ? 'Yes' : 'No';
+                        node_model.mobility = node.mobility == "true" ? 'Yes' : 'No';
                         node_model.status = node.status;
                         this.Nodes.push(node_model);
                     }

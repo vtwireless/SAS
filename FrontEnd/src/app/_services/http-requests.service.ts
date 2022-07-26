@@ -50,7 +50,10 @@ export class HttpRequestsService {
 	}
 
 	public getAllNodes(): Observable<any> {
-		return this.httpClient.get(this.SERVER + "nodes", {headers: this.HEEADERS});
+		this.socketClient.configure('http://localhost', "8000");
+		this.socketClient.emit('getNodesRequest', {});
+
+		return this.socketClient.listen('getNodesResponse');
 	}
 
 	public getMyNodes(SUId: string): Observable<any> {
@@ -100,21 +103,27 @@ export class HttpRequestsService {
 	}
 
 	public createNode(model: any) {
-		var body = JSON.stringify({
-			nodeName: model.nodeName.toString(),
-			location: model.location,
-			IPAddress: model.IPAddress,
-			trustLevel: model.trustLevel.toString(),
-			minFrequency: model.minFrequency.toString(),
-			maxFrequency: model.maxFrequency.toString(),
-			minSampleRate: model.minSampleRate.toString(),
-			maxSampleRate: model.maxSampleRate.toString(),
-			nodeType: model.nodeType,
-			mobility: model.mobility.toString(),
-			status: model.status,
-			comment: model.comment.toString()
-		});
-		return this.httpClient.post(this.SERVER + "createNode", body, {headers: this.HEEADERS});
+		var body = {
+			registrationRequest: [{
+				nodeName: model.nodeName.toString(),
+				location: model.location,
+				IPAddress: model.IPAddress,
+				trustLevel: model.trustLevel.toString(),
+				minFrequency: model.minFrequency.toString(),
+				maxFrequency: model.maxFrequency.toString(),
+				minSampleRate: model.minSampleRate.toString(),
+				maxSampleRate: model.maxSampleRate.toString(),
+				nodeType: model.nodeType,
+				mobility: model.mobility.toString(),
+				status: model.status,
+				comment: model.comment.toString()
+			}]
+		};
+
+		this.socketClient.configure('http://localhost', "8000");
+		this.socketClient.emit('registrationRequest', body);
+
+		return this.socketClient.listen('registrationResponse');
 	}
 
 	public createRequest(model: GrantRequest, isAdmin: boolean): Observable<any> {

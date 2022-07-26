@@ -83,10 +83,6 @@ def getSettings():
 def sendBroadcast(broadcastName, data):
     socket.emit(broadcastName, data)
 
-#def addObjectToREM(spectrumData):
-#     obj = SASREM.SASREMObject(5, 50, "obj", 5, 3500000, 3550000, time.time() )
-#    REM.addREMObject(obj)
-
 def getGrantWithID(grantId):
     for grant in grants:
         if str(grant.id) == str(grantId):
@@ -170,7 +166,8 @@ def removeCBSD(cbsdId):
             cbsds.remove(c)
             return True
     return False
-            
+
+# In[ --- Connection Management ---]
 
 @socket.event
 def connect(sid, environ):
@@ -187,55 +184,53 @@ def disconnect(sid):
         if radio.sid == sid:
             allRadios.remove(radio)
 
-@socket.on('registrationRequest')
-def register(sid, data):
-    jsonData = json.loads(data)
-    responseArr = []
-    assignmentArr = []
-    for item in jsonData["registrationRequest"]:
-        radio = CBSD.CBSD('0', 5, item["fccId"])
-        if "vtParams" in item:
-            item["nodeType"] = item["vtParams"]["nodeType"]
-            item["minFrequency"] = item["vtParams"]["minFrequency"]
-            item["maxFrequency"] = item["vtParams"]["maxFrequency"]
-            item["minSampleRate"] = item["vtParams"]["minSampleRate"]
-            item["maxSampleRate"] = item["vtParams"]["maxSampleRate"]
-            item["mobility"] = item["vtParams"]["isMobile"]
+# In[ --- User Management ---]
 
-            radio.nodeType = item["vtParams"]["nodeType"]
-            radio.minFrequency = item["vtParams"]["minFrequency"]
-            radio.maxFrequency = item["vtParams"]["maxFrequency"]
-            radio.minSampleRate = item["vtParams"]["minSampleRate"]
-            radio.maxSampleRate = item["vtParams"]["maxSampleRate"]
-            radio.mobility = item["vtParams"]["isMobile"]
-        if "installationParam" in item:
-            if "latitude" in item["installationParam"] and "longitude" in item["installationParam"]:
-                item["location"] = str(item["installationParam"]["latitude"]) + ',' + str(item["installationParam"]["longitude"])
-                radio.latitude = item["installationParam"]["latitude"]
-                radio.longitude = item["installationParam"]["longitude"]
-        item["IPAddress"] = 'TODO IP'
-        item["action"] = "createNode"
-        if databaseLogging:
-            print(sendPostRequest(item))
-            radio.id = 'TODO'
-        else:
-            radio.id = generateId()
-            allClients.append(radio)
-            cbsds.append(radio)
-        if "measCapability" in item:#if the registering entity is a radio add it to the array and give it an assignment
-            cbsd = SASREM.CBSDSocket(radio.id, sid, False)
-            assignmentArr.append(cbsd)
-        response = WinnForum.RegistrationResponse(radio.id, None, SASAlgorithms.generateResponse(0))
-        if "measCapability" in item:
-            response.measReportConfig = item["measCapability"]
-        responseArr.append(response.asdict())
-    responseDict = {"registrationResponse":responseArr}
-    print(responseDict)
-    socket.emit('registrationResponse', to=sid, data=json.dumps(responseDict))
+@socket.on('suLogin')
+def suLogin(sid, data):
+    response = db.authenticate_user(data, False)
+    socket.emit('suLoginResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+@socket.on('adminLogin')
+def adminLogin(sid, data):
+    response = db.authenticate_user(data, True)
+    socket.emit('adminLoginResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+@socket.on('createSU')
+def createSecondaryUser(sid, data):
+    response = db.create_user(data, False)
+    socket.emit('createSUResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+@socket.on('createAdminUserINsas')
+def createAdminUser(sid, data):
+    response = db.create_user(data, True)
+    socket.emit('createAdminUserINsasResponse', to=sid, data=response)
+
+    # socket.disconnect(sid)
+
+# In[ --- Node Management ---]
+
+@socket.on('getNodesRequest')
+def getNodes(sid, payload):
+    response = db.get_nodes()
+    socket.emit('getNodesResponse', to=sid, data=response)
+
+@socket.on('registrationRequest')
+def register(sid, nodes):
+    response, assignmentArr = db.create_nodes(sid, nodes)
+    socket.emit('registrationResponse', to=sid, data=response)
+
     #if the radio does not get the assignment out of the meas config
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
 
+# In[ --- TODO --- ]
 @socket.on('deregistrationRequest')
 def deregister(sid, data):
     jsonData = json.loads(data)
@@ -434,34 +429,6 @@ def printPuDetections(sid):
     global puDetections
     socket.emit("detections", json.dumps(puDetections))
     puDetections = {}
-
-@socket.on('suLogin')
-def suLogin(sid, data):
-    response = db.user_authentication(data, False)
-    socket.emit('suLoginResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-@socket.on('adminLogin')
-def adminLogin(sid, data):
-    response = db.user_authentication(data, True)
-    socket.emit('adminLoginResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-@socket.on('createSU')
-def createSecondaryUser(sid, data):
-    response = db.user_creation(data, False)
-    socket.emit('createSUResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-@socket.on('createAdminUserINsas')
-def createAdminUser(sid, data):
-    response = db.user_creation(data, True)
-    socket.emit('createAdminUserINsasResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
 
 # IIC Functions ---------------------------------------
 def getRandBool():
@@ -726,7 +693,7 @@ def checkPUAlert(data=None):
     else:
         threading.Timer(1, checkPUAlert).start()
    
-
+# In[ --- main --- ]
 if __name__ == '__main__':
     getSettings()
     if(not isSimulating):

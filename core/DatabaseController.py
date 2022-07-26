@@ -1,15 +1,25 @@
 import sqlalchemy as db
+from sqlalchemy import select, insert, and_
 from sqlalchemy.engine import CursorResult
 
 import settings
 import os
+import uuid
+
+from Schemas import Schemas
+import CBSD
+from core import SASREM
+from SASAlgorithms import SASAlgorithms
+import Server_WinnForum as WinnForum
 
 
 class DatabaseController:
     ENGINE = None
     CONNECTION = None
     METADATA = None
-    SU_TABLE = None
+    USERS = None
+    NODES = None
+    algorithms = SASAlgorithms()
 
     def __init__(self):
         self._delete_db_file()
@@ -20,7 +30,9 @@ class DatabaseController:
             self._connect_to_prod_db()
 
         # Initialize tables
-        self._create_tables()
+        self.schemas = Schemas(self.METADATA)
+        self._set_tables()
+        self._get_tables()
 
         # Create Admin User
         admin_user = {
@@ -30,7 +42,7 @@ class DatabaseController:
             'deviceID': '',
             'location': ''
         }
-        self.user_creation(admin_user, True)
+        self.create_user(admin_user, True)
 
     def _connect_to_dev_db(self):
         self.ENGINE = db.create_engine(settings.DEVELOPMENT_DATABASE_URI)
@@ -66,38 +78,34 @@ class DatabaseController:
         self.CONNECTION.close()
         self._delete_db_file()
 
-    # ################ CREATE TABLES ################
-    def _create_tables(self):
-        self._set_secondaryUser_table()
+    # In[ --- CREATE TABLES --- ]
 
-    def _set_secondaryUser_table(self):
-        secondaryUser = db.Table(
-            settings.SECONDARY_USER_TABLE, self.METADATA,
-            db.Column('username', db.String(80), nullable=False),
-            db.Column('email', db.String(80), index=True, unique=True, nullable=False, primary_key=True),
-            db.Column('admin', db.Boolean, nullable=False),
-            db.Column('password', db.String(80), nullable=False),
-            db.Column('deviceID', db.String(80), nullable=False),
-            db.Column('location', db.String(80), nullable=False)
-        )
-
+    def _set_tables(self):
+        self.schemas.create_tables()
         self.METADATA.create_all(self.ENGINE)
-        self.SU_TABLE = db.Table(
+
+    def _get_tables(self):
+        self._get_secondaryUser_table()
+        self._get_nodes_table()
+
+    # In[ --- USER CONTROLS --- ]
+
+    def _get_secondaryUser_table(self):
+        self.USERS = db.Table(
             settings.SECONDARY_USER_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
         )
 
-    # ################ DATABASE CONTROLS ################
-    def user_authentication(self, payload: any, isAdmin: bool):
+    def authenticate_user(self, payload: any, isAdmin: bool):
         email = payload['username']
         password = payload['password']
 
         if not email or not password:
             raise Exception("Username or password not provided")
 
-        query = db.select([self.SU_TABLE]).where(db.and_(
-            self.SU_TABLE.columns.email == email,
-            self.SU_TABLE.columns.password == password,
-            self.SU_TABLE.columns.admin == isAdmin
+        query = select([self.USERS]).where(and_(
+            self.USERS.columns.email == email,
+            self.USERS.columns.password == password,
+            self.USERS.columns.admin == isAdmin
         ))
         rows = self._execute_query(query)
 
@@ -113,7 +121,7 @@ class DatabaseController:
             "userType": 'SU' if not rows[0]['admin'] else 'ADMIN'
         }
 
-    def user_creation(self, payload, isAdmin):
+    def create_user(self, payload, isAdmin):
         username = payload['secondaryUserName']
         email = payload['secondaryUserEmail']
         password = payload['secondaryUserPassword']
@@ -130,7 +138,7 @@ class DatabaseController:
         if not password:
             raise Exception("Password not provided")
 
-        query = db.select([self.SU_TABLE]).where(self.SU_TABLE.columns.email == email)
+        query = select([self.USERS]).where(self.USERS.columns.email == email)
         rows = self._execute_query(query)
         if len(rows) > 0:
             message = f"Email '{email}' already exists. Contact an administrator to recover or reset password."
@@ -140,10 +148,10 @@ class DatabaseController:
                 "message": message
             }
 
-        insert = db.insert(self.SU_TABLE).values(
+        insertQuery = insert(self.USERS).values(
             username=username, email=email, admin=isAdmin, password=password, deviceID=deviceID, location=location
         )
-        ResultProxy = self.CONNECTION.execute(insert)
+        ResultProxy = self.CONNECTION.execute(insertQuery)
 
         rows = self._execute_query(query)
         if len(rows) < 1:
@@ -156,5 +164,89 @@ class DatabaseController:
             "status": 1,
             "message": "User has been added."
         }
+
+    # In[ --- NODE CONTROLS --- ]
+    
+    def _get_nodes_table(self):
+        self.NODES = db.Table(
+            settings.NODE_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+
+    def get_nodes(self):
+        query = select([self.NODES])
+        try:
+            rows = self._execute_query(query)
+
+            return {
+                'status': 1,
+                'nodes': rows
+            }
+        except Exception as err:
+            raise Exception(str(err))
+
+    def create_nodes(self, sid, payload):
+        responseArr, assignmentArr, insertionArr = [], [], []
+
+        for item in payload["registrationRequest"]:
+            radioID = item.get('fccId', str(uuid.uuid4()))
+            item['fccId'] = radioID
+            # Sanity Checks
+            if not radioID:
+                raise Exception("Radio ID not provided")
+
+            query = select([self.NODES]).where(and_(
+                self.NODES.columns.fccId == radioID,
+                self.NODES.columns.IPAddress == item['IPAddress']
+            ))
+            rows = self._execute_query(query)
+            if len(rows) > 0:
+                message = f"Node '{radioID}' already exists with the same IP Address. Node creation rollback complete"
+                return {
+                    "status": 0,
+                    "exists": 1,
+                    "message": message
+                }
+
+            insertionArr.append(item)
+
+            radio = CBSD.CBSD(radioID, 5, radioID)
+            # Flatten Structure
+            location = item['location'].split(',')
+            radio.latitude = location[0]
+            radio.longitude = location[1]
+            radio.nodeType = item["nodeType"]
+            radio.minFrequency = item["minFrequency"]
+            radio.maxFrequency = item["maxFrequency"]
+            radio.minSampleRate = item["minSampleRate"]
+            radio.maxSampleRate = item["maxSampleRate"]
+            radio.mobility = item["mobility"]
+            radio.id = radioID
+
+            response = WinnForum.RegistrationResponse(radio.id, None, self.algorithms.generateResponse(0))
+
+            if "measCapability" in item:
+                cbsd = SASREM.CBSDSocket(radio.id, sid, False)
+                assignmentArr.append(cbsd)
+                response.measReportConfig = item["measCapability"]
+
+            responseArr.append(response.asdict())
+
+        try:
+            self.CONNECTION.execute(self.NODES.insert(), insertionArr)
+        except Exception as err:
+            print(str(err))
+            return {
+                "status": 0,
+                "message": f"Nodes could not be added due to '{str(err)}'. Contact an administrator."
+            }
+
+        # responseDict = {"registrationResponse": responseArr}
+
+        return {
+            "status": 1,
+            "message": "Nodes have been added.",
+            "registrationResponse": responseArr
+        }, assignmentArr
+
 
 
