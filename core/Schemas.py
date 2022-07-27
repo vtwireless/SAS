@@ -11,6 +11,7 @@ class Schemas:
     def create_tables(self):
         self.__get_user_table()
         self.__get_node_table()
+        self.__get_grant_table()
         
     def __get_user_table(self):
         Table(
@@ -50,4 +51,28 @@ class Schemas:
             Column('groupingParam', String(80), index=False, unique=False, nullable=False, default=''),
             Column('fullyTrusted', String(80), index=False, unique=False, nullable=False, default=''),
             Column('comment', String(80), index=False, unique=False, nullable=False)
+        )
+
+    def __get_grant_table(self):
+        Table(
+            settings.GRANT_TABLE, self._metadata,
+            Column('requestID', Integer, primary_key=True),
+            Column('secondaryUserID', String(80), index=False, unique=False, nullable=''),
+            Column('secondaryUserName', String(80), index=False, unique=False, nullable='', default=''),
+            Column('tier', String(80), index=False, unique=False, nullable='', default=''),
+            Column('minFrequency', Float, index=False, unique=False, nullable=False),
+            Column('maxFrequency', Float, index=False, unique=False, nullable=False),
+            Column('preferredFrequency', Float, index=False, unique=False, nullable=False),
+            Column('frequencyAbsolute', Boolean, index=False, unique=False, nullable=False),
+            Column('minBandwidth', Float, index=False, unique=False, nullable=False),
+            Column('preferredBandwidth', Float, index=False, unique=False, nullable=False),
+            Column('startTime', String(80), index=False, unique=False, nullable=''),
+            Column('endTime', String(80), index=False, unique=False, nullable=''),
+            Column('approximateByteSize', Float, index=False, unique=False, nullable=''),
+            Column('dataType', String(80), index=False, unique=False, nullable=''),
+            Column('powerLevel', Float, index=False, unique=False, nullable=''),
+            Column('location', String(80), index=False, unique=False, nullable='', default=''),
+            Column('mobility', Boolean, index=False, unique=False, nullable=''),
+            Column('maxVelocity', String(80), index=False, unique=False, nullable=''),
+            Column('range', String(80), index=False, unique=False, nullable='', default='')
         )

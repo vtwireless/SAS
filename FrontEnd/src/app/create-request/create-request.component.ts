@@ -49,7 +49,7 @@ export class CreateRequestComponent {
 					(data) => {
 						if (data['status'] == 1) {
 							this.SecondaryUsers = data['secondaryUsers'];
-							this.model.secondaryUserID = null;
+							this.model.secondaryUserID = user.id;
 						}
 					},
 					(error) => console.error(error)
@@ -103,8 +103,6 @@ export class CreateRequestComponent {
 		this.locationValid = false;
 	}
 
-	//////// NOT SHOWN IN DOCS ////////
-
 	showFormControls(form: any) {
 		return (
 			form &&
@@ -113,19 +111,12 @@ export class CreateRequestComponent {
 		);
 	}
 
-	/////////////////////////////
-	//evaluationForm = new FormGroup({
-	// scale: new FormControl(''),
-	//  tone: new FormControl(''),
-	//  musicianship: new FormControl(''),
-	//  technique: new FormControl(''),
-	//  sightreading: new FormControl(''),
-	// })
 	public updatePreferredBandwidth() {
 		if (this.model.preferredBandwidth < this.model.minBandwidth) {
 			this.model.preferredBandwidth = this.model.minBandwidth;
 		}
 	}
+
 	public updateFrequencies() {
 		if (this.model.maxFrequency < this.model.minFrequency) {
 			this.model.maxFrequency = this.model.minFrequency;
@@ -144,6 +135,7 @@ export class CreateRequestComponent {
         }*/
 		this.frequencyBeAbsolute();
 	}
+
 	public updateTimes() {
 		if (
 			this.model.endTime < this.model.startTime ||
@@ -152,6 +144,7 @@ export class CreateRequestComponent {
 			this.model.endTime = this.model.startTime;
 		}
 	}
+
 	public frequencyBeAbsolute() {
 		if (this.model.frequencyAbsolute == true) {
 			this.model.minFrequency = Math.max(
@@ -171,6 +164,7 @@ export class CreateRequestComponent {
 			);
 		}
 	}
+
 	public setStartTime() {
 		let now = new Date();
 		var coeff = 1000 * 60 * 5;
@@ -210,6 +204,7 @@ export class CreateRequestComponent {
 		this.minDate = this.model.startTime;
 		//console.log(this.minDate);
 	}
+
 	public checkLocationValid() {
 		this.locationSet = true;
 		this.model.location = this.model.location.replace(' ', '');

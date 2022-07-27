@@ -27,51 +27,40 @@ export class HttpRequestsService {
 		'Content-Type':'application/json',
 		'Access-Control-Allow-Origin': '*'
 	});
+	HOSTNAME = 'http://localhost'
+	PORT = '8000'
 
-	// constructor(private httpClient: HttpClient) {}
-	constructor(private httpClient: HttpClient, private socketClient: SocketService) {}
-
-	public getPrimaryUsers(): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getPrimaryUsers');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+	constructor(
+		private httpClient: HttpClient, 
+		private socketClient: SocketService
+	) {
+		this.socketClient.configure(this.HOSTNAME, this.PORT);
 	}
 
-	public getSecondaryUsers(): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getSecondaryUsers');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-
-		return this.httpClient.post(this.GETAPI, params, {
-			observe: 'response',
-			headers: { 'Content-Type': 'application/json' }, });
+	private sendRequest(requestCode: string, requestBody: any, responseCode: string): Observable<any> {
+		this.socketClient.emit(requestCode, requestBody);
+		
+		return this.socketClient.listen(responseCode);
 	}
 
-	public getAllNodes(): Observable<any> {
-		this.socketClient.configure('http://localhost', "8000");
-		this.socketClient.emit('getNodesRequest', {});
+	// ------------------------------ User Requests ------------------------------------
+	
+	public suLogin(model: any): Observable<any> {
+		var body = {
+			password: model.password,
+			username: model.username
+		};
 
-		return this.socketClient.listen('getNodesResponse');
+		return this.sendRequest('suLogin', body, 'suLoginResponse');
 	}
 
-	public getMyNodes(SUId: string): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('SUID', SUId);
-		params = params.set('action', 'getAllNodes');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
+	public adminLogin(model: any): Observable<any> {
+		var body = {
+			password: model.password,
+			username: model.username
+		};
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
-	}
-
-	public logGrant(grantID: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'logGrant');
-		params = params.set('grantID', grantID.toString());
-		params = params.set('status', 'DELETED');
-
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendRequest('adminLogin', body, 'adminLoginResponse');
 	}
 
 	public createSecondaryAccount(model: any): Observable<any> {
@@ -83,24 +72,19 @@ export class HttpRequestsService {
 			deviceID: model.deviceID,
 			location: model.location,
 		};
-		
-		this.socketClient.configure('http://localhost', "8000");
-		this.socketClient.emit('createSU', body);
 
-		return this.socketClient.listen('createSUResponse');
+		return this.sendRequest('createSU', body, 'createSUResponse');
 	}
 
-	public createJudge(model: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'createJudge');
-		params = params.set('title', model.title);
-		params = params.set('firstName', model.firstName);
-		params = params.set('lastName', model.lastName);
-		params = params.set('email', model.email);
-		params = params.set('phone', model.phone);
-		params = params.set('password', model.password);
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+	public getSecondaryUsers(): Observable<any> {
+		return this.sendRequest('getUsers', {}, 'getUsersResponse');
 	}
+
+	public getPrimaryUsers(): Observable<any> {
+		return this.sendRequest('getUsers', {}, 'getUsersResponse');
+	}
+
+	// ------------------------------ Node Requests ------------------------------------
 
 	public createNode(model: any) {
 		var body = {
@@ -120,56 +104,75 @@ export class HttpRequestsService {
 			}]
 		};
 
-		this.socketClient.configure('http://localhost', "8000");
-		this.socketClient.emit('registrationRequest', body);
-
-		return this.socketClient.listen('registrationResponse');
+		return this.sendRequest('registrationRequest', body, 'registrationResponse');
 	}
+	
+	public getAllNodes(): Observable<any> {
+		return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
+	}
+
+	// ------------------------------ Grant Requests -----------------------------------
 
 	public createRequest(model: GrantRequest, isAdmin: boolean): Observable<any> {
 		let MHz = 10000000;
-		let user = JSON.parse(localStorage.getItem('currentUser'));
+		var body = {
+			grantRequest: [{
+				secondaryUserID: model.secondaryUserID,
+				secondaryUserName: model.secondaryUserName,
+				location: model.location,
+				minFrequency: (MHz * model.minFrequency),
+				maxFrequency: (MHz * model.maxFrequency),
+				preferredFrequency: (MHz * model.preferredFrequency),
+				frequencyAbsolute: model.frequencyAbsolute,
+				minBandwidth: model.minBandwidth,
+				preferredBandwidth: model.preferredBandwidth,
+				startTime: model.startTime.toString(),
+				endTime: model.endTime.toString(),
+				approximateByteSize: model.approximateByteSize,
+				dataType: model.dataType,
+				powerLevel: model.powerLevel,
+				mobility: model.mobility,
+				maxVelocity: model.maxVelocity,
+				range: model.range
+			}]
+		};
 
+		return this.sendRequest('grantRequest', body, 'grantResponse');
+	}
+
+	public getSpectrumGrants(): Observable<any> {
+		return this.sendRequest('getGrantsRequest', {}, 'getGrantsResponse');
+	}
+
+	// ------------------------------ Todo Requests ------------------------------------
+
+	public getMyNodes(SUId: string): Observable<any> {
 		let params = new HttpParams();
-		params = params.set('action', 'createRequest');
-		if (isAdmin) {
-			params = params.set(
-				'secondaryUserID',
-				model.secondaryUserID.toString()
-			);
-		} else {
-			user = new User('', '', '');
-			user = JSON.parse(localStorage.getItem('currentUser'));
-			params = params.set('secondaryUserID', user.id.toString());
-		}
-		params = params.set('nodeName', 'namePlaceholder');
-		params = params.set('location', model.location);
-		params = params.set('minFrequency', (MHz * model.minFrequency).toString());
-		params = params.set('maxFrequency', (MHz * model.maxFrequency).toString());
-		params = params.set(
-			'preferredFrequency',
-			(MHz * model.preferredFrequency).toString()
-		);
-		params = params.set(
-			'frequencyAbsolute',
-			model.frequencyAbsolute.toString()
-		);
-		params = params.set('minBandwidth', model.minBandwidth.toString());
-		params = params.set(
-			'preferredBandwidth',
-			model.preferredBandwidth.toString()
-		);
-		params = params.set('startTime', model.startTime.toString());
-		params = params.set('endTime', model.endTime.toString());
-		params = params.set(
-			'approximateByteSize',
-			model.approximateByteSize.toString()
-		);
-		params = params.set('dataType', model.dataType);
-		params = params.set('powerLevel', model.powerLevel.toString());
-		params = params.set('mobility', model.mobility.toString());
-		params = params.set('maxVelocity', model.maxVelocity.toString());
+		params = params.set('SUID', SUId);
+		params = params.set('action', 'getAllNodes');
+		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
+		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+	}
+
+	public logGrant(grantID: any): Observable<any> {
+		let params = new HttpParams();
+		params = params.set('action', 'logGrant');
+		params = params.set('grantID', grantID.toString());
+		params = params.set('status', 'DELETED');
+
+		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+	}
+
+	public createJudge(model: any): Observable<any> {
+		let params = new HttpParams();
+		params = params.set('action', 'createJudge');
+		params = params.set('title', model.title);
+		params = params.set('firstName', model.firstName);
+		params = params.set('lastName', model.lastName);
+		params = params.set('email', model.email);
+		params = params.set('phone', model.phone);
+		params = params.set('password', model.password);
 		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
@@ -215,14 +218,6 @@ export class HttpRequestsService {
 		return this.httpClient.post(this.SERVER + "checkEmailAvail", body, {headers: this.HEEADERS});
 	}
 
-	public getSpectrumGrants(): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getSpectrumGrants');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
-	}
-
 	public getGrantByID(grantID: string) {
 		let params = new HttpParams();
 		params = params.set('action', 'getSpectrumGrant');
@@ -263,30 +258,6 @@ export class HttpRequestsService {
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 		
 		return this.httpClient.post(this.GETAPI, params);
-	}
-	
-	public suLogin(model: any): Observable<any> {
-		var body = {
-			password: model.password,
-			username: model.username
-		};
-
-		this.socketClient.configure('http://localhost', "8000");
-		this.socketClient.emit('suLogin', body);
-
-		return this.socketClient.listen('suLoginResponse');
-	}
-
-	public adminLogin(model: any): Observable<any> {
-		var body = {
-			password: model.password,
-			username: model.username
-		};
-
-		this.socketClient.configure('http://localhost', "8000");
-		this.socketClient.emit('adminLogin', body);
-
-		return this.socketClient.listen('adminLoginResponse');
 	}
 
 	public getNodeByID(nodeID: any): Observable<any> {

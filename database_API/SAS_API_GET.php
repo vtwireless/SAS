@@ -165,7 +165,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
         }
-        //TODO
+
         if ($action == "getPrimaryUsers") {
             $exists = 0;
             $result = mysqli_query($connection, "SELECT * FROM primaryUser;");
@@ -213,7 +213,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
 
         }
-        //TODO
+
         if ($action == "getSecondaryUsers") {
             $exists = 0;
             $result = mysqli_query($connection, "SELECT * FROM secondaryUser;");

@@ -214,6 +214,11 @@ def createAdminUser(sid, data):
 
     # socket.disconnect(sid)
 
+@socket.on('getUsers')
+def getSecondaryUsers(sid, data):
+    response = db.get_secondary_users()
+    socket.emit('getUsersResponse', to=sid, data=response)
+
 # In[ --- Node Management ---]
 
 @socket.on('getNodesRequest')
@@ -230,7 +235,20 @@ def register(sid, nodes):
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
 
+# In[ --- Grant Management --- ]
+
+@socket.on('getGrantsRequest')
+def getGrantRequests(sid, payload):
+    response = db.get_grants()
+    socket.emit('getGrantsResponse', to=sid, data=response)
+
+@socket.on('grantRequest')
+def grantRequest(sid, data):
+    response = db.create_grant_request(data)
+    socket.emit('grantResponse', to=sid, data=response)
+
 # In[ --- TODO --- ]
+
 @socket.on('deregistrationRequest')
 def deregister(sid, data):
     jsonData = json.loads(data)
@@ -253,54 +271,7 @@ def deregister(sid, data):
             response.response = SASAlgorithms.generateResponse(103)
         responseArr.append(response.asdict())
     responseDict = {"deregistrationResponse":responseArr}
-    socket.emit('deregistrationResponse', to=sid, data=json.dumps(responseDict))   
-
-@socket.on('grantRequest')
-def grantRequest(sid, data):
-    jsonData = json.loads(data)
-    print(jsonData)
-    responseArr = []
-    for item in jsonData["grantRequest"]:
-        item["secondaryUserID"] = item["cbsdId"]
-        if "operationParam" in item:
-            item["powerLevel"] = item["operationParam"]["maxEirp"]
-            item["minFrequency"] = int(item["operationParam"]["operationFrequencyRange"]["lowFrequency"])
-            item["maxFrequency"] = int(item["operationParam"]["operationFrequencyRange"]["highFrequency"])
-        if "vtGrantParams" in item:
-            item["approximateByteSize"] = int(item["vtGrantParams"]["approximateByteSize"])
-            item["dataType"] = item["vtGrantParams"]["dataType"]
-            item["mobility"] = item["vtGrantParams"]["mobility"]
-            item["maxVelocity"] = item["vtGrantParams"]["maxVelocity"]
-            item["preferredFrequency"] = int(item["vtGrantParams"]["preferredFrequency"])
-            item["preferredBandwidth"] = int(item["vtGrantParams"]["preferredBandwidth"])
-            item["minBandwidth"] = int(item["vtGrantParams"]["minBandwidth"])
-            item["frequencyAbsolute"] = int(item["vtGrantParams"]["frequencyAbsolute"])
-            item["dataType"] = item["vtGrantParams"]["dataType"]
-            item["startTime"] = item["vtGrantParams"]["startTime"]
-            item["endTime"] = item["vtGrantParams"]["endTime"]
-            item["location"] = item["vtGrantParams"]["location"]
-        item["action"] = "createGrantRequest"
-        grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
-        if "operationParam" in item:
-            ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
-            op = WinnForum.OperationParam(item["powerLevel"], ofr)
-            grantRequest.operationParam = op
-        vtgp = None
-        if "vtGrantParams" in item:
-            vt = item["vtGrantParams"]
-            vtgp = WinnForum.VTGrantParams(None, None, vt["preferredFrequency"], vt["frequencyAbsolute"], vt["minBandwidth"], vt["preferredBandwidth"], vt["preferredBandwidth"], vt["startTime"], vt["endTime"], vt["approximateByteSize"], vt["dataType"], vt["powerLevel"], vt["location"], vt["mobility"], vt["maxVelocity"])
-            grantRequest.vtGrantParams = vtgp
-        grantResponse = SASAlgorithms.runGrantAlgorithm(grants, REM, grantRequest)#algorithm   
-        if databaseLogging:
-            sendPostRequest(item)#Database log
-        else:
-            grantResponse.grantId = generateId()
-        if grantResponse.response.responseCode == "0":
-            g = WinnForum.Grant(grantResponse.grantId, item["cbsdId"], grantResponse.operationParam, vtgp, grantResponse.grantExpireTime)
-            grants.append(g)
-        responseArr.append(grantResponse.asdict())
-    responseDict = {"grantResponse":responseArr}
-    socket.emit('grantResponse', to=sid, data=json.dumps(responseDict))
+    socket.emit('deregistrationResponse', to=sid, data=json.dumps(responseDict))
 
 @socket.on('heartbeatRequest')
 def heartbeat(sid, data):
