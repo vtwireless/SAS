@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-
+    // TODO
     if ($action == "checkEmailAvail") {
 
         $email = strtolower($_POST['email']);
@@ -291,7 +291,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
     }
 
     ////////
-    # TODO:
     if ($action == "deregisterNode") {
         $cbsdID = "";
 

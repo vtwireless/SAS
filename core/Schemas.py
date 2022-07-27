@@ -28,7 +28,7 @@ class Schemas:
         Table(
             settings.NODE_TABLE, self._metadata,
             Column('nodeID', Integer, primary_key=True),
-            Column('fccId', String(80), index=False, unique=False, nullable=False),
+            Column('fccId', String(80), index=False, unique=True, nullable=False),
             Column('nodeName', String(80), index=False, unique=False, nullable=False),
             Column('location', String(80), index=False, unique=False, nullable=False, default=''),
             Column('trustLevel', Integer, index=False, unique=False, nullable=False),
@@ -41,6 +41,7 @@ class Schemas:
             Column('mobility', SmallInteger, index=False, unique=False, nullable=False),
             Column('status', String(80), index=False, unique=False, nullable=False),
             Column('userId', String(80), index=False, unique=False, nullable=False, default=''),
+            Column('cbsdId', String(80), index=False, unique=True, nullable=False, default=''),
             Column('cbsdSerialNumber', String(80), index=False, unique=False, nullable=False, default=''),
             Column('cbsdCategory', String(80), index=False, unique=False, nullable=False, default=''),
             Column('cbsdInfo', String(80), index=False, unique=False, nullable=False, default=''),
@@ -57,6 +58,7 @@ class Schemas:
         Table(
             settings.GRANT_TABLE, self._metadata,
             Column('requestID', Integer, primary_key=True),
+            Column('grantId', String(80), index=False, unique=False, nullable=''),
             Column('secondaryUserID', String(80), index=False, unique=False, nullable=''),
             Column('secondaryUserName', String(80), index=False, unique=False, nullable='', default=''),
             Column('tier', String(80), index=False, unique=False, nullable='', default=''),

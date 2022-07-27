@@ -1,15 +1,18 @@
-import sqlalchemy as db
-from sqlalchemy import select, insert, and_
-from sqlalchemy.engine import CursorResult
+import threading
 
+from sqlalchemy import select, insert, delete, update, and_
+from sqlalchemy.engine import CursorResult
+import sqlalchemy as db
+from datetime import datetime, timedelta, timezone
 import settings
 import os
 import uuid
 
 from Schemas import Schemas
-import CBSD
 from core import SASREM
 from SASAlgorithms import SASAlgorithms
+from Utilities import Utilities
+import CBSD
 import Server_WinnForum as WinnForum
 
 
@@ -26,6 +29,7 @@ class DatabaseController:
     GRANTS = None
 
     __grantRecords = []
+    __allRadios = []
 
     def __init__(self):
         self._delete_db_file()
@@ -50,6 +54,7 @@ class DatabaseController:
         }
         self.create_user(admin_user, True)
 
+# In[ --- Private Helper Functions --- ]
     def _connect_to_dev_db(self):
         self.ENGINE = db.create_engine(settings.DEVELOPMENT_DATABASE_URI)
         self.CONNECTION = self.ENGINE.connect()
@@ -84,7 +89,7 @@ class DatabaseController:
         self.CONNECTION.close()
         self._delete_db_file()
 
-    # In[ --- CREATE TABLES --- ]
+# In[ --- CREATE TABLES --- ]
 
     def _set_tables(self):
         self.schemas.create_tables()
@@ -95,7 +100,7 @@ class DatabaseController:
         self._get_nodes_table()
         self._get_grants_table()
 
-    # In[ --- USER CONTROLS --- ]
+# In[ --- USER CONTROLS --- ]
 
     def _get_secondaryUser_table(self):
         self.USERS = db.Table(
@@ -110,6 +115,25 @@ class DatabaseController:
             return {
                 'status': 1,
                 'secondaryUsers': rows
+            }
+        except Exception as err:
+            raise Exception(str(err))
+
+    def get_secondary_user(self, payload):
+        email = payload['username']
+        password = payload['password']
+
+        query = select([self.USERS]).where(and_(
+            self.USERS.columns.email == email,
+            self.USERS.columns.password == password
+        ))
+
+        try:
+            rows = self._execute_query(query)
+
+            return {
+                'status': 0,
+                'user': rows
             }
         except Exception as err:
             raise Exception(str(err))
@@ -184,7 +208,7 @@ class DatabaseController:
             "message": "User has been added."
         }
 
-    # In[ --- NODE CONTROLS --- ]
+# In[ --- NODE CONTROLS --- ]
     
     def _get_nodes_table(self):
         self.NODES = db.Table(
@@ -203,7 +227,7 @@ class DatabaseController:
         except Exception as err:
             raise Exception(str(err))
 
-    def create_nodes(self, sid, payload):
+    def register_nodes(self, sid, payload):
         responseArr, assignmentArr, insertionArr = [], [], []
 
         for item in payload["registrationRequest"]:
@@ -259,15 +283,56 @@ class DatabaseController:
                 "message": f"Nodes could not be added due to '{str(err)}'. Contact an administrator."
             }
 
-        # responseDict = {"registrationResponse": responseArr}
-
         return {
             "status": 1,
             "message": "Nodes have been added.",
             "registrationResponse": responseArr
         }, assignmentArr
 
-    # In[ --- GRANT CONTROLS --- ]
+    def deregister_nodes(self, nodes):
+        try:
+            responseArr = []
+            for item in nodes["deregistrationRequest"]:
+                if 'fccId' not in item or not item['fccId']:
+                    raise Exception(str('FCC-ID not provided'))
+                if 'cbsdId' not in item or not item['cbsdId']:
+                    raise Exception(str('CBSD-ID not provided'))
+
+                query = delete([self.NODES]).where(and_(
+                    self.NODES.columns.fccId == item['fccId'],
+                    self.NODES.columns.cbsdId == item['cbsdId']
+                ))
+                rows = self._execute_query(query)
+
+                response = WinnForum.DeregistrationResponse()
+                response.cbsdId = item['cbsdId']
+
+                query = select([self.NODES]).where(and_(
+                    self.NODES.columns.fccId == item['fccId'],
+                    self.NODES.columns.cbsdId == item['cbsdId']
+                ))
+                rows = self._execute_query(query)
+
+                if len(rows) > 0:
+                    response.response = self.algorithms.generateResponse(0)
+                else:
+                    response.response = self.algorithms.generateResponse(103)
+
+                responseArr.append(response.asdict())
+
+            return {
+                'status': 0,
+                'message': 'Node Deregistration complete',
+                'deregistrationResponse': responseArr
+            }
+
+        except Exception as err:
+            return {
+                'status': 1,
+                'message': str(err)
+            }
+
+# In[ --- GRANT CONTROLS --- ]
 
     def get_grant_records(self):
         return self.__grantRecords
@@ -348,6 +413,102 @@ class DatabaseController:
             "grantResponse": responseArr
         }
 
+    def heartbeat_request(self, data):
+        try:
+            heartbeatArr, grantArr = [], []
+
+            for heartbeat in data["heartbeatRequest"]:
+                cbsdQuery = select([self.NODES]).where(self.NODES.columns.cbsdId == heartbeat['cbsdId'])
+                cbsd = self._execute_query(cbsdQuery)[0]
+
+                grantQuery = select([self.GRANTS]).where(self.GRANTS.columns.grantId == heartbeat['grantId'])
+                grant = self._execute_query(grantQuery)[0]
+
+                if heartbeat["measReport"]:
+                    for rpmr in heartbeat["measReport"]["rcvdPowerMeasReports"]:
+                        # TODO: check to see if frequency range already exists as a submission
+                        #  from specific CBSD to prevent spamming
+                        mr = Utilities.measReportObjectFromJSON(rpmr)
+                        self.rem.measReportToSASREMObject(mr, cbsd)
+
+                response = self.algorithms.runHeartbeatAlgorithm(self.__grantRecords, self.rem, heartbeat, grant)
+                grant.heartbeatTime = datetime.now(timezone.utc)
+                grant.heartbeatInterval = response.heartbeatInterval
+                grantArr.append(grant)
+                heartbeatArr.append(response.asdict())
+
+            return {
+                'status': 0,
+                "heartbeatResponse": heartbeatArr
+            }, grantArr
+
+        except Exception as err:
+            return {
+                'status': 1,
+                "message": str(err)
+            }, []
+
+    def cancel_grant(self, grant):
+        now = datetime.now(timezone.utc)
+        if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now:
+            query = delete([self.GRANTS]).where(and_(
+                self.GRANTS.columns.grantId == grant['grantId'],
+                self.GRANTS.columns.secondaryUserID == grant['secondaryUserID']
+            ))
+            row = self._execute_query(query)[0]
+
+            print(f"Grant {grant['grantId']} has been cancelled")
+
+    def spectrum_inquiry(self, data):
+        try:
+            inquiryArr = []
+            radiosToChangeBack = []
+            radiosToCommunicate = []
+
+            for request in data["spectrumInquiryRequest"]:
+                response = WinnForum.SpectrumInquiryResponse(
+                    request["cbsdId"], [], self.algorithms.generateResponse(0)
+                )
+
+                for fr in request["inquiredSpectrum"]:
+                    lowFreq, highFreq = int(fr["lowFrequency"]), int(fr["highFrequency"])
+                    channelType, ruleApplied = "PAL", "FCC_PART_96"
+                    maxEirp = self.algorithms.getMaxEIRP()
+
+                    if self.algorithms.acceptableRange(lowFreq, highFreq):
+                        if 3700000000 > highFreq > 3650000000:
+                            channelType = "GAA"
+
+                        present = self.algorithms.isPUPresentREM(
+                            self.rem, highFreq, lowFreq, None, None, None
+                        )
+                        if present == 0:
+                            fr = WinnForum.FrequencyRange(lowFreq, highFreq)
+                            availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
+                            response.availableChannel.append(availChan)
+                        elif present == 2:
+                            rTCB, rTC = Utilities.initiateSensing(
+                                lowFreq, highFreq, self.__allRadios
+                            )
+                            radiosToChangeBack.extend(rTCB)
+                            radiosToCommunicate.extend(rTC)
+
+                inquiryArr.append(response.asdict())
+
+            threading.Timer(
+                3.0, Utilities.resetRadioStatuses, [radiosToChangeBack]
+            ).start()
+
+            return {
+                'status': 0,
+                "spectrumInquiryResponse": inquiryArr
+            }, radiosToCommunicate
+
+        except Exception as err:
+            return {
+                'status': 1,
+                "message": str(err)
+            }, []
 
 
 

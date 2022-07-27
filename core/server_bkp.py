@@ -7,22 +7,19 @@ Advised by Dr. Carl Dietrich (cdietric@vt.edu)
 For Wireless@VT
 """
 
-import eventlet
-import socketio
+import eventlet  # pip install eventlet
+import socketio  # pip install socketio
 import requests
 import json
+import SASAlgorithms
+import SASREM
+import time
+from datetime import datetime, timedelta, timezone
+import Server_WinnForum as WinnForum
+import CBSD
 import threading
 import uuid
 import random
-import sqlalchemy
-import time
-from datetime import datetime, timedelta, timezone
-
-import SASAlgorithms
-import SASREM
-import Server_WinnForum as WinnForum
-import CBSD
-import DatabaseController
 
 GETURL = "http://localhost/SASAPI/SAS_API_GET.php"
 POSTURL = "http://localhost/SASAPI/SAS_API.php"
@@ -40,17 +37,14 @@ isSimulating = True
 NUM_OF_CHANNELS = 15
 puDetections = {}
 
-socket = socketio.Server(cors_allowed_origins='*')
+socket = socketio.Server()
 app = socketio.WSGIApp(socket, static_files={
     '/': {'content_type': 'text/html', 'filename': 'index.html'}
 })
-db = DatabaseController.DatabaseController()
 
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
 
-
-# In[ --- Helper Functions --- ]
 
 def sendGetRequest(parameters):
     parameters["SAS_KEY"] = SASKEY
@@ -90,6 +84,10 @@ def getSettings():
 def sendBroadcast(broadcastName, data):
     socket.emit(broadcastName, data)
 
+
+# def addObjectToREM(spectrumData):
+#     obj = SASREM.SASREMObject(5, 50, "obj", 5, 3500000, 3550000, time.time() )
+#    REM.addREMObject(obj)
 
 def getGrantWithID(grantId):
     for grant in grants:
@@ -186,8 +184,6 @@ def removeCBSD(cbsdId):
     return False
 
 
-# In[ --- Connection Management ---]
-
 @socket.event
 def connect(sid, environ):
     print('connect ', sid)
@@ -205,65 +201,52 @@ def disconnect(sid):
             allRadios.remove(radio)
 
 
-# In[ --- User Management ---]
-
-@socket.on('suLogin')
-def suLogin(sid, data):
-    response = db.authenticate_user(data, False)
-    socket.emit('suLoginResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-
-@socket.on('adminLogin')
-def adminLogin(sid, data):
-    response = db.authenticate_user(data, True)
-    socket.emit('adminLoginResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-
-@socket.on('createSU')
-def createSecondaryUser(sid, data):
-    response = db.create_user(data, False)
-    socket.emit('createSUResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-
-@socket.on('createAdminUserINsas')
-def createAdminUser(sid, data):
-    response = db.create_user(data, True)
-    socket.emit('createAdminUserINsasResponse', to=sid, data=response)
-
-    # socket.disconnect(sid)
-
-
-@socket.on('getUsers')
-def getSecondaryUsers(sid, data):
-    response = db.get_secondary_users()
-    socket.emit('getUsersResponse', to=sid, data=response)
-
-
-@socket.on('getUser')
-def getUser(sid, data):
-    response = db.get_secondary_user(data)
-    socket.emit('getUserResponse', to=sid, data=response)
-
-
-# In[ --- Node Management ---]
-
-@socket.on('getNodesRequest')
-def getNodes(sid, payload):
-    response = db.get_nodes()
-    socket.emit('getNodesResponse', to=sid, data=response)
-
-
 @socket.on('registrationRequest')
-def register(sid, nodes):
-    response, assignmentArr = db.register_nodes(sid, nodes)
-    socket.emit('registrationResponse', to=sid, data=response)
+def register(sid, data):
+    jsonData = json.loads(data)
+    responseArr = []
+    assignmentArr = []
+    for item in jsonData["registrationRequest"]:
+        radio = CBSD.CBSD('0', 5, item["fccId"])
+        if "vtParams" in item:
+            item["nodeType"] = item["vtParams"]["nodeType"]
+            item["minFrequency"] = item["vtParams"]["minFrequency"]
+            item["maxFrequency"] = item["vtParams"]["maxFrequency"]
+            item["minSampleRate"] = item["vtParams"]["minSampleRate"]
+            item["maxSampleRate"] = item["vtParams"]["maxSampleRate"]
+            item["mobility"] = item["vtParams"]["isMobile"]
 
+            radio.nodeType = item["vtParams"]["nodeType"]
+            radio.minFrequency = item["vtParams"]["minFrequency"]
+            radio.maxFrequency = item["vtParams"]["maxFrequency"]
+            radio.minSampleRate = item["vtParams"]["minSampleRate"]
+            radio.maxSampleRate = item["vtParams"]["maxSampleRate"]
+            radio.mobility = item["vtParams"]["isMobile"]
+        if "installationParam" in item:
+            if "latitude" in item["installationParam"] and "longitude" in item["installationParam"]:
+                item["location"] = str(item["installationParam"]["latitude"]) + ',' + str(
+                    item["installationParam"]["longitude"])
+                radio.latitude = item["installationParam"]["latitude"]
+                radio.longitude = item["installationParam"]["longitude"]
+        item["IPAddress"] = 'TODO IP'
+        item["action"] = "createNode"
+        if databaseLogging:
+            print(sendPostRequest(item))
+            radio.id = 'TODO'
+        else:
+            radio.id = generateId()
+            allClients.append(radio)
+            cbsds.append(radio)
+        if "measCapability" in item:  # if the registering entity is a radio add it to the array and give it an assignment
+            cbsd = SASREM.CBSDSocket(radio.id, sid, False)
+            assignmentArr.append(cbsd)
+        response = WinnForum.RegistrationResponse(radio.id, None, SASAlgorithms.generateResponse(0))
+        if "measCapability" in item:
+            response.measReportConfig = item["measCapability"]
+        responseArr.append(response.asdict())
+    responseDict = {"registrationResponse": responseArr}
+    print(responseDict)
+    socket.emit('registrationResponse', to=sid, data=json.dumps(responseDict))
     # if the radio does not get the assignment out of the meas config
     for radio in assignmentArr:
         sendAssignmentToRadio(radio)
@@ -271,47 +254,108 @@ def register(sid, nodes):
 
 @socket.on('deregistrationRequest')
 def deregister(sid, data):
-    response = db.deregister_nodes(data)
-    socket.emit('deregistrationResponse', to=sid, data=response)
-
-
-# In[ --- Grant Management --- ]
-
-@socket.on('getGrantsRequest')
-def getGrantRequests(sid, payload):
-    response = db.get_grants()
-    socket.emit('getGrantsResponse', to=sid, data=response)
+    jsonData = json.loads(data)
+    responseArr = []
+    for item in jsonData["deregistrationRequest"]:
+        if databaseLogging:
+            item["action"] = "deregisterNode"
+            print(sendPostRequest(item))
+            response = {}
+            response["cbsdId"] = item["cbsdId"]
+            response["response"] = generateResponse(0)
+            responseArr.append(response)  # TODO
+        success = removeCBSD(item["cbsdId"])
+        response = WinnForum.DeregistrationResponse()
+        if success:
+            response.cbsdId = item["cbsdId"]
+            response.response = SASAlgorithms.generateResponse(0)
+        else:
+            response.cbsdId = item["cbsdId"]
+            response.response = SASAlgorithms.generateResponse(103)
+        responseArr.append(response.asdict())
+    responseDict = {"deregistrationResponse": responseArr}
+    socket.emit('deregistrationResponse', to=sid, data=json.dumps(responseDict))
 
 
 @socket.on('grantRequest')
 def grantRequest(sid, data):
-    response = db.create_grant_request(data)
-    socket.emit('grantResponse', to=sid, data=response)
+    jsonData = json.loads(data)
+    print(jsonData)
+    responseArr = []
+    for item in jsonData["grantRequest"]:
+        item["secondaryUserID"] = item["cbsdId"]
+        if "operationParam" in item:
+            item["powerLevel"] = item["operationParam"]["maxEirp"]
+            item["minFrequency"] = int(item["operationParam"]["operationFrequencyRange"]["lowFrequency"])
+            item["maxFrequency"] = int(item["operationParam"]["operationFrequencyRange"]["highFrequency"])
+        if "vtGrantParams" in item:
+            item["approximateByteSize"] = int(item["vtGrantParams"]["approximateByteSize"])
+            item["dataType"] = item["vtGrantParams"]["dataType"]
+            item["mobility"] = item["vtGrantParams"]["mobility"]
+            item["maxVelocity"] = item["vtGrantParams"]["maxVelocity"]
+            item["preferredFrequency"] = int(item["vtGrantParams"]["preferredFrequency"])
+            item["preferredBandwidth"] = int(item["vtGrantParams"]["preferredBandwidth"])
+            item["minBandwidth"] = int(item["vtGrantParams"]["minBandwidth"])
+            item["frequencyAbsolute"] = int(item["vtGrantParams"]["frequencyAbsolute"])
+            item["dataType"] = item["vtGrantParams"]["dataType"]
+            item["startTime"] = item["vtGrantParams"]["startTime"]
+            item["endTime"] = item["vtGrantParams"]["endTime"]
+            item["location"] = item["vtGrantParams"]["location"]
+        item["action"] = "createGrantRequest"
+        grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
+        if "operationParam" in item:
+            ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
+            op = WinnForum.OperationParam(item["powerLevel"], ofr)
+            grantRequest.operationParam = op
+        vtgp = None
+        if "vtGrantParams" in item:
+            vt = item["vtGrantParams"]
+            vtgp = WinnForum.VTGrantParams(None, None, vt["preferredFrequency"], vt["frequencyAbsolute"],
+                                           vt["minBandwidth"], vt["preferredBandwidth"], vt["preferredBandwidth"],
+                                           vt["startTime"], vt["endTime"], vt["approximateByteSize"], vt["dataType"],
+                                           vt["powerLevel"], vt["location"], vt["mobility"], vt["maxVelocity"])
+            grantRequest.vtGrantParams = vtgp
+        grantResponse = SASAlgorithms.runGrantAlgorithm(grants, REM, grantRequest)  # algorithm
+        if databaseLogging:
+            sendPostRequest(item)  # Database log
+        else:
+            grantResponse.grantId = generateId()
+        if grantResponse.response.responseCode == "0":
+            g = WinnForum.Grant(grantResponse.grantId, item["cbsdId"], grantResponse.operationParam, vtgp,
+                                grantResponse.grantExpireTime)
+            grants.append(g)
+        responseArr.append(grantResponse.asdict())
+    responseDict = {"grantResponse": responseArr}
+    socket.emit('grantResponse', to=sid, data=json.dumps(responseDict))
 
 
 @socket.on('heartbeatRequest')
 def heartbeat(sid, data):
-    response, grantArray = db.heartbeat_request(data)
-    socket.emit('heartbeatResponse', to=sid, data=response)
+    jsonData = json.loads(data)
+    hbrArray = []
+    grantArray = []
+    for hb in jsonData["heartbeatRequest"]:
+        cbsd = getCBSDWithId(hb["cbsdId"])
+        grant = getGrantWithID(hb["grantId"])
+        grantArray.append(grant)
+        try:
+            if hb["measReport"]:
+                for rpmr in hb["measReport"]["rcvdPowerMeasReports"]:
+                    # Future TODO: check to see if frequency range already exists as a submission from specific CBSD to prevent spamming
+                    mr = measReportObjectFromJSON(rpmr)  # this should be an array
+                    REM.measReportToSASREMObject(mr, cbsd)
+        except KeyError:
+            print("no measure report")
+        response = SASAlgorithms.runHeartbeatAlgorithm(grants, REM, hb, grant)
+        grant.heartbeatTime = datetime.now(timezone.utc)
+        grant.heartbeatInterval = response.heartbeatInterval
+        hbrArray.append(response.asdict())
+    responseDict = {"heartbeatResponse": hbrArray}
+    socket.emit('heartbeatResponse', to=sid, data=json.dumps(responseDict))
 
-    for grant in grantArray:
-        threading.Timer(
-            (grant.heartbeatInterval * 1.1) + 2, db.cancel_grant, [grant]
-        ).start()
+    for g in grantArray:
+        threading.Timer((response.heartbeatInterval * 1.1) + 2, cancelGrant, [g]).start()
 
-
-@socket.on('spectrumInquiryRequest')
-def spectrumInquiryRequest(sid, data):
-    response, radiosToCommunicate = db.spectrum_inquiry(data)
-    socket.emit('spectrumInquiryResponse', to=sid, data=response)
-
-    for radio in radiosToCommunicate:
-        socket.emit(
-            "changeRadioParams", data=radio['data'], room=radio['room']
-        )
-
-
-# In[ --- TODO --- ]
 
 @socket.on('relinquishmentRequest')
 def relinquishment(sid, data):
@@ -337,6 +381,34 @@ def relinquishment(sid, data):
         relinquishArr.append(response)
     responseDict = {"relinquishmentResponse": relinquishArr}
     socket.emit('relinquishmentResponse', to=sid, data=json.dumps(responseDict))
+
+
+@socket.on('spectrumInquiryRequest')
+def spectrumInquiryRequest(sid, data):
+    jsonData = json.loads(data)
+    inquiryArr = []
+    for request in jsonData["spectrumInquiryRequest"]:
+        response = WinnForum.SpectrumInquiryResponse(request["cbsdId"], [], SASAlgorithms.generateResponse(0))
+        for fr in request["inquiredSpectrum"]:
+            lowFreq = int(fr["lowFrequency"])
+            highFreq = int(fr["highFrequency"])
+            channelType = "PAL"
+            ruleApplied = "FCC_PART_96"
+            maxEirp = SASAlgorithms.getMaxEIRP()
+            if SASAlgorithms.acceptableRange(lowFreq, highFreq):
+                if highFreq < 3700000000 and highFreq > 3650000000:
+                    channelType = "GAA"
+                present = SASAlgorithms.isPUPresentREM(REM, highFreq, lowFreq, None, None, None)
+                if present == 0:  # not present
+                    fr = WinnForum.FrequencyRange(lowFreq, highFreq)
+                    availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
+                    response.availableChannel.append(availChan)
+                elif present == 2:  # no spectrum data
+                    initiateSensing(lowFreq, highFreq)
+
+        inquiryArr.append(response.asdict())
+    responseDict = {"spectrumInquiryResponse": inquiryArr}
+    socket.emit('spectrumInquiryResponse', to=sid, data=json.dumps(responseDict))
 
 
 @socket.on('changeSettings')
@@ -393,7 +465,7 @@ def printPuDetections(sid):
     puDetections = {}
 
 
-# In[ --- IIC Functions --- ]
+# IIC Functions ---------------------------------------
 def getRandBool():
     """Randomly returns True or False"""
     return bool(random.getrandbits(1))  # Requires import random
@@ -670,10 +742,8 @@ def checkPUAlert(data=None):
         threading.Timer(1, checkPUAlert).start()
 
 
-# In[ --- main --- ]
 if __name__ == '__main__':
     getSettings()
-    if not isSimulating:
+    if (not isSimulating):
         threading.Timer(3.0, checkPUAlert).start()
-    # TODO: move to gunicorn
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
