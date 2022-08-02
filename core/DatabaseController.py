@@ -1,5 +1,3 @@
-import threading
-
 from sqlalchemy import select, insert, delete, update, and_
 from sqlalchemy.engine import CursorResult
 import sqlalchemy as db
@@ -7,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 import settings
 import os
 import uuid
+import threading
+import time
 
 from Schemas import Schemas
 from core import SASREM
@@ -27,6 +27,7 @@ class DatabaseController:
     USERS = None
     NODES = None
     GRANTS = None
+    PUDETECTIONS = None
 
     __grantRecords = []
     __allRadios = []
@@ -99,6 +100,7 @@ class DatabaseController:
         self._get_secondaryUser_table()
         self._get_nodes_table()
         self._get_grants_table()
+        self._get_pudetections_table()
 
 # In[ --- USER CONTROLS --- ]
 
@@ -227,6 +229,22 @@ class DatabaseController:
         except Exception as err:
             raise Exception(str(err))
 
+    def _get_node_by_cbsdId(self, cbsdId):
+        query = select([self.NODES]).where(
+            self.NODES.columns.cbsdId == cbsdId
+        )
+
+        try:
+            rows = self._execute_query(query)
+
+            if len(rows) > 0:
+                return Utilities.loadCBSDFromJSON(rows[0])
+
+            return None
+
+        except Exception as err:
+            raise Exception(str(err))
+
     def register_nodes(self, sid, payload):
         responseArr, assignmentArr, insertionArr = [], [], []
 
@@ -348,6 +366,22 @@ class DatabaseController:
             }
         except Exception as err:
             raise Exception(str(err))
+
+    def get_grant_with_id(self, grantId):
+        query = select([self.GRANTS]).where(
+            self.GRANTS.columns.grantId == grantId
+        )
+        rows = self._execute_query(query)
+
+        if len(rows) == 0:
+            for grant in self.__grantRecords:
+                if str(grant.id) == str(grantId):
+                    return grant
+            raise Exception(f"Grant with Id {grantId} not found")
+        else:
+            grant = Utilities.loadGrantFromJSON(rows[0])
+
+            return grant
 
     def _get_grants_table(self):
         self.GRANTS = db.Table(
@@ -510,5 +544,153 @@ class DatabaseController:
                 "message": str(err)
             }, []
 
+    def relinquishment_request(self, data):
+        relinquishArr = []
+
+        for relinquishmentRequest in data["relinquishmentRequest"]:
+            # TODO: Connect to DB
+            # params = {
+            #     "cbsdId": relinquishmentRequest["cbsdId"],
+            #     "grantId": relinquishmentRequest["grantId"],
+            #     "action": "relinquishGrant"
+            # }
+            # if databaseLogging:
+            #     sendPostRequest(params)
+
+            success = Utilities.removeGrant(
+                self.get_grant_with_id(relinquishmentRequest["grantId"]).id,
+                relinquishmentRequest["cbsdId"],
+                self.__grantRecords
+            )
+
+            response = {
+                "cbsdId": relinquishmentRequest["cbsdId"],
+                "grantId": relinquishmentRequest["grantId"]
+            }
+
+            if relinquishmentRequest["cbsdId"] is None or relinquishmentRequest["grantId"] is None:
+                response["response"] = Utilities.generateResponse(102)
+            elif success:
+                response["response"] = Utilities.generateResponse(0)
+            else:
+                response["response"] = Utilities.generateResponse(103)
+            relinquishArr.append(response)
+
+        return {"relinquishmentResponse": relinquishArr}
+
+    def spectrumData(self, jsonData):
+        try:
+            cbsd = self._get_node_by_cbsdId(jsonData["spectrumData"]["cbsdId"])
+
+            if cbsd:
+                deviceInfo = jsonData["spectrumData"]
+                cbsd.latitude = deviceInfo["latitude"]
+                cbsd.longitude = deviceInfo["longitude"]
+                # TODO: # If simulating, dump previously logged data
+                # if (isSimulating):
+                #     REM.objects = []
+
+                if deviceInfo["spectrumData"]:
+                    for rpmr in deviceInfo["spectrumData"]["rcvdPowerMeasReports"]:
+                        mr = Utilities.measReportObjectFromJSON(rpmr)
+                        self.rem.measReportToSASREMObject(mr, cbsd)
+
+        except Exception as err:
+            raise Exception(str(err))
+
+# In[ --- PU DETECTIONS CONTROLS --- ]
+
+    def _get_pudetections_table(self):
+        self.PUDETECTIONS = db.Table(
+            settings.PUDETECTIONS, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+
+    def get_pudetections(self):
+        query = select([self.PUDETECTIONS])
+
+        try:
+            rows = self._execute_query(query)
+
+            return {
+                'status': 1,
+                'puDetections': rows
+            }
+        except Exception as err:
+            raise Exception(str(err))
+
+    def get_pudetection_by_id(self, reportId):
+        query = select([self.PUDETECTIONS]).where(
+            self.PUDETECTIONS.columns.reportId == reportId
+        )
+
+        try:
+            rows = self._execute_query(query)
+
+            return {
+                'status': 1,
+                'puDetection': rows
+            }
+        except Exception as err:
+            raise Exception(str(err))
+
+    def set_pudetections(self, insertionArr):
+        try:
+            self.CONNECTION.execute(self.PUDETECTIONS.insert(), insertionArr)
+        except Exception as err:
+            print(str(err))
+            return {
+                "status": 0,
+                "message": f"PU Detections could not be added due to '{str(err)}'."
+            }
+
+        return {
+            "status": 1,
+            "message": "PU Detections recorded"
+        }
+
+    def check_pudetections(self, data=None):
+        report, pauseArr, insertionArr = [], [], []
+        freqRange = self.algorithms.MAXCBRSFREQ - self.algorithms.MINCBRSFREQ
+        blocks = freqRange/self.algorithms.TENMHZ
+        grants = self.get_grants()['spectrumGrants']
+
+        for i in range(int(blocks)):
+            low = (i * self.algorithms.TENMHZ) + self.algorithms.MINCBRSFREQ
+            high = ((i + 1) * self.algorithms.TENMHZ) + self.algorithms.MINCBRSFREQ
+            result = self.algorithms.isPUPresentREM(
+                self.rem, low, high, None, None, None
+            )
+
+            if result == 1:
+                if data:
+                    insertionArr.append({
+                        "reportId": data["reportId"],
+                        "timestamp": str(int(time.time())),
+                        "lowFreq": low,
+                        "highFreq": high,
+                        "result": int(result)
+                    })
+
+                    for grant in grants:
+                        isOverlap = self.algorithms.frequencyOverlap(
+                            low, high, grant.minFrequency, grant.maxFrequency
+                        )
+                        # TODO: CBSD and NODE are not in sync. Currently, cbsd doesn't have an sid
+                        node = self._get_node_by_cbsdId(grant.cbsdId)
+
+                        if isOverlap and node:
+                            pauseArr.append({
+                                'grantId': grant.grantId,
+                                'sid': node.sid
+                            })
+                    report.append("PU FOUND")
+            elif result == 0:
+                report.append("PU NOT FOUND")
+            elif result == 2:
+                report.append("NO SPECTRUM DATA")
+
+        self.set_pudetections(insertionArr)
+
+        return report, pauseArr
 
 

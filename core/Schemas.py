@@ -12,6 +12,7 @@ class Schemas:
         self.__get_user_table()
         self.__get_node_table()
         self.__get_grant_table()
+        self.__get_puDetections()
         
     def __get_user_table(self):
         Table(
@@ -51,7 +52,8 @@ class Schemas:
             Column('measCapability', String(80), index=False, unique=False, nullable=False, default=''),
             Column('groupingParam', String(80), index=False, unique=False, nullable=False, default=''),
             Column('fullyTrusted', String(80), index=False, unique=False, nullable=False, default=''),
-            Column('comment', String(80), index=False, unique=False, nullable=False)
+            Column('comment', String(80), index=False, unique=False, nullable=False),
+            Column('sid', String(80), index=False, unique=False, nullable=False)
         )
 
     def __get_grant_table(self):
@@ -76,5 +78,16 @@ class Schemas:
             Column('location', String(80), index=False, unique=False, nullable='', default=''),
             Column('mobility', Boolean, index=False, unique=False, nullable=''),
             Column('maxVelocity', String(80), index=False, unique=False, nullable=''),
-            Column('range', String(80), index=False, unique=False, nullable='', default='')
+            Column('range', String(80), index=False, unique=False, nullable='', default=''),
+            Column('cbsdId', String(80), index=False, unique=True, nullable=False, default='')
+        )
+
+    def __get_puDetections(self):
+        Table(
+            settings.PUDETECTIONS, self._metadata,
+            Column('timestamp', String(80), nullable=False),
+            Column('reportId', String(80), index=True, unique=True, nullable=False, primary_key=True),
+            Column('lowFreq', Float, nullable=False),
+            Column('highFreq', Float, nullable=False),
+            Column('result', Integer, nullable=False)
         )

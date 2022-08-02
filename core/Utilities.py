@@ -1,4 +1,5 @@
 import Server_WinnForum as WinnForum
+import CBSD
 
 
 class Utilities:
@@ -48,3 +49,54 @@ class Utilities:
         for radio in radios:
             radio.justChangedParams = False
 
+    @staticmethod
+    def removeGrant(grantId, cbsdId, grants):
+        for g in grants:
+            if str(g.id) == str(grantId) and str(g.cbsdId) == str(cbsdId):
+                grants.remove(g)
+                return True
+        return False
+
+    @staticmethod
+    def loadGrantFromJSON(grantJson):
+        ofr = WinnForum.FrequencyRange(
+            grantJson["frequency"],
+            grantJson["frequency"] + grantJson["bandwidth"]
+        )
+        operationParam = WinnForum.OperationParam(grantJson["requestPowerLevel"], ofr)
+        vtgp = WinnForum.VTGrantParams(
+            None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
+        )
+
+        try:
+            vtgp.minFrequency = grantJson["requestMinFrequency"]
+            vtgp.maxFrequency = grantJson["requestMaxFrequency"]
+            vtgp.startTime = grantJson["startTime"]
+            vtgp.endTime = grantJson["endTime"]
+            vtgp.approximateByteSize = grantJson["requestApproximateByteSize"]
+            vtgp.dataType = grantJson["dataType"]
+            vtgp.powerLevel = grantJson["requestPowerLevel"]
+            vtgp.location = grantJson["requestLocation"]
+            vtgp.mobility = grantJson["requestMobility"]
+            vtgp.maxVelocity = grantJson["requestMaxVelocity"]
+        except KeyError:
+            raise Exception('VTGP Params not found')
+
+        grant = WinnForum.Grant(grantJson["grantID"], grantJson["secondaryUserID"], operationParam, vtgp)
+
+        return grant
+
+    @staticmethod
+    def loadCBSDFromJSON(json):
+        # TODO: Handle null exception
+        locArr = json["location"].split(",")
+        longitude = locArr[0]
+        latitude = locArr[0]
+
+        return CBSD.CBSD(
+            json["id"], json["trustLevel"], json["fccId"], json["name"], longitude, latitude, json["IPAddress"],
+            json["minFrequency"], json["maxFrequency"], json["minSampleRate"], json["maxSampleRate"], json["cbsdType"],
+            json["mobility"], json["status"], json["cbsdSerialNumber"], json["callSign"], json["cbsdCategory"],
+            json["cbsdInfo"], json["airInterface"], json["installationParam"], json["measCapability"],
+            json["groupingParam"]
+        )

@@ -311,74 +311,17 @@ def spectrumInquiryRequest(sid, data):
         )
 
 
-# In[ --- TODO --- ]
-
 @socket.on('relinquishmentRequest')
 def relinquishment(sid, data):
-    jsonData = json.loads(data)
-    relinquishArr = []
-    for relinquishmentRequest in jsonData["relinquishmentRequest"]:
-        params = {}
-        params["cbsdId"] = relinquishmentRequest["cbsdId"]
-        params["grantId"] = relinquishmentRequest["grantId"]
-        params["action"] = "relinquishGrant"
-        if databaseLogging:
-            sendPostRequest(params)
-        success = removeGrant(getGrantWithID(relinquishmentRequest["grantId"]).id, relinquishmentRequest["cbsdId"])
-        response = {}
-        response["cbsdId"] = relinquishmentRequest["cbsdId"]
-        response["grantId"] = relinquishmentRequest["grantId"]
-        if relinquishmentRequest["cbsdId"] == None or relinquishmentRequest["grantId"] == None:
-            response["response"] = generateResponse(102)
-        elif success:
-            response["response"] = generateResponse(0)
-        else:
-            response["response"] = generateResponse(103)
-        relinquishArr.append(response)
-    responseDict = {"relinquishmentResponse": relinquishArr}
-    socket.emit('relinquishmentResponse', to=sid, data=json.dumps(responseDict))
+    response, radiosToCommunicate = db.relinquishment_request(data)
+    socket.emit('relinquishmentResponse', to=sid, data=response)
 
 
-@socket.on('changeSettings')
-def changeAlgorithm(sid, data):
-    getSettings()
-
-
-@socket.on('spectrumData')
-def spectrumData(sid, data):
-    jsonData = json.loads(data)
-    cbsd = None
-    try:
-        cbsd = getCBSDWithId(jsonData["spectrumData"]["cbsdId"])
-    except KeyError:
-        pass
-    try:
-        deviceInfo = jsonData["spectrumData"]
-        cbsd.latitude = deviceInfo["latitude"]
-        cbsd.longitude = deviceInfo["longitude"]
-        # If simulating, dump previously logged data
-        if (isSimulating):
-            REM.objects = []
-        if (deviceInfo["spectrumData"]):
-            for rpmr in deviceInfo["spectrumData"]["rcvdPowerMeasReports"]:
-                mr = measReportObjectFromJSON(rpmr)
-                REM.measReportToSASREMObject(mr, cbsd)
-    except KeyError as ke:
-        print("rcvd power meas error: ")
-        print(ke)
-
-
-@socket.on("latencyTest")
-def sendCurrentTime(sid):
-    """Sends the simulation client the current server time. Used to calulcated latency."""
-    responseDict = {"serverCurrentTime": time.time()}
-    socket.emit('latencyTest', to=sid, data=json.dumps(responseDict))
-
+# In[ --- PU Detections Management --- ]
 
 @socket.on("simCheckPUAlert")
 def simCheckPUAlert(sid, data):
-    payload = json.loads(data)
-    checkPUAlert(payload)
+    checkPUAlert(data)
 
 
 @socket.on("checkPUAlert")
@@ -388,11 +331,32 @@ def sendSimPuDetection(sid):
 
 @socket.on("getPuDetections")
 def printPuDetections(sid):
-    global puDetections
-    socket.emit("detections", json.dumps(puDetections))
-    puDetections = {}
+    response = db.get_pudetections()
+    socket.emit('detections', to=sid, data=response)
 
 
+# In[ --- Others --- ]
+
+@socket.on("latencyTest")
+def sendCurrentTime(sid):
+    """Sends the simulation client the current server time. Used to calulcated latency."""
+    response = {
+        "serverCurrentTime": time.time()
+    }
+    socket.emit('latencyTest', to=sid, data=response)
+
+
+@socket.on('changeSettings')
+def changeAlgorithm(sid, data):
+    getSettings()
+
+
+@socket.on('spectrumData')
+def spectrumData(sid, data):
+    db.spectrumData(data)
+
+
+# In[ --- TODO --- ]
 # In[ --- IIC Functions --- ]
 def getRandBool():
     """Randomly returns True or False"""
@@ -624,50 +588,14 @@ def sendObstructionToRadio(cbsd, lowFreq, highFreq):
 
 
 def checkPUAlert(data=None):
-    report = []
-    global puDetections
-    freqRange = SASAlgorithms.MAXCBRSFREQ - SASAlgorithms.MINCBRSFREQ
-    blocks = freqRange / SASAlgorithms.TENMHZ
-    if (data):
-        puDetections[str(data["reportId"])] = []
-    for i in range(int(blocks)):
-        low = (i * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
-        high = ((i + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
-        result = SASAlgorithms.isPUPresentREM(REM, low, high, None, None, None)
-        if (result == 1):
-            if (isSimulating):
-                if (data):
-                    puDetections[str(data["reportId"])].append(
-                        {"reportId": data["reportId"], "timestamp": str(float("{:0.3f}".format(time.time()))),
-                         "lowFreq": low, "highFreq": high, "result": str(result)})
-                report.append("PU FOUND")
-            else:
-                for grant in grants:
-                    if SASAlgorithms.frequencyOverlap(low, high, SASAlgorithms.getLowFreqFromOP(grant.operationParam),
-                                                      SASAlgorithms.getHighFreqFromOP(grant.operationPARAM)):
-                        cbsd = getCBSDWithId(grant.cbsdId)
-                        cbsd.sid.emit('pauseGrant', {'grantId': grant.id})
-        elif result == 0:
-            if (isSimulating):
-                report.append("PU NOT FOUND")
-                # socket.emit("puStatus", data="PU NOT FOUND")
-        elif (result == 2):
-            if (isSimulating):
-                report.append("NO SPECTRUM DATA")
-                # socket.emit("puStatus", data="NO SPECTRUM DATA")
+    report, pauseArr = db.check_pudetections(data)
+    for item in pauseArr:
+        socket.emit('pauseGrant', to=item['sid'], data={'grantId': item['grantId']})
 
-    if (isSimulating):
-        # print(report)
-        # for x in (puDetections[str(data["reportId"])]):
-        #  print(x)
-        # Write to a (CSV/JOSN) file
-        pass
-        # try:
-        #     socket.emit("puStatus", to=allClients[0],  data="report")
-        # except:
-        #     pass
-    else:
-        threading.Timer(1, checkPUAlert).start()
+    # TODO: Check if we need to return anything
+    # return report
+
+    threading.Timer(1, checkPUAlert).start()
 
 
 # In[ --- main --- ]
