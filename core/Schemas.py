@@ -13,6 +13,15 @@ class Schemas:
         self.__get_node_table()
         self.__get_grant_table()
         self.__get_puDetections()
+        self.__get_settings()
+
+    def __get_settings(self):
+        Table(
+            settings.SECONDARY_USER_TABLE, self._metadata,
+            Column('algorithm', String(80), index=True, unique=True, nullable=False, primary_key=True),
+            Column('heartbeatInterval', Integer, nullable=False),
+            Column('REMAlgorithm', String(80), nullable=False)
+        )
         
     def __get_user_table(self):
         Table(

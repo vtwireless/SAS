@@ -1,5 +1,8 @@
+import random
+
 import Server_WinnForum as WinnForum
 import CBSD
+from SASAlgorithms import SASAlgorithms
 
 
 class Utilities:
@@ -100,3 +103,81 @@ class Utilities:
             json["cbsdInfo"], json["airInterface"], json["installationParam"], json["measCapability"],
             json["groupingParam"]
         )
+
+    @staticmethod
+    def getRandBool():
+        """Randomly returns True or False"""
+        return bool(random.getrandbits(1))  # Requires import random
+
+    @staticmethod
+    def getChannelFromFrequency(freq):
+        """Returns the lowFreq for the channel 'freq' can be found"""
+        NUM_OF_CHANNELS = 15
+
+        for channel in range(NUM_OF_CHANNELS):
+            if freq < ((channel + 1) * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ:
+                return channel
+        return None
+
+    @staticmethod
+    def getChannelFreqFromChannel(channel, getHighFreq=False):
+        """Convert a channel integer to a freq for the channel"""
+        if getHighFreq:
+            channel = channel + 1
+
+        return (channel * SASAlgorithms.TENMHZ) + SASAlgorithms.MINCBRSFREQ
+
+    @staticmethod
+    def double_pad_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
+        """Executes Double Pad Obfuscation Scheme"""
+        obfuscationArr = []
+        pu_bw = puHighFreq - puLowFreq
+        low_su_low_freq = puLowFreq - pu_bw
+        low_su_high_freq = puLowFreq
+        high_su_low_freq = puHighFreq
+        high_su_high_freq = puHighFreq + pu_bw
+
+        if Utilities.getRandBool():  # Randomly pick to pad top or bottom first
+            if low_su_low_freq >= SASAlgorithms.MINCBRSFREQ and est_num_of_available_sus:
+                obfuscationArr.append((low_su_low_freq, low_su_high_freq))
+                est_num_of_available_sus -= 1
+
+            if high_su_high_freq <= SASAlgorithms.MAXCBRSFREQ and est_num_of_available_sus:
+                obfuscationArr.append((high_su_low_freq, high_su_high_freq))
+                est_num_of_available_sus -= 1
+        else:
+            if high_su_high_freq <= SASAlgorithms.MAXCBRSFREQ:
+                obfuscationArr.append((high_su_low_freq, high_su_high_freq))
+                est_num_of_available_sus -= 1
+
+            if low_su_low_freq >= SASAlgorithms.MINCBRSFREQ:
+                obfuscationArr.append((low_su_low_freq, low_su_high_freq))
+                est_num_of_available_sus -= 1
+
+        return obfuscationArr
+
+    @staticmethod
+    def fill_channel_obfuscate(puLowFreq, puHighFreq, est_num_of_available_sus):
+        """Fills PU Occupied Channel(s)"""
+        obfuscationArr = []
+
+        # Find the channel where the lowest PU frequency resides
+        puLowChannel = Utilities.getChannelFromFrequency(puLowFreq)
+        channelFreqLow = Utilities.getChannelFreqFromChannel(puLowChannel)
+        lowCbsdBw = puLowFreq - channelFreqLow
+
+        # Find the channel where the highest PU frequency resides
+        puHighChannel = Utilities.getChannelFromFrequency(puHighFreq)
+        channelFreqHigh = Utilities.getChannelFreqFromChannel(puHighChannel, getHighFreq=True)
+        highCbsdBw = channelFreqHigh - puHighFreq
+
+        # Only command radio if the obfuscating spectrum is at least 1 kHz
+        if highCbsdBw > 1000:
+            obfuscationArr.append((puHighFreq, channelFreqHigh))
+
+        if lowCbsdBw >= 1000:
+            obfuscationArr.append((channelFreqLow, puLowFreq))
+
+        return obfuscationArr
+
+

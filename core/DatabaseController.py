@@ -24,6 +24,7 @@ class DatabaseController:
     algorithms = SASAlgorithms()
     rem = SASREM.SASREM()
 
+    SETTINGS = None
     USERS = None
     NODES = None
     GRANTS = None
@@ -97,10 +98,69 @@ class DatabaseController:
         self.METADATA.create_all(self.ENGINE)
 
     def _get_tables(self):
+        self._get_settings_table()
         self._get_secondaryUser_table()
         self._get_nodes_table()
         self._get_grants_table()
         self._get_pudetections_table()
+
+# In[ --- SETTINGS CONTROLS --- ]
+
+    def _get_settings_table(self):
+        self.SETTINGS = db.Table(
+            settings.SETTINGS_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+        self.create_sas_settings()
+
+    def get_sas_settings(self, algorithm=None):
+        if not algorithm:
+            query = select([self.SETTINGS])
+        else:
+            query = select([self.SETTINGS]).where(
+                self.SETTINGS.columns.algorithm == algorithm
+            )
+
+        try:
+            result = self._execute_query(query)[0]
+            message = f"GRANT: {result['algorithm']}, " \
+                      f"HB: {str(result['heartbeatInterval'])}, " \
+                      f"REM: {result['REMAlgorithm']}"
+            print(message)
+
+        except Exception as err:
+            raise Exception(str(err))
+
+    def set_algorithm_settings(self, result):
+        self.algorithms.setGrantAlgorithm(result["algorithm"])
+        self.algorithms.setHeartbeatInterval(result["heartbeatInterval"])
+        self.algorithms.setREMAlgorithm(result["REMAlgorithm"])
+
+    def create_sas_settings(self, data=None):
+        if not data:
+            data = {
+                'algorithm': 'DEFAULT',
+                'heartbeatInterval': 5,
+                'REMAlgorithm': 'DEFAULT'
+            }
+
+        try:
+            self.CONNECTION.execute(self.SETTINGS.insert(), [data])
+            self.set_algorithm_settings(data)
+        except Exception as err:
+            raise Exception(str(err))
+
+    def update_sas_settings(self, data):
+        updateQuery = update(self.SETTINGS)\
+            .where(self.SETTINGS.columns.algorithm == data.algorithm)\
+            .values(
+                heartbeatInterval=data['heartbeatInterval'],
+                REMAlgorithm=data['REMAlgorithm']
+            )
+        ResultProxy = self.CONNECTION.execute(updateQuery)
+
+        self.set_algorithm_settings(data)
+        self.get_sas_settings()
+
 
 # In[ --- USER CONTROLS --- ]
 
@@ -521,6 +581,7 @@ class DatabaseController:
                             availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
                             response.availableChannel.append(availChan)
                         elif present == 2:
+                            # TODO: Remove allRadios
                             rTCB, rTC = Utilities.initiateSensing(
                                 lowFreq, highFreq, self.__allRadios
                             )
@@ -693,4 +754,71 @@ class DatabaseController:
 
         return report, pauseArr
 
+# In[ --- OTHERS --- ]
+
+    def incumbentInformation(self, incumbentData):
+        """Function for PUs to send their operating data"""
+        utilizeExtraChannel, obfuscated = True, []  # TODO: Decide when to toggle this
+
+        for data in incumbentData["incumbentInformation"]:
+            lowFreq, highFreq = None, None
+            # Get time, location, and frequency range of PU
+            desireObfuscation, scheme, startTime, endTime = [None] * 4
+            puLat, puLon, puLowFreq, puLighFreq, power = [None] * 5
+
+            try:
+                desireObfuscation = bool(data["desireObfuscation"])
+                scheme = str(data["scheme"])
+                puLowFreq = float(data["lowFreq"])
+                puHighFreq = float(data["highFreq"])
+                puLat = data["puLat"]
+                puLon = data["puLon"]
+                power = data["power"]
+                startTime = data["startTime"]
+                endTime = data["endTime"]
+            except Exception as err:
+                raise Exception(str(err))
+
+            if desireObfuscation:
+                if scheme:
+                    # TODO: Remove allRadios
+                    est_num_of_available_sus = 0
+                    for radio in self.__allRadios:
+                        if not radio.justChangedParams:
+                            est_num_of_available_sus += 1
+
+                    if scheme == "double_pad":
+                        lowFreq, highFreq = Utilities.double_pad_obfuscate(
+                            puLowFreq, puHighFreq, est_num_of_available_sus
+                        )
+                    elif scheme == "fill_channel":
+                        lowFreq, highFreq = Utilities.fill_channel_obfuscate(
+                            puLowFreq, puHighFreq, est_num_of_available_sus
+                        )
+
+                    obfuscated.extend(self.sendIICCommand(lowFreq, highFreq))
+                else:
+                    print("No PU Obfuscation Scheme Detected...")
+            else:
+                pass  # PU does not want special treatment
+
+        return obfuscated
+
+    def sendIICCommand(self, lowFreq, highFreq):
+        """Will ask 1 idle node to transmit over the low-high freq"""
+
+        radiosToChangeBack, obstructionArr = [], []
+        # TODO: Remove radios
+        for radio in self.__allRadios:
+            if not radio.justChangedParams:
+                # print("SENDING LOW: " +str(lowFreq)+" and HIGH: "+str(highFreq))
+                radio.justChangedParams = True
+                obstructionArr.append((radio, lowFreq, highFreq))
+                radiosToChangeBack.append(radio)
+
+        threading.Timer(
+            5.0, Utilities.resetRadioStatuses, [radiosToChangeBack]
+        ).start()
+
+        return obstructionArr
 
