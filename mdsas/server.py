@@ -1,8 +1,8 @@
 """
 Very similar to server.py
 
-Revised: March 20, 2021
-Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Revised: Aug 8, 2022
+Authored by: Saurav Kumar (sauravk3@vt.edu), Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
 Advised by Dr. Carl Dietrich (cdietric@vt.edu)
 For Wireless@VT
 """
@@ -12,9 +12,9 @@ import time
 import eventlet
 import socketio
 
-import DatabaseController
-import SASAlgorithms
-import SASREM
+from controllers import DatabaseController
+from algorithms import SASAlgorithms
+from algorithms import SASREM
 from Utilities import Utilities
 
 
@@ -105,6 +105,18 @@ def getUser(sid, data):
     socket.emit('getUserResponse', to=sid, data=response)
 
 
+@socket.on('checkEmailAvail')
+def checkEmailAvailability(sid, data):
+    try:
+        response = db.check_email_availability(data)
+        socket.emit('checkEmailResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('checkEmailResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
 # In[ --- Node Management ---]
 
 @socket.on('getNodesRequest')
@@ -128,6 +140,15 @@ def deregister(sid, data):
     response = db.deregister_nodes(data)
     socket.emit('deregistrationResponse', to=sid, data=response)
 
+
+@socket.on('updateNode')
+def updateNode(sid, payload):
+    try:
+        response = db.update_nodes(payload)
+    except Exception as err:
+        response = {'status': 0, 'message': str(err)}
+
+    socket.emit('updateNodeResponse', to=sid, data=response)
 
 # In[ --- Grant Management --- ]
 

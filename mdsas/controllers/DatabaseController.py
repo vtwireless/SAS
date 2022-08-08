@@ -2,18 +2,18 @@ from sqlalchemy import select, insert, delete, update, and_
 from sqlalchemy.engine import CursorResult
 import sqlalchemy as db
 from datetime import datetime, timedelta, timezone
-import settings
 import os
 import uuid
 import threading
 import time
 
-from Schemas import Schemas
-from core import SASREM
-from SASAlgorithms import SASAlgorithms
+from settings import settings
+from models.Schemas import Schemas
+from algorithms import SASREM
+from algorithms.SASAlgorithms import SASAlgorithms
 from Utilities import Utilities
-import CBSD
-import Server_WinnForum as WinnForum
+from algorithms import CBSD
+from algorithms import Server_WinnForum as WinnForum
 
 
 class DatabaseController:
@@ -161,7 +161,6 @@ class DatabaseController:
         self.set_algorithm_settings(data)
         self.get_sas_settings()
 
-
 # In[ --- USER CONTROLS --- ]
 
     def _get_secondaryUser_table(self):
@@ -270,8 +269,35 @@ class DatabaseController:
             "message": "User has been added."
         }
 
+    def check_email_availability(self, payload):
+        email = payload.get('email', None)
+
+        if not email:
+            raise Exception("Email not provided")
+
+        query = select([self.USERS]).where(
+            self.USERS.columns.email == email
+        )
+
+        try:
+            rows = self._execute_query(query)
+
+            if len(rows) > 1:
+                return {
+                    'status': 1,
+                    'exists': 1,
+                    'message': 'Email In Use'
+                }
+            return {
+                'status': 1,
+                'exists': 0,
+                'message': 'Email Unique'
+            }
+        except Exception as err:
+            raise Exception(str(err))
+
 # In[ --- NODE CONTROLS --- ]
-    
+
     def _get_nodes_table(self):
         self.NODES = db.Table(
             settings.NODE_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
@@ -409,6 +435,25 @@ class DatabaseController:
                 'status': 1,
                 'message': str(err)
             }
+
+    def update_nodes(self, payload):
+        try:
+            updateQuery = update(self.NODES) \
+                .where(self.NODES.columns.nodeID == payload['nodeID']) \
+                .values(
+                    trustLevel=payload['trustLevel'], IPAddress=payload['IPAddress'],
+                    minFrequency=payload['minFrequency'], maxFrequency=payload['maxFrequency'],
+                    minSampleRate=payload['minSampleRate'], maxSampleRate=payload['maxSampleRate'],
+                    nodeType=payload['nodeType'], mobility=payload['mobility'], status=payload['status'],
+                    comment=payload['comment'], fccId=payload['fccId'], cbsdSerialNumber=payload['cbsdSerialNumber'],
+                    callSign=payload['callSign'], cbsdCategory=payload['cbsdCategory'], cbsdInfo=payload['cbsdInfo'],
+                    airInterface=payload['airInterface'], installationParam=payload['installationParam'],
+                    measCapability=payload['measCapability'], groupingParam=payload['groupingParam']
+                )
+            ResultProxy = self.CONNECTION.execute(updateQuery)
+
+        except Exception as err:
+            raise Exception(str(err))
 
 # In[ --- GRANT CONTROLS --- ]
 

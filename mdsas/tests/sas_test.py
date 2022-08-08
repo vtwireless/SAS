@@ -13,9 +13,11 @@ testuser = {
     'location': '38.2296,-81.4139'
 }
 
+
 @client.on('createSUResponse')
 def createSUResponse(data):
     print(data)
+
 
 print("Emit event")
 client.emit('createSU', testuser)
