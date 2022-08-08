@@ -6,3 +6,4 @@ FrontEnd/node_modules/
 
 # Database files
 core/*.db
+mdsas/*.db
