@@ -69,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
         }
     }
 
-    # TODO:
+    # NO SUCH DB - TO BE IMPLEMENTED
     if ($action == "updateSASSettings") {
         $algorithm = strtoupper($_POST['algorithm']);
         $heartbeatInterval = $_POST['heartbeatInterval'];
@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-    // TODO
+
     if ($action == "checkEmailAvail") {
 
         $email = strtolower($_POST['email']);
@@ -134,7 +134,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
         }
     }
 
-    # TODO:
+
     if ($action == "createGrantRequest") {
         $secondaryUserID = $minFrequency = $maxFrequency = $preferredFrequency = $frequencyAbsolute = $minBandwidth = $preferredBandwidth = $startTime = $endTime = $approximateByteSize = $dataType = $powerLevel = $location = $mobility = $maxVelocity = "";
         if (isset($_POST['secondaryUserID'])) {
@@ -494,7 +494,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
         }
 
     }
-    # TODO:
+
     if ($action == "updateNode") {
         $nodeID = $_POST['nodeID'];
         $nodeName = $_POST['nodeName'];
@@ -523,7 +523,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
             $valid = 0;
         }
         if ($valid == 1) {
-            $sql = "UPDATE node SET nodeName = '$nodeName', location = '$location', trustLevel = '$trustLevel', IPAddress = '$IPAddress', minFrequency = '$minFrequency', maxFrequency = '$maxFrequency', minSampleRate = '$minSampleRate', maxSampleRate = '$maxSampleRate', nodeType = '$nodeType', mobility = '$mobility', status = '$status', comment = '$comment', fccId = '$fccId', cbsdSerialNumber = '$cbsdSerialNumber', callSign = '$callSign', cbsdCategory = '$cbsdCategory', cbsdInfo = '$cbsdInfo', airInterface = '$airInterface', installationParam = '$installationParam', 'measCapability = $measCapability', groupingParam = '$groupingParam' WHERE nodeID = '$nodeID' LIMIT 1;";
+            $sql = "UPDATE node SET nodeName = '$nodeName', location = '$location',
+                trustLevel = '$trustLevel', IPAddress = '$IPAddress',
+                minFrequency = '$minFrequency', maxFrequency = '$maxFrequency',
+                minSampleRate = '$minSampleRate', maxSampleRate = '$maxSampleRate',
+                nodeType = '$nodeType', mobility = '$mobility', status = '$status',
+                comment = '$comment', fccId = '$fccId',
+                cbsdSerialNumber = '$cbsdSerialNumber',
+                callSign = '$callSign', cbsdCategory = '$cbsdCategory',
+                cbsdInfo = '$cbsdInfo', airInterface = '$airInterface',
+                installationParam = '$installationParam',
+                'measCapability = $measCapability',
+                groupingParam = '$groupingParam'
+            WHERE nodeID = '$nodeID' LIMIT 1;";
 
             if (mysqli_query($connection, $sql)) {
                 $m['status'] = 1;
