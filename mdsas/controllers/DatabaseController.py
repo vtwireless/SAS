@@ -31,6 +31,7 @@ class DatabaseController:
     PUDETECTIONS = None
     TIERCLASS = None
     TIERASSIGNMENT = None
+    REGIONSCHEDULE = None
 
     __grantRecords = []
     __allRadios = []
@@ -326,7 +327,7 @@ class DatabaseController:
                 'status': 0,
                 'message': str(err)
             }
-        
+
     def create_tierclass(self, payload):
         tierClassName = payload['tierClassName']
         tierPriorityLevel = payload['tierPriorityLevel']
@@ -334,7 +335,7 @@ class DatabaseController:
         maxTierNumber = payload['maxTierNumber']
         tierUpperBand = payload['tierUpperBand']
         tierLowerBand = payload['tierLowerBand']
-        
+
         if not tierClassName or not tierPriorityLevel or not maxTierNumber or not tierUpperBand or not tierLowerBand:
             raise Exception("All parameters not provided")
 
@@ -348,8 +349,8 @@ class DatabaseController:
             }
 
         insertQuery = insert(self.TIERCLASS).values(
-            tierClassName=tierClassName, tierPriorityLevel=tierPriorityLevel, 
-            tierClassDescription=tierClassDescription, maxTierNumber=maxTierNumber, 
+            tierClassName=tierClassName, tierPriorityLevel=tierPriorityLevel,
+            tierClassDescription=tierClassDescription, maxTierNumber=maxTierNumber,
             tierUpperBand=tierUpperBand, tierLowerBand=tierLowerBand
         )
         rows = self._execute_query(insertQuery)
@@ -374,10 +375,10 @@ class DatabaseController:
             maxTierNumber = payload['maxTierNumber']
             tierUpperBand = payload['tierUpperBand']
             tierLowerBand = payload['tierLowerBand']
-    
+
             if not tierClassName or not tierPriorityLevel or not maxTierNumber or not tierUpperBand or not tierLowerBand:
                 raise Exception("All parameters not provided")
-    
+
             updateQuery = update(self.TIERCLASS).values(
                 tierClassName=tierClassName, tierPriorityLevel=tierPriorityLevel,
                 tierClassDescription=tierClassDescription, maxTierNumber=maxTierNumber,
@@ -386,7 +387,7 @@ class DatabaseController:
                 self.TIERCLASS.columns.tierClassName == tierClassName
             )
             rows = self._execute_query(updateQuery)
-    
+
             return {
                 "status": 1,
                 "message": "Tier Class has been updated."
@@ -464,7 +465,97 @@ class DatabaseController:
             'message': f"Tier Assignment {assignmentID} deleted"
         }
 
+# In[ --- REGION SCHEDULE CONTROLS --- ]
 
+    def _get_region_schedule_table(self):
+        self.REGIONSCHEDULE = db.Table(
+            settings.REGIONSCHEDULE, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+
+    def create_region_schedule(self, payload):
+        regionName = payload['regionName']
+        regionShape = payload['regionShape']
+        shapeRadius = payload['shapeRadius']
+        shapePoints = payload['shapePoints']
+        schedulingAlgorithm = payload['schedulingAlgorithm']
+        useSUTiers = payload['useSUTiers']
+        useClassTiers = payload['useClassTiers']
+        useInnerClassTiers = payload['useInnerClassTiers']
+        isDefault = payload['isDefault']
+        isActive = payload['isActive']
+
+        # $regionName == "" ||
+        # ($regionShape != "circle" && $regionShape != "polygon") ||
+        # $schedulingAlgorithm == "" || $useSUTiers == "" || $useClassTiers == ""
+        # || $useInnerClassTiers == "" || $isDefault == "" || $isActive == ""
+        if not regionName or (regionShape != "circle" and regionShape != "polygon") or not schedulingAlgorithm \
+            or not useSUTiers or not useClassTiers or not useInnerClassTiers or not isDefault or not isActive \
+                or (regionShape == "circle" and shapeRadius == ""):
+            return {
+                'status': 0,
+                'message': 'All parameters not provided'
+            }
+
+        query = select([self.REGIONSCHEDULE]).where(
+            self.REGIONSCHEDULE.columns.regionName == regionName
+        )
+        rows = self._execute_query(query)
+        if len(rows) > 1:
+            return {
+                'status': 0,
+                'message': 'Region Schedule created successfully'
+            }
+
+        self.CONNECTION.execute(self.REGIONSCHEDULE.insert(), [payload])
+
+    def update_region_schedule(self, payload):
+        regionID = payload['regionID']
+        regionName = payload['regionName']
+        regionShape = payload['regionShape']
+        shapeRadius = payload['shapeRadius']
+        shapePoints = payload['shapePoints']
+        schedulingAlgorithm = payload['schedulingAlgorithm']
+        useSUTiers = payload['useSUTiers']
+        useClassTiers = payload['useClassTiers']
+        useInnerClassTiers = payload['useInnerClassTiers']
+        isDefault = payload['isDefault']
+        isActive = payload['isActive']
+
+        # $regionName == "" ||
+        # ($regionShape != "circle" && $regionShape != "polygon") ||
+        # $schedulingAlgorithm == "" || $useSUTiers == "" || $useClassTiers == ""
+        # || $useInnerClassTiers == "" || $isDefault == "" || $isActive == ""
+        if not regionName or (regionShape != "circle" and regionShape != "polygon") or not schedulingAlgorithm \
+                or not useSUTiers or not useClassTiers or not useInnerClassTiers or not isDefault or not isActive \
+                or (regionShape == "circle" and shapeRadius == ""):
+            return {
+                'status': 0,
+                'message': 'All parameters not provided'
+            }
+
+        """
+        UPDATE regionSchedule SET 
+            regionName = '$regionName', regionShape = '$regionShape', shapeRadius = '$shapeRadius', 
+            shapePoints = '$shapePoints', schedulingAlgorithm = '$schedulingAlgorithm', useSUTiers = '$useSUTiers', 
+            useClassTiers = '$useClassTiers', useInnerClassTiers = '$useInnerClassTiers', isDefault = '$isDefault', 
+            isActive = '$isActive' 
+         WHERE regionID = '$regionID' LIMIT 1
+        """
+        updateQuery = update(self.REGIONSCHEDULE) \
+            .where(self.REGIONSCHEDULE.columns.regionID == regionID) \
+            .values(
+                regionName=regionName, regionShape=regionShape,
+                shapeRadius=shapeRadius, schedulingAlgorithm=schedulingAlgorithm,
+                useSUTiers=useSUTiers, useClassTiers=useClassTiers,
+                shapePoints=shapePoints, useInnerClassTiers=useInnerClassTiers, isDefault=isDefault,
+                isActive=isActive
+            )
+        ResultProxy = self.CONNECTION.execute(updateQuery)
+
+        return {
+            'status': 1,
+            'message': 'Region Schedule updated successfully'
+        }
 
 # In[ --- NODE CONTROLS --- ]
 

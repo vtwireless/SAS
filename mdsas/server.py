@@ -154,7 +154,7 @@ def alterTierClassAssignment(sid, data):
 
 
 @socket.on('deleteTierClassAssignment')
-def alterTierClassAssignment(sid, data):
+def deleteTierClassAssignment(sid, data):
     try:
         response = db.delete_tierclass_assignment(data)
         socket.emit('deleteTierClassAssignmentResponse', to=sid, data=response)
@@ -164,6 +164,29 @@ def alterTierClassAssignment(sid, data):
             'status': 0, 'message': str(err)
         })
 
+
+@socket.on('createRegionSchedule')
+def createRegionSchedule(sid, data):
+    try:
+        response = db.create_region_schedule(data)
+        socket.emit('createRegionScheduleResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('createRegionScheduleResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
+@socket.on('updateRegionSchedule')
+def updateRegionSchedule(sid, data):
+    try:
+        response = db.update_region_schedule(data)
+        socket.emit('updateRegionScheduleResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('updateRegionScheduleResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 # In[ --- Node Management ---]
 

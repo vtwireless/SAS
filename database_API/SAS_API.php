@@ -624,7 +624,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-    # TODO:
     if ($action == "createRegionSchedule") {
         $regionName = $_POST['regionName'];
         $regionShape = $_POST['regionShape'];
@@ -668,7 +667,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
         }
 
     }
-    # TODO:
+
     if ($action == "updateRegionSchedule") {
         $regionID = $_POST['regionID'];
         $regionName = $_POST['regionName'];

@@ -24,4 +24,5 @@ GRANT_TABLE = 'grants'
 PUDETECTIONS = 'pudetections'
 TIERCLASS = 'tierclass'
 TIERASSIGNMENT = 'tierassignment'
+REGIONSCHEDULE = 'regionSchedule'
 

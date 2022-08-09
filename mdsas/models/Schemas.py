@@ -12,6 +12,7 @@ import settings_schema
 import users_schema
 import tierclass_schema
 import tierassignment_schema
+import regionschedule_schema
 
 
 class Schemas:
@@ -25,6 +26,8 @@ class Schemas:
         self.__get_grant_table()
         self.__get_puDetections()
         self.__get_tierclass_table()
+        self.__get_tierassignment_table()
+        self.__get_regionschedule_table()
 
     def __get_settings(self):
         settings_schema.set_schema(self._metadata)
@@ -46,4 +49,7 @@ class Schemas:
 
     def __get_tierassignment_table(self):
         tierassignment_schema.set_schema(self._metadata)
+
+    def __get_regionschedule_table(self):
+        regionschedule_schema.set_schema(self._metadata)
 
