@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from sqlalchemy import select, insert, delete, update, and_
 from sqlalchemy.engine import CursorResult
 import sqlalchemy as db
@@ -14,6 +18,8 @@ from algorithms.SASAlgorithms import SASAlgorithms
 from Utilities import Utilities
 from algorithms import CBSD
 from algorithms import Server_WinnForum as WinnForum
+
+from SettingsController import SettingsController
 
 
 class DatabaseController:
@@ -102,6 +108,8 @@ class DatabaseController:
         self.METADATA.create_all(self.ENGINE)
 
     def _get_tables(self):
+        # TODO: Migrate Controllers
+        # self.settings_data = SettingsController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
         self._get_settings_table()
         self._get_secondaryUser_table()
         self._get_nodes_table()
@@ -1026,7 +1034,6 @@ class DatabaseController:
             "status": 1,
             "message": f"Grant {payload['grantLogID']} logged."
         }
-
 
 # In[ --- PU DETECTIONS CONTROLS --- ]
 
