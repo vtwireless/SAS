@@ -117,6 +117,54 @@ def checkEmailAvailability(sid, data):
         })
 
 
+@socket.on('createTierClass')
+def createTierClass(sid, data):
+    try:
+        response = db.create_tierclass(data)
+        socket.emit('createTierClassResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('createTierClassResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
+@socket.on('updateTierClass')
+def updateTierClass(sid, data):
+    try:
+        response = db.update_tierclass(data)
+        socket.emit('updateTierClassResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('updateTierClassResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
+@socket.on('alterTierClassAssignment')
+def alterTierClassAssignment(sid, data):
+    try:
+        response = db.alter_tierclass_assignment(data)
+        socket.emit('alterTierClassAssignmentResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('alterTierClassAssignmentResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
+@socket.on('deleteTierClassAssignment')
+def alterTierClassAssignment(sid, data):
+    try:
+        response = db.delete_tierclass_assignment(data)
+        socket.emit('deleteTierClassAssignmentResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('deleteTierClassAssignmentResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
 # In[ --- Node Management ---]
 
 @socket.on('getNodesRequest')

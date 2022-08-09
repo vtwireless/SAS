@@ -22,4 +22,6 @@ SECONDARY_USER_TABLE = 'secondaryUser'
 NODE_TABLE = 'node'
 GRANT_TABLE = 'grants'
 PUDETECTIONS = 'pudetections'
+TIERCLASS = 'tierclass'
+TIERASSIGNMENT = 'tierassignment'
 

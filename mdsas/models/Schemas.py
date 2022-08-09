@@ -10,6 +10,8 @@ import nodes_schema
 import pudetections_schema
 import settings_schema
 import users_schema
+import tierclass_schema
+import tierassignment_schema
 
 
 class Schemas:
@@ -17,11 +19,12 @@ class Schemas:
         self._metadata = metadata
 
     def create_tables(self):
+        self.__get_settings()
         self.__get_user_table()
         self.__get_node_table()
         self.__get_grant_table()
         self.__get_puDetections()
-        self.__get_settings()
+        self.__get_tierclass_table()
 
     def __get_settings(self):
         settings_schema.set_schema(self._metadata)
@@ -37,3 +40,10 @@ class Schemas:
 
     def __get_puDetections(self):
         pudetections_schema.set_schema(self._metadata)
+
+    def __get_tierclass_table(self):
+        tierclass_schema.set_schema(self._metadata)
+
+    def __get_tierassignment_table(self):
+        tierassignment_schema.set_schema(self._metadata)
+

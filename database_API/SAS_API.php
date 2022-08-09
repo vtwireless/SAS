@@ -354,7 +354,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-    # TODO:
     if ($action == "deleteTierClassAssignment") {
         $assignmentID = "";
 
@@ -557,7 +556,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-    # TODO:
     if ($action == "createTierClass") {
         $tierClassName = $_POST['tierClassName'];
         $tierPriorityLevel = $_POST['tierPriorityLevel'];
@@ -591,7 +589,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
         }
 
     }
-    # TODO:
+
     if ($action == "updateTierClass") {
         $tierClassID = $_POST['tierClassID'];
         $tierPriorityLevel = $_POST['tierPriorityLevel'];
@@ -715,7 +713,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-    # TODO:
     if ($action == "alterTierClassAssignment") {
         $isNewTA = $_POST['isNewTA'];
         $secondaryUserID = $_POST['secondaryUserID'];
