@@ -25,4 +25,6 @@ PUDETECTIONS = 'pudetections'
 TIERCLASS = 'tierclass'
 TIERASSIGNMENT = 'tierassignment'
 REGIONSCHEDULE = 'regionSchedule'
+GRANTLOG = 'grantlog'
+GRANTREQUEST = 'grantrequest'
 

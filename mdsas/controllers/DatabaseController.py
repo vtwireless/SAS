@@ -32,6 +32,7 @@ class DatabaseController:
     TIERCLASS = None
     TIERASSIGNMENT = None
     REGIONSCHEDULE = None
+    GRANTLOG = None
 
     __grantRecords = []
     __allRadios = []
@@ -851,6 +852,34 @@ class DatabaseController:
 
             print(f"Grant {grant['grantId']} has been cancelled")
 
+    def delete_grant_by_id(self, payload):
+        requestID = payload['grantRequestID']
+        if not requestID:
+            return {
+                'status': 0,
+                'message': 'Request ID not provided'
+            }
+
+        query = delete([self.GRANTS]).where(
+            self.GRANTS.columns.requestID == requestID
+        )
+        rows = self._execute_query(query)
+
+        query = select([self.GRANTS]).where(
+            self.GRANTS.columns.requestID == requestID
+        )
+        rows = self._execute_query(query)
+        if len(rows) > 0:
+            return {
+                "status": 0,
+                "message": 'Grant could not be deleted'
+            }
+
+        return {
+            "status": 1,
+            "message": f"Grant {requestID} deleted."
+        }
+
     def spectrum_inquiry(self, data):
         try:
             inquiryArr = []
@@ -956,6 +985,48 @@ class DatabaseController:
 
         except Exception as err:
             raise Exception(str(err))
+
+    def _get_grantlog_table(self):
+        self.GRANTLOG = db.Table(
+            settings.GRANTLOG, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+
+    def log_grant(self, payload):
+        if not payload['grantID'] or not payload['status']:
+            return {
+                'status': 0,
+                'message': 'All parameters were not provided'
+            }
+
+        query = select([self.GRANTLOG]).where(and_(
+            self.GRANTLOG.columns.grantLogID == payload['grantLogID'],
+            self.GRANTLOG.columns.secondaryUserID == payload['secondaryUserID']
+        ))
+        rows = self._execute_query(query)
+
+        if len(rows) > 0:
+            message = f"Grant already logged."
+            return {
+                "status": 0,
+                "exists": 1,
+                "message": message
+            }
+
+        self.CONNECTION.execute(self.GRANTLOG.insert(), [payload])
+
+        rows = self._execute_query(query)
+        if len(rows) < 1:
+            message = f"Grant could not be logged"
+            return {
+                "status": 0,
+                "message": message
+            }
+
+        return {
+            "status": 1,
+            "message": f"Grant {payload['grantLogID']} logged."
+        }
+
 
 # In[ --- PU DETECTIONS CONTROLS --- ]
 

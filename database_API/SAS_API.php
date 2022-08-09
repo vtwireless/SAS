@@ -322,7 +322,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
 
     }
 
-    # TODO:
+
     if ($action == "deleteGrantRequest") {
         $grantRequestID = "";
 
@@ -778,7 +778,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
     }
 
     //////
-    # TODO:
+
     if ($action == "logGrant") {
         $grantID = $status = "";
         $status = $_POST['status'];

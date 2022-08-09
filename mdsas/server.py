@@ -270,6 +270,30 @@ def relinquishment(sid, data):
     socket.emit('relinquishmentResponse', to=sid, data=response)
 
 
+@socket.on('logGrant')
+def logGrant(sid, data):
+    try:
+        response = db.log_grant(data)
+        socket.emit('logGrantResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('logGrantResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
+@socket.on('deleteGrantRequest')
+def deleteGrantRequest(sid, data):
+    try:
+        response = db.delete_grant_by_id(data)
+        socket.emit('deleteGrantResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('deleteGrantResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
 # In[ --- PU Detections Management --- ]
 
 @socket.on("simCheckPUAlert")
