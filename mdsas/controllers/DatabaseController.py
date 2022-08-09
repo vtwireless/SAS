@@ -533,14 +533,6 @@ class DatabaseController:
                 'message': 'All parameters not provided'
             }
 
-        """
-        UPDATE regionSchedule SET 
-            regionName = '$regionName', regionShape = '$regionShape', shapeRadius = '$shapeRadius', 
-            shapePoints = '$shapePoints', schedulingAlgorithm = '$schedulingAlgorithm', useSUTiers = '$useSUTiers', 
-            useClassTiers = '$useClassTiers', useInnerClassTiers = '$useInnerClassTiers', isDefault = '$isDefault', 
-            isActive = '$isActive' 
-         WHERE regionID = '$regionID' LIMIT 1
-        """
         updateQuery = update(self.REGIONSCHEDULE) \
             .where(self.REGIONSCHEDULE.columns.regionID == regionID) \
             .values(

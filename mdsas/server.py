@@ -17,7 +17,6 @@ from algorithms import SASAlgorithms
 from algorithms import SASREM
 from Utilities import Utilities
 
-
 allClients = []
 allRadios = []  # CBSDSocket
 allWebApps = []
@@ -43,7 +42,7 @@ SASAlgorithms = SASAlgorithms.SASAlgorithms()
 # In[ --- Connection Management ---]
 
 @socket.event
-def connect(sid, environ):
+def connect(sid):
     print('connect ', sid)
     allClients.append(sid)
 
@@ -52,8 +51,10 @@ def connect(sid, environ):
 def disconnect(sid):
     print('disconnect ', sid)
     allClients.remove(sid)
-    if sid in allWebApps: allWebApps.remove(sid)
-    if sid in allSASs: allSASs.remove(sid)
+    if sid in allWebApps:
+        allWebApps.remove(sid)
+    if sid in allSASs:
+        allSASs.remove(sid)
     for radio in allRadios:
         if radio.sid == sid:
             allRadios.remove(radio)
@@ -117,6 +118,8 @@ def checkEmailAvailability(sid, data):
         })
 
 
+# In[ --- Tier Class Management ---]
+
 @socket.on('createTierClass')
 def createTierClass(sid, data):
     try:
@@ -165,6 +168,8 @@ def deleteTierClassAssignment(sid, data):
         })
 
 
+# In[ --- Region Schedule Management ---]
+
 @socket.on('createRegionSchedule')
 def createRegionSchedule(sid, data):
     try:
@@ -187,6 +192,7 @@ def updateRegionSchedule(sid, data):
         socket.emit('updateRegionScheduleResponse', to=sid, data={
             'status': 0, 'message': str(err)
         })
+
 
 # In[ --- Node Management ---]
 
@@ -220,6 +226,7 @@ def updateNode(sid, payload):
         response = {'status': 0, 'message': str(err)}
 
     socket.emit('updateNodeResponse', to=sid, data=response)
+
 
 # In[ --- Grant Management --- ]
 
@@ -365,8 +372,10 @@ def checkPUAlert(data=None):
 
 
 # In[ --- main --- ]
+
 if __name__ == '__main__':
     if not isSimulating:
         threading.Timer(3.0, checkPUAlert).start()
+
     # TODO: move to gunicorn
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
