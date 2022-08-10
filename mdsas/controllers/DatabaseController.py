@@ -20,6 +20,7 @@ from algorithms import CBSD
 from algorithms import Server_WinnForum as WinnForum
 
 from SettingsController import SettingsController
+from UsersController import UsersController
 
 
 class DatabaseController:
@@ -54,16 +55,6 @@ class DatabaseController:
         self.schemas = Schemas(self.METADATA)
         self._set_tables()
         self._get_tables()
-
-        # Create Admin User
-        admin_user = {
-            'secondaryUserName': settings.ADMIN_EMAIL,
-            'secondaryUserEmail': settings.ADMIN_EMAIL,
-            'secondaryUserPassword': settings.ADMIN_PWD,
-            'deviceID': '',
-            'location': ''
-        }
-        self.create_user(admin_user, True)
 
 # In[ --- Private Helper Functions --- ]
     def _connect_to_dev_db(self):
@@ -109,8 +100,9 @@ class DatabaseController:
     def _get_tables(self):
         # TODO: Migrate Controllers
         self.settings_controller = SettingsController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
+        self.users_controller = UsersController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
 
-        self._get_secondaryUser_table()
+        # self._get_secondaryUser_table()
         self._get_nodes_table()
         self._get_grants_table()
         self._get_pudetections_table()
@@ -133,136 +125,33 @@ class DatabaseController:
 
 # In[ --- USER CONTROLS --- ]
 
-    def _get_secondaryUser_table(self):
-        self.USERS = db.Table(
-            settings.SECONDARY_USER_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
-        )
-
     def get_secondary_users(self):
-        query = select([self.USERS])
         try:
-            rows = self._execute_query(query)
-
-            return {
-                'status': 1,
-                'secondaryUsers': rows
-            }
+            return self.users_controller.get_secondary_users()
         except Exception as err:
             raise Exception(str(err))
 
     def get_secondary_user(self, payload):
-        email = payload['username']
-        password = payload['password']
-
-        query = select([self.USERS]).where(and_(
-            self.USERS.columns.email == email,
-            self.USERS.columns.password == password
-        ))
-
         try:
-            rows = self._execute_query(query)
-
-            return {
-                'status': 0,
-                'user': rows
-            }
+            return self.users_controller.get_secondary_user(payload)
         except Exception as err:
             raise Exception(str(err))
 
     def authenticate_user(self, payload: any, isAdmin: bool):
-        email = payload['username']
-        password = payload['password']
-
-        if not email or not password:
-            raise Exception("Username or password not provided")
-
-        query = select([self.USERS]).where(and_(
-            self.USERS.columns.email == email,
-            self.USERS.columns.password == password,
-            self.USERS.columns.admin == isAdmin
-        ))
-        rows = self._execute_query(query)
-
-        if len(rows) < 1:
-            return {
-                "status": 0
-            }
-
-        return {
-            "status": 1,
-            "name": rows[0]['username'],
-            "id": rows[0]['username'],
-            "userType": 'SU' if not rows[0]['admin'] else 'ADMIN'
-        }
+        try:
+            return self.users_controller.authenticate_user(payload, isAdmin)
+        except Exception as err:
+            raise Exception(str(err))
 
     def create_user(self, payload, isAdmin):
-        username = payload['secondaryUserName']
-        email = payload['secondaryUserEmail']
-        password = payload['secondaryUserPassword']
-        deviceID = payload['deviceID']
-        location = payload['location']
-
-        # Sanity Checks
-        if not username:
-            raise Exception("Username not provided")
-
-        if not email:
-            raise Exception("Email Address not provided")
-
-        if not password:
-            raise Exception("Password not provided")
-
-        query = select([self.USERS]).where(self.USERS.columns.email == email)
-        rows = self._execute_query(query)
-        if len(rows) > 0:
-            message = f"Email '{email}' already exists. Contact an administrator to recover or reset password."
-            return {
-                "status": 0,
-                "exists": 1,
-                "message": message
-            }
-
-        insertQuery = insert(self.USERS).values(
-            username=username, email=email, admin=isAdmin, password=password, deviceID=deviceID, location=location
-        )
-        ResultProxy = self.CONNECTION.execute(insertQuery)
-
-        rows = self._execute_query(query)
-        if len(rows) < 1:
-            return {
-                "status": 0,
-                "message": "User could not be added. Contact an administrator."
-            }
-
-        return {
-            "status": 1,
-            "message": "User has been added."
-        }
+        try:
+            return self.users_controller.create_user(payload, isAdmin)
+        except Exception as err:
+            raise Exception(str(err))
 
     def check_email_availability(self, payload):
-        email = payload.get('email', None)
-
-        if not email:
-            raise Exception("Email not provided")
-
-        query = select([self.USERS]).where(
-            self.USERS.columns.email == email
-        )
-
         try:
-            rows = self._execute_query(query)
-
-            if len(rows) > 1:
-                return {
-                    'status': 1,
-                    'exists': 1,
-                    'message': 'Email In Use'
-                }
-            return {
-                'status': 1,
-                'exists': 0,
-                'message': 'Email Unique'
-            }
+            return self.users_controller.check_email_availability(payload)
         except Exception as err:
             raise Exception(str(err))
 
