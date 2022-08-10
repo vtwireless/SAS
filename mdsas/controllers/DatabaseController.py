@@ -21,6 +21,7 @@ from algorithms import Server_WinnForum as WinnForum
 
 from SettingsController import SettingsController
 from UsersController import UsersController
+from TierClassController import TierClassController
 
 
 class DatabaseController:
@@ -35,8 +36,6 @@ class DatabaseController:
     NODES = None
     GRANTS = None
     PUDETECTIONS = None
-    TIERCLASS = None
-    TIERASSIGNMENT = None
     REGIONSCHEDULE = None
     GRANTLOG = None
 
@@ -101,13 +100,14 @@ class DatabaseController:
         # TODO: Migrate Controllers
         self.settings_controller = SettingsController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
         self.users_controller = UsersController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
+        self.tierclass_controller = TierClassController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
 
         # self._get_secondaryUser_table()
         self._get_nodes_table()
         self._get_grants_table()
         self._get_pudetections_table()
-        self._get_tierclass_table()
-        self._get_tierassignment_table()
+        # self._get_tierclass_table()
+        # self._get_tierassignment_table()
 
 # In[ --- SETTINGS CONTROLS --- ]
 
@@ -157,167 +157,35 @@ class DatabaseController:
 
 # In[ --- TIER CONTROLS --- ]
 
-    def _get_tierclass_table(self):
-        self.TIERCLASS = db.Table(
-            settings.TIERCLASS, self.METADATA, autoload=True, autoload_with=self.ENGINE
-        )
-
     def get_tierclass(self):
-        query = select([self.TIERCLASS])
         try:
-            rows = self._execute_query(query)
-
-            if len(rows) > 0:
-                return {
-                    'status': 1,
-                    'tierClasses': rows
-                }
-            return {
-                'status': 0,
-                'message': "No tier classes"
-            }
+            return self.tierclass_controller.get_tierclass()
         except Exception as err:
-            return {
-                'status': 0,
-                'message': str(err)
-            }
+            raise Exception(str(err))
 
     def create_tierclass(self, payload):
-        tierClassName = payload['tierClassName']
-        tierPriorityLevel = payload['tierPriorityLevel']
-        tierClassDescription = payload['tierClassDescription']
-        maxTierNumber = payload['maxTierNumber']
-        tierUpperBand = payload['tierUpperBand']
-        tierLowerBand = payload['tierLowerBand']
-
-        if not tierClassName or not tierPriorityLevel or not maxTierNumber or not tierUpperBand or not tierLowerBand:
-            raise Exception("All parameters not provided")
-
-        query = select([self.TIERCLASS]).where(self.TIERCLASS.columns.tierClassName == tierClassName)
-        rows = self._execute_query(query)
-        if len(rows) > 0:
-            return {
-                "status": 0,
-                "exists": 1,
-                "message": f"Tier Class '{tierClassName}' already exists."
-            }
-
-        insertQuery = insert(self.TIERCLASS).values(
-            tierClassName=tierClassName, tierPriorityLevel=tierPriorityLevel,
-            tierClassDescription=tierClassDescription, maxTierNumber=maxTierNumber,
-            tierUpperBand=tierUpperBand, tierLowerBand=tierLowerBand
-        )
-        rows = self._execute_query(insertQuery)
-
-        rows = self._execute_query(query)
-        if len(rows) < 1:
-            return {
-                "status": 0,
-                "message": "Tier Class could not be added. Contact an administrator."
-            }
-
-        return {
-            "status": 1,
-            "message": "Tier Class has been added."
-        }
+        try:
+            return self.tierclass_controller.create_tierclass(payload)
+        except Exception as err:
+            raise Exception(str(err))
 
     def update_tierclass(self, payload):
         try:
-            tierClassName = payload['tierClassName']
-            tierPriorityLevel = payload['tierPriorityLevel']
-            tierClassDescription = payload['tierClassDescription']
-            maxTierNumber = payload['maxTierNumber']
-            tierUpperBand = payload['tierUpperBand']
-            tierLowerBand = payload['tierLowerBand']
-
-            if not tierClassName or not tierPriorityLevel or not maxTierNumber or not tierUpperBand or not tierLowerBand:
-                raise Exception("All parameters not provided")
-
-            updateQuery = update(self.TIERCLASS).values(
-                tierClassName=tierClassName, tierPriorityLevel=tierPriorityLevel,
-                tierClassDescription=tierClassDescription, maxTierNumber=maxTierNumber,
-                tierUpperBand=tierUpperBand, tierLowerBand=tierLowerBand
-            ).where(
-                self.TIERCLASS.columns.tierClassName == tierClassName
-            )
-            rows = self._execute_query(updateQuery)
-
-            return {
-                "status": 1,
-                "message": "Tier Class has been updated."
-            }
-
+            return self.tierclass_controller.update_tierclass(payload)
         except Exception as err:
-            return {
-                "status": 0,
-                "message": str(err)
-            }
-
-    def _get_tierassignment_table(self):
-        self.TIERASSIGNMENT = db.Table(
-            settings.TIERASSIGNMENT, self.METADATA, autoload=True, autoload_with=self.ENGINE
-        )
+            raise Exception(str(err))
 
     def alter_tierclass_assignment(self, payload):
-        isNewTA = payload['isNewTA']
-        secondaryUserID = payload['secondaryUserID']
-        tierClassID = payload['tierClassID']
-        innerTierLevel = payload['innerTierLevel']
-        tierAssignmentID = ""
-
-        if not secondaryUserID or not tierClassID or not innerTierLevel:
-            raise Exception("Parameters not provided")
-
-        if not isNewTA:
-            tierAssignmentID = payload['tierAssignmentID']
-            if not tierAssignmentID:
-                raise Exception("Parameters not provided")
-
-        query = select([self.TIERASSIGNMENT]).where(and_(
-            self.TIERASSIGNMENT.columns.secondaryUserID == secondaryUserID,
-            self.TIERASSIGNMENT.columns.tierClassID == tierClassID
-        ))
-
-        rows = self._execute_query(query)
-        if len(rows) > 0:
-            # Update
-            updateQuery = update(self.TIERASSIGNMENT).values(
-                tierClassID=tierClassID, secondaryUserID=secondaryUserID, innerTierLevel=innerTierLevel
-            ).where(
-                self.TIERASSIGNMENT.columns.tierAssignmentID == tierAssignmentID
-            )
-            rows = self._execute_query(updateQuery)
-
-            return {
-                'status': 1,
-                'message': "Tier class updated successfully"
-            }
-        else:
-            # Create
-            insertQuery = insert(self.TIERASSIGNMENT).values(
-                tierClassID=tierClassID, secondaryUserID=secondaryUserID, innerTierLevel=innerTierLevel
-            )
-            rows = self._execute_query(insertQuery)
-
-            return {
-                'status': 1,
-                'message': "Tier class created successfully"
-            }
+        try:
+            return self.tierclass_controller.alter_tierclass_assignment(payload)
+        except Exception as err:
+            raise Exception(str(err))
 
     def delete_tierclass_assignment(self, payload):
-        assignmentID = payload.get('assignmentID', None)
-        if not assignmentID:
-            raise Exception('Assignment ID not provided')
-
-        query = delete([self.TIERASSIGNMENT]).where(
-            self.TIERASSIGNMENT.columns.tierAssignmentID == assignmentID
-        ).first()
-        rows = self._execute_query(query)
-
-        return {
-            'status': 0,
-            'message': f"Tier Assignment {assignmentID} deleted"
-        }
+        try:
+            return self.tierclass_controller.delete_tierclass_assignment(payload)
+        except Exception as err:
+            raise Exception(str(err))
 
 # In[ --- REGION SCHEDULE CONTROLS --- ]
 
