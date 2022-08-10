@@ -14,7 +14,7 @@ class SettingsController:
         self.CONNECTION = connection
         self.algorithms = algorithms
 
-        self._get_settings_table()
+        self._set_settings_table()
 
     def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
@@ -23,11 +23,14 @@ class SettingsController:
 
         return rows
 
-    def _get_settings_table(self):
+    def _set_settings_table(self):
         self.SETTINGS = db.Table(
             settings.SETTINGS_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
         )
-        # self.create_sas_settings()
+        self.create_sas_settings()
+
+    def get_settings_table(self):
+        return self.SETTINGS
 
     def get_sas_settings(self, algorithm=None):
         if not algorithm:

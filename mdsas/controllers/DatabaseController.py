@@ -30,7 +30,6 @@ class DatabaseController:
     algorithms = SASAlgorithms()
     rem = SASREM.SASREM()
 
-    SETTINGS = None
     USERS = None
     NODES = None
     GRANTS = None
@@ -109,8 +108,8 @@ class DatabaseController:
 
     def _get_tables(self):
         # TODO: Migrate Controllers
-        # self.settings_data = SettingsController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
-        self._get_settings_table()
+        self.settings_controller = SettingsController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
+
         self._get_secondaryUser_table()
         self._get_nodes_table()
         self._get_grants_table()
@@ -120,60 +119,17 @@ class DatabaseController:
 
 # In[ --- SETTINGS CONTROLS --- ]
 
-    def _get_settings_table(self):
-        self.SETTINGS = db.Table(
-            settings.SETTINGS_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
-        )
-        self.create_sas_settings()
-
     def get_sas_settings(self, algorithm=None):
-        if not algorithm:
-            query = select([self.SETTINGS])
-        else:
-            query = select([self.SETTINGS]).where(
-                self.SETTINGS.columns.algorithm == algorithm
-            )
-
-        try:
-            result = self._execute_query(query)[0]
-            message = f"GRANT: {result['algorithm']}, " \
-                      f"HB: {str(result['heartbeatInterval'])}, " \
-                      f"REM: {result['REMAlgorithm']}"
-            print(message)
-
-        except Exception as err:
-            raise Exception(str(err))
+        self.settings_controller.get_sas_settings(algorithm)
 
     def set_algorithm_settings(self, result):
-        self.algorithms.setGrantAlgorithm(result["algorithm"])
-        self.algorithms.setHeartbeatInterval(result["heartbeatInterval"])
-        self.algorithms.setREMAlgorithm(result["REMAlgorithm"])
+        self.settings_controller.set_algorithm_settings(result)
 
     def create_sas_settings(self, data=None):
-        if not data:
-            data = {
-                'algorithm': 'DEFAULT',
-                'heartbeatInterval': 5,
-                'REMAlgorithm': 'DEFAULT'
-            }
-
-        try:
-            self.CONNECTION.execute(self.SETTINGS.insert(), [data])
-            self.set_algorithm_settings(data)
-        except Exception as err:
-            raise Exception(str(err))
+        self.settings_controller.create_sas_settings(data)
 
     def update_sas_settings(self, data):
-        updateQuery = update(self.SETTINGS)\
-            .where(self.SETTINGS.columns.algorithm == data.algorithm)\
-            .values(
-                heartbeatInterval=data['heartbeatInterval'],
-                REMAlgorithm=data['REMAlgorithm']
-            )
-        ResultProxy = self.CONNECTION.execute(updateQuery)
-
-        self.set_algorithm_settings(data)
-        self.get_sas_settings()
+        self.settings_controller.update_sas_settings(data)
 
 # In[ --- USER CONTROLS --- ]
 
