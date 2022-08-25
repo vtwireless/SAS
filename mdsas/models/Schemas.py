@@ -27,7 +27,7 @@ class Schemas:
         self.__get_grant_table()
         self.__get_puDetections()
         self.__get_tierclass_table()
-        self.__get_tierassignment_table()
+        # self.__get_tierassignment_table()
         self.__get_regionschedule_table()
         self.__get_grantlog_table()
 
