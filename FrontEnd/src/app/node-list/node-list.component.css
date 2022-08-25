@@ -7,55 +7,6 @@ th.mat-sort-header-sorted {
     color: black;
 }
 
-.mat-column-nodeID {
-    width: 5%;
-    min-width: 5%;
-    font-size: small;
-}
-
-.mat-column-nodeName {
-    width: 10%;
-    min-width: 10%;
-    font-size: small;
-}
-
-.mat-column-location {
-    width: 15%;
-    min-width: 15%;
-    font-size: small;
-}
-
-.mat-column-trustLevel {
-    width: 8%;
-    min-width: 8%;
-    font-size: small;
-}
-
-.mat-column-freqRange {
-    width: 15%;
-    min-width: 15%;
-    font-size: small;
-}
-
-.mat-column-sampleRange {
-    width: 15%;
-    min-width: 15%;
-    font-size: small;
-}
-
-.mat-column-nodeType {
-    width: 18%;
-    min-width: 18%;
-    font-size: small;
-}
-
-.mat-column-mobility {
-    width: 8%;
-    min-width: 8%;
-    font-size: small;
-}
-
-.mat-column-status {
-    width: 10%;
-    min-width: 10%;
+table.mat-table {
+    display: table;
 }

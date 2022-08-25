@@ -23,7 +23,6 @@ from SettingsController import SettingsController
 from UsersController import UsersController
 from TierClassController import TierClassController
 
-
 class DatabaseController:
     ENGINE = None
     CONNECTION = None
@@ -42,7 +41,7 @@ class DatabaseController:
     __grantRecords = []
     __allRadios = []
 
-    def __init__(self):
+    def __init__(self, LOAD_SEED_DATA):
         self._delete_db_file()
 
         if settings.ENVIRONMENT == 'DEVELOPMENT':
@@ -55,7 +54,14 @@ class DatabaseController:
         self._set_tables()
         self._get_tables()
 
+        if LOAD_SEED_DATA:
+            self.load_seed_data()
+
 # In[ --- Private Helper Functions --- ]
+    def load_seed_data(self):
+        self.users_controller.load_seed_data()
+        self.tierclass_controller.load_seed_data()
+
     def _connect_to_dev_db(self):
         self.ENGINE = db.create_engine(settings.DEVELOPMENT_DATABASE_URI)
         self.CONNECTION = self.ENGINE.connect()
@@ -157,17 +163,14 @@ class DatabaseController:
 
 # In[ --- TIER CONTROLS --- ]
 
+    def get_tierclass_by_id(self, payload):
+        return self.tierclass_controller.get_tierclass_by_id(payload)
+
     def get_tierclass(self):
-        try:
-            return self.tierclass_controller.get_tierclass()
-        except Exception as err:
-            raise Exception(str(err))
+        return self.tierclass_controller.get_tierclass()
 
     def create_tierclass(self, payload):
-        try:
-            return self.tierclass_controller.create_tierclass(payload)
-        except Exception as err:
-            raise Exception(str(err))
+        return self.tierclass_controller.create_tierclass(payload)
 
     def update_tierclass(self, payload):
         try:
@@ -329,6 +332,8 @@ class DatabaseController:
                     "message": message
                 }
 
+            # Prepare item
+            item['sid'] = sid
             insertionArr.append(item)
 
             radio = CBSD.CBSD(radioID, 5, radioID)

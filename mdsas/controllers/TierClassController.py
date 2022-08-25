@@ -35,6 +35,23 @@ class TierClassController:
             settings.TIERASSIGNMENT, self.METADATA, autoload=True, autoload_with=self.ENGINE
         )
 
+    def get_tierclass_by_id(self, payload):
+        query = select([self.TIERCLASS]).where(
+            self.TIERCLASS.columns.tierClassID == payload['tierClassID']
+        )
+        rows = self._execute_query(query)
+
+        if len(rows) > 0:
+            return {
+                'status': 1,
+                'tierClass': rows[0]
+            }
+
+        return {
+            'status': 0,
+            'message': "No tier classes"
+        }
+
     def get_tierclass(self):
         query = select([self.TIERCLASS])
         rows = self._execute_query(query)
@@ -58,9 +75,6 @@ class TierClassController:
         tierUpperBand = payload['tierUpperBand']
         tierLowerBand = payload['tierLowerBand']
 
-        if not tierClassName or not tierPriorityLevel or not maxTierNumber or not tierUpperBand or not tierLowerBand:
-            raise Exception("All parameters not provided")
-
         query = select([self.TIERCLASS]).where(self.TIERCLASS.columns.tierClassName == tierClassName)
         rows = self._execute_query(query)
         if len(rows) > 0:
@@ -75,7 +89,7 @@ class TierClassController:
             tierClassDescription=tierClassDescription, maxTierNumber=maxTierNumber,
             tierUpperBand=tierUpperBand, tierLowerBand=tierLowerBand
         )
-        rows = self._execute_query(insertQuery)
+        ResultProxy = self.CONNECTION.execute(insertQuery)
 
         rows = self._execute_query(query)
         if len(rows) < 1:
@@ -160,6 +174,58 @@ class TierClassController:
                 'message': "Tier class created successfully"
             }
 
+    def create_tierclass_assignment(self, payload):
+        query = select([self.TIERASSIGNMENT]).where(
+            self.TIERASSIGNMENT.columns.secondaryUserID == payload['secondaryUserID']
+        )
+
+        rows = self._execute_query(query)
+        if len(rows) > 0:
+            return {
+                "status": 0,
+                "exists": 1,
+                "message": f"Tier Assignment for {payload['secondaryUserID']} already exists."
+            }
+
+        insertQuery = insert(self.TIERASSIGNMENT).values(
+            tierClassID=payload['tierClassID'],
+            secondaryUserID=payload['secondaryUserID'],
+            innerTierLevel=payload['innerTierLevel']
+        )
+        ResultProxy = self.CONNECTION.execute(insertQuery)
+
+        rows = self._execute_query(query)
+        if len(rows) < 1:
+            return {
+                "status": 0,
+                "message": "Tier Assignment could not be added. Contact an administrator."
+            }
+
+        return {
+            "status": 1,
+            "message": "Tier Assignment has been added."
+        }
+
+    def get_tireclass_assignment_by_id(self, payload):
+        if 'tierClassID' not in payload:
+            raise Exception('tierClassID not provided')
+
+        query = select([self.TIERASSIGNMENT]).where(
+            self.TIERASSIGNMENT.columns.tierClassID == payload['tierClassID']
+        )
+        rows = self._execute_query(query)
+
+        if len(rows) > 0:
+            return {
+                'status': 1,
+                'tierClass': rows[0]
+            }
+
+        return {
+            'status': 0,
+            'message': "No tier classes"
+        }
+
     def delete_tierclass_assignment(self, payload):
         assignmentID = payload.get('assignmentID', None)
         if not assignmentID:
@@ -173,4 +239,30 @@ class TierClassController:
         return {
             'status': 0,
             'message': f"Tier Assignment {assignmentID} deleted"
+        }
+
+    def load_seed_data(self):
+        self.create_tierclass(
+            self.generate_seed_payload('Tier1', 0, 'Tier1 - Top Level', 2, 15e8, 12e8)
+        )
+        self.create_tierclass(
+            self.generate_seed_payload('Tier2', 1, 'Tier2 - Middle Level', 5, 17e8, 14e8)
+        )
+        self.create_tierclass(
+            self.generate_seed_payload('Tier3', 2, 'Tier3 - Low Level', 9, 19e8, 15e8)
+        )
+
+        self.create_tierclass_assignment({'tierClassID': 1, 'secondaryUserID': 'abc', 'innerTierLevel': 1})
+        self.create_tierclass_assignment({'tierClassID': 2, 'secondaryUserID': 'bbc', 'innerTierLevel': 1})
+        self.create_tierclass_assignment({'tierClassID': 3, 'secondaryUserID': 'cbc', 'innerTierLevel': 1})
+
+    @staticmethod
+    def generate_seed_payload(name, priority, description, maxTiers, upperBand, lowerBand):
+        return {
+            'tierClassName': name,
+            'tierPriorityLevel': priority,
+            'tierClassDescription': description,
+            'maxTierNumber': maxTiers,
+            'tierUpperBand': upperBand,
+            'tierLowerBand': lowerBand
         }

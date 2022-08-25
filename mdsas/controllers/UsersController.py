@@ -156,3 +156,24 @@ class UsersController:
             'exists': 0,
             'message': 'Email Unique'
         }
+
+    def load_seed_data(self):
+        self.create_user(
+            self.generate_seed_payload('abc', 'abc@abc.com', 'password', '100.121.1.15', '35.6673,-81.5411'), True
+        )
+        self.create_user(
+            self.generate_seed_payload('bbc', 'bbc@abc.com', 'password', '100.121.1.16', '36.6673,-85.5411'), True
+        )
+        self.create_user(
+            self.generate_seed_payload('cbc', 'cbc@abc.com', 'password', '100.121.1.17', '39.6673,-89.5411'), True
+        )
+
+    @staticmethod
+    def generate_seed_payload(name, email, password, deviceId, location):
+        return {
+            'secondaryUserName': name,
+            'secondaryUserEmail': email,
+            'secondaryUserPassword': password,
+            'deviceID': deviceId,
+            'location': location
+        }

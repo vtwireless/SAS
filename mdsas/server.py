@@ -16,6 +16,7 @@ from controllers import DatabaseController
 from algorithms import SASAlgorithms
 from algorithms import SASREM
 from Utilities import Utilities
+from settings import settings
 
 allClients = []
 allRadios = []  # CBSDSocket
@@ -33,7 +34,11 @@ socket = socketio.Server(cors_allowed_origins='*')
 app = socketio.WSGIApp(socket, static_files={
     '/': {'content_type': 'text/html', 'filename': 'index.html'}
 })
-db = DatabaseController.DatabaseController()
+
+if settings.ENVIRONMENT == 'DEVELOPMENT':
+    db = DatabaseController.DatabaseController(True)
+else:
+    db = DatabaseController.DatabaseController(False)
 
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
@@ -42,7 +47,7 @@ SASAlgorithms = SASAlgorithms.SASAlgorithms()
 # In[ --- Connection Management ---]
 
 @socket.event
-def connect(sid):
+def connect(sid, environ):
     print('connect ', sid)
     allClients.append(sid)
 
@@ -119,6 +124,29 @@ def checkEmailAvailability(sid, data):
 
 
 # In[ --- Tier Class Management ---]
+
+@socket.on('getTierClassById')
+def getTierClassById(sid, data):
+    try:
+        response = db.get_tierclass_by_id(data)
+        socket.emit('getTierClassByIdResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('getTierClassByIdResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
+
+
+@socket.on('getTierClass')
+def getTierClass(sid, data):
+    try:
+        response = db.get_tierclass()
+        socket.emit('getTierClassResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('getTierClassResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 @socket.on('createTierClass')
 def createTierClass(sid, data):

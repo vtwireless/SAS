@@ -378,46 +378,25 @@ export class HttpRequestsService {
 		GIGA: number,
 		MEGA: number
 	): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'createTierClass');
-		params = params.set('tierClassName', model.tierClassName.toString());
-		params = params.set(
-			'tierPriorityLevel',
-			model.tierPriorityLevel.toString()
-		);
-		params = params.set('tierClassDescription', model.tierClassDescription);
-		params = params.set('maxTierNumber', model.maxTierNumber.toString());
-		// tslint:disable-next-line: triple-equals
-		if (model.range == 'MHz') {
-			params = params.set(
-				'tierUpperBand',
-				(model.tierUpperBand * MEGA).toString()
-			);
-			params = params.set(
-				'tierLowerBand',
-				(model.tierLowerBand * MEGA).toString()
-			);
-		} else {
-			params = params.set(
-				'tierUpperBand',
-				(model.tierUpperBand * GIGA).toString()
-			);
-			params = params.set(
-				'tierLowerBand',
-				(model.tierLowerBand * GIGA).toString()
-			);
-		}
+		var scale = model.range == 'MHz' ? MEGA : GIGA;
+		var body = {
+			tierClassName: model.tierClassName,
+			tierPriorityLevel: model.tierPriorityLevel,
+			tierClassDescription: model.tierClassDescription,
+			maxTierNumber: model.maxTierNumber,
+			tierUpperBand: model.tierUpperBand * scale,
+			tierLowerBand: model.tierLowerBand * scale
+		};
 
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendRequest('createTierClass', body, 'createTierClassResponse');
 	}
 
 	public getTierClassID(tierID: any): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getTierClass');
-		params = params.set('tierClassID', tierID);
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendRequest(
+			'getTierClassById',
+			{'tierClassID': tierID},
+			'getTierClassByIdResponse'
+		);
 	}
 
 	public getSUsNotInTierClassByID(tierID: any): Observable<any> {
@@ -437,12 +416,7 @@ export class HttpRequestsService {
 	}
 
 	public getTierClass(): Observable<any> {
-		let params = new HttpParams();
-		params = params.set('action', 'getTierClasses');
-		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-
-		return this.httpClient.post(this.GETAPI, params)
-		.catch(this.handleError);
+		return this.sendRequest('getTierClass', {}, 'getTierClassResponse');
 	}
 
 	public alterTierClassAssignmentByID(tierID: any, model: any): Observable<any> {
