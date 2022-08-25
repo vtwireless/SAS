@@ -69,46 +69,75 @@ def disconnect(sid):
 
 @socket.on('suLogin')
 def suLogin(sid, data):
-    response = db.authenticate_user(data, False)
-    socket.emit('suLoginResponse', to=sid, data=response)
+    try:
+        response = db.authenticate_user(data, False)
+        socket.emit('suLoginResponse', to=sid, data=response)
 
-    # socket.disconnect(sid)
+    except Exception as err:
+        socket.emit('suLoginResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('adminLogin')
 def adminLogin(sid, data):
-    response = db.authenticate_user(data, True)
-    socket.emit('adminLoginResponse', to=sid, data=response)
+    try:
+        response = db.authenticate_user(data, True)
+        socket.emit('adminLoginResponse', to=sid, data=response)
 
-    # socket.disconnect(sid)
+    except Exception as err:
+        socket.emit('adminLoginResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('createSU')
 def createSecondaryUser(sid, data):
-    response = db.create_user(data, False)
-    socket.emit('createSUResponse', to=sid, data=response)
+    try:
+        response = db.create_user(data, False)
+        socket.emit('createSUResponse', to=sid, data=response)
 
-    # socket.disconnect(sid)
+    except Exception as err:
+        socket.emit('createSUResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('createAdminUserINsas')
 def createAdminUser(sid, data):
-    response = db.create_user(data, True)
-    socket.emit('createAdminUserINsasResponse', to=sid, data=response)
 
-    # socket.disconnect(sid)
+    try:
+        response = db.create_user(data, True)
+        socket.emit('createAdminUserINsasResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('createAdminUserINsasResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('getUsers')
 def getSecondaryUsers(sid, data):
-    response = db.get_secondary_users()
-    socket.emit('getUsersResponse', to=sid, data=response)
+    try:
+        response = db.get_secondary_users()
+        socket.emit('getUsersResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('getUsersResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('getUser')
 def getUser(sid, data):
-    response = db.get_secondary_user(data)
-    socket.emit('getUserResponse', to=sid, data=response)
+    try:
+        response = db.get_secondary_user(data)
+        socket.emit('getUserResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('getUserResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('checkEmailAvail')
@@ -148,6 +177,7 @@ def getTierClass(sid, data):
             'status': 0, 'message': str(err)
         })
 
+
 @socket.on('createTierClass')
 def createTierClass(sid, data):
     try:
@@ -168,30 +198,6 @@ def updateTierClass(sid, data):
 
     except Exception as err:
         socket.emit('updateTierClassResponse', to=sid, data={
-            'status': 0, 'message': str(err)
-        })
-
-
-@socket.on('alterTierClassAssignment')
-def alterTierClassAssignment(sid, data):
-    try:
-        response = db.alter_tierclass_assignment(data)
-        socket.emit('alterTierClassAssignmentResponse', to=sid, data=response)
-
-    except Exception as err:
-        socket.emit('alterTierClassAssignmentResponse', to=sid, data={
-            'status': 0, 'message': str(err)
-        })
-
-
-@socket.on('deleteTierClassAssignment')
-def deleteTierClassAssignment(sid, data):
-    try:
-        response = db.delete_tierclass_assignment(data)
-        socket.emit('deleteTierClassAssignmentResponse', to=sid, data=response)
-
-    except Exception as err:
-        socket.emit('deleteTierClassAssignmentResponse', to=sid, data={
             'status': 0, 'message': str(err)
         })
 
@@ -226,8 +232,14 @@ def updateRegionSchedule(sid, data):
 
 @socket.on('getNodesRequest')
 def getNodes(sid, payload):
-    response = db.get_nodes()
-    socket.emit('getNodesResponse', to=sid, data=response)
+    try:
+        response = db.get_nodes()
+        socket.emit('getNodesResponse', to=sid, data=response)
+
+    except Exception as err:
+        socket.emit('getNodesResponse', to=sid, data={
+            'status': 0, 'message': str(err)
+        })
 
 
 @socket.on('registrationRequest')

@@ -19,7 +19,7 @@ PRODUCTION_DATABASE_URI = f"dialect+driver://{DATABASE['username']}:{DATABASE['p
 # Tables Settings
 SETTINGS_TABLE = 'settings'
 SECONDARY_USER_TABLE = 'secondaryUser'
-NODE_TABLE = 'node'
+CBSD_TABLE = 'node'
 GRANT_TABLE = 'grants'
 PUDETECTIONS = 'pudetections'
 TIERCLASS = 'tierclass'

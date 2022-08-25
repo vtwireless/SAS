@@ -1,8 +1,8 @@
 import random
 
-import Server_WinnForum as WinnForum
-import CBSD
-from SASAlgorithms import SASAlgorithms
+import algorithms.Server_WinnForum as WinnForum
+import algorithms.CBSD as CBSD
+from algorithms.SASAlgorithms import SASAlgorithms
 
 
 class Utilities:

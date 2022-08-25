@@ -41,7 +41,7 @@ class CBSD:
 		self.fccId = fccId
 		self.cbsdSerialNumber = cbsdSerialNumber
 		self.callSign = callSign
-		self.cbsdCategroy = cbsdCategory
+		self.cbsdCategory = cbsdCategory
 		self.cbsdInfo = cbsdInfo
 		self.airInterface = airInterface
 		self.installationParam = installationParam
@@ -91,8 +91,8 @@ class CBSD:
 			return_dict["cbsdSerialNumber"] = self.cbsdSerialNumber
 		if(self.callSign):
 			return_dict["callSign"] = self.callSign
-		if(self.cbsdCategroy):
-			return_dict["cbsdCategroy"] = self.cbsdCategroy
+		if(self.cbsdCategory):
+			return_dict["cbsdCategory"] = self.cbsdCategory
 		if(self.cbsdInfo):
 			return_dict["cbsdInfo"] = self.cbsdInfo
 		if(self.airInterface):
