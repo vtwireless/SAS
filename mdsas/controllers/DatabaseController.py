@@ -1,30 +1,36 @@
 import os
 import sys
-
-from controllers.CBSDController import CBSDController
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from sqlalchemy import select, insert, delete, update, and_
-from sqlalchemy.engine import CursorResult
-import sqlalchemy as db
-from datetime import datetime, timedelta, timezone
 import os
 import uuid
 import threading
 import time
+import sqlalchemy as db
+from sqlalchemy import select, insert, delete, update, and_
+from sqlalchemy.engine import CursorResult
+from datetime import datetime, timedelta, timezone
 
-from settings import settings
-from models.Schemas import Schemas
-from algorithms import SASREM
-from algorithms.SASAlgorithms import SASAlgorithms
 from Utilities import Utilities
 from algorithms import CBSD
+from algorithms import SASREM
+from settings import settings
+from models.Schemas import Schemas
+from controllers.CBSDController import CBSDController
+from controllers.GrantController import GrantController
+from controllers.SettingsController import SettingsController
+from controllers.TierClassController import TierClassController
+from controllers.UsersController import UsersController
+from algorithms.SASAlgorithms import SASAlgorithms
 from algorithms import Server_WinnForum as WinnForum
 
-from SettingsController import SettingsController
-from UsersController import UsersController
-from TierClassController import TierClassController
+# sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# from settings import settings
+# from models.Schemas import Schemas
+# from algorithms import SASREM
+# from algorithms.SASAlgorithms import SASAlgorithms
+# from Utilities import Utilities
+# from algorithms import CBSD
+# from algorithms import Server_WinnForum as WinnForum
 
 
 class DatabaseController:
@@ -113,10 +119,13 @@ class DatabaseController:
         self.users_controller = UsersController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
         self.tierclass_controller = TierClassController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
         self.cbsd_controller = CBSDController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
+        self.grants_controller = GrantController(
+            self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms, self.cbsd_controller
+        )
 
         # self._get_secondaryUser_table()
         # self._get_nodes_table()
-        self._get_grants_table()
+        # self._get_grants_table()
         self._get_pudetections_table()
         # self._get_tierclass_table()
         # self._get_tierassignment_table()
@@ -289,41 +298,22 @@ class DatabaseController:
 
     # In[ --- GRANT CONTROLS --- ]
 
-    def get_grant_records(self):
-        return self.__grantRecords
+    # def get_grant_records(self):
+    #     return self.__grantRecords
 
     def get_grants(self):
-        query = select([self.GRANTS])
-        try:
-            rows = self._execute_query(query)
-
-            return {
-                'status': 1,
-                'spectrumGrants': rows
-            }
-        except Exception as err:
-            raise Exception(str(err))
+        return self.grants_controller.get_grants()
 
     def get_grant_with_id(self, grantId):
-        query = select([self.GRANTS]).where(
-            self.GRANTS.columns.grantId == grantId
-        )
-        rows = self._execute_query(query)
+        return self.grants_controller.get_grant_with_id(grantId)
 
-        if len(rows) == 0:
-            for grant in self.__grantRecords:
-                if str(grant.id) == str(grantId):
-                    return grant
-            raise Exception(f"Grant with Id {grantId} not found")
-        else:
-            grant = Utilities.loadGrantFromJSON(rows[0])
+    # def _get_grants_table(self):
+    #     self.GRANTS = db.Table(
+    #         settings.GRANT_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
+    #     )
 
-            return grant
-
-    def _get_grants_table(self):
-        self.GRANTS = db.Table(
-            settings.GRANT_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
-        )
+    def spectrum_inquiry(self, data):
+        return self.grants_controller.spectrum_inquiry(data)
 
     def create_grant_request(self, payload):
         responseArr, insertionArr = [], []
@@ -457,58 +447,6 @@ class DatabaseController:
             "status": 1,
             "message": f"Grant {requestID} deleted."
         }
-
-    def spectrum_inquiry(self, data):
-        try:
-            inquiryArr = []
-            radiosToChangeBack = []
-            radiosToCommunicate = []
-
-            for request in data["spectrumInquiryRequest"]:
-                response = WinnForum.SpectrumInquiryResponse(
-                    request["cbsdId"], [], self.algorithms.generateResponse(0)
-                )
-
-                for fr in request["inquiredSpectrum"]:
-                    lowFreq, highFreq = int(fr["lowFrequency"]), int(fr["highFrequency"])
-                    channelType, ruleApplied = "PAL", "FCC_PART_96"
-                    maxEirp = self.algorithms.getMaxEIRP()
-
-                    if self.algorithms.acceptableRange(lowFreq, highFreq):
-                        if 3700000000 > highFreq > 3650000000:
-                            channelType = "GAA"
-
-                        present = self.algorithms.isPUPresentREM(
-                            self.rem, highFreq, lowFreq, None, None, None
-                        )
-                        if present == 0:
-                            fr = WinnForum.FrequencyRange(lowFreq, highFreq)
-                            availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
-                            response.availableChannel.append(availChan)
-                        elif present == 2:
-                            # TODO: Remove allRadios
-                            rTCB, rTC = Utilities.initiateSensing(
-                                lowFreq, highFreq, self.__allRadios
-                            )
-                            radiosToChangeBack.extend(rTCB)
-                            radiosToCommunicate.extend(rTC)
-
-                inquiryArr.append(response.asdict())
-
-            threading.Timer(
-                3.0, Utilities.resetRadioStatuses, [radiosToChangeBack]
-            ).start()
-
-            return {
-                       'status': 0,
-                       "spectrumInquiryResponse": inquiryArr
-                   }, radiosToCommunicate
-
-        except Exception as err:
-            return {
-                       'status': 1,
-                       "message": str(err)
-                   }, []
 
     def relinquishment_request(self, data):
         relinquishArr = []

@@ -169,6 +169,12 @@ class CBSDController:
         )
         ResultProxy = self.CONNECTION.execute(updateQuery)
 
+    def update_cbsd_justChangedParams(self, cbsdId, param):
+        updateQuery = update(self.CBSD) \
+            .where(self.CBSD.columns.cbsdID == cbsdId) \
+            .values(justChangedParams=param)
+        ResultProxy = self.CONNECTION.execute(updateQuery)
+
     def load_seed_data(self):
         self.create_cbsd(self.generate_seed_payload(
             'node1', '30.2234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',

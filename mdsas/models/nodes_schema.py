@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float, SmallInteger
+from sqlalchemy import Column, String, Integer, Float, SmallInteger, Boolean
 from sqlalchemy import Table
 
 from settings import settings
@@ -33,5 +33,6 @@ def set_schema(metadata):
         Column('groupingParam', String(80), index=False, unique=False, nullable=False, default=''),
         Column('fullyTrusted', String(80), index=False, unique=False, nullable=False, default=''),
         Column('comment', String(80), index=False, unique=False, nullable=False, default=''),
+        Column('justChangedParams', Boolean, index=False, unique=False, nullable=False, default=False),
         Column('sid', String(80), index=False, unique=False, nullable=False)
     )
