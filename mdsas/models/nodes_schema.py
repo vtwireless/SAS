@@ -9,7 +9,7 @@ def set_schema(metadata):
         settings.CBSD_TABLE, metadata,
         Column('cbsdID', Integer, primary_key=True, autoincrement=True),
         Column('fccId', String(80), index=False, unique=False, nullable=False, default=''),
-        Column('name', String(80), index=False, unique=False, nullable=False),
+        Column('nodeName', String(80), index=False, unique=False, nullable=False),
         Column('location', String(80), index=False, unique=False, nullable=False, default=''),
         Column('trustLevel', Integer, index=False, unique=False, nullable=False),
         Column('IPAddress', String(80), index=False, unique=False, nullable=False),

@@ -310,16 +310,16 @@ def relinquishment(sid, data):
     socket.emit('relinquishmentResponse', to=sid, data=response)
 
 
-@socket.on('logGrant')
-def logGrant(sid, data):
-    try:
-        response = db.log_grant(data)
-        socket.emit('logGrantResponse', to=sid, data=response)
-
-    except Exception as err:
-        socket.emit('logGrantResponse', to=sid, data={
-            'status': 0, 'message': str(err)
-        })
+# @socket.on('logGrant')
+# def logGrant(sid, data):
+#     try:
+#         response = db.log_grant(data)
+#         socket.emit('logGrantResponse', to=sid, data=response)
+#
+#     except Exception as err:
+#         socket.emit('logGrantResponse', to=sid, data={
+#             'status': 0, 'message': str(err)
+#         })
 
 
 @socket.on('deleteGrantRequest')

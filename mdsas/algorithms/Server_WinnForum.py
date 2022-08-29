@@ -17,21 +17,23 @@ RECEIVED_POWER_WITH_GRANT
 INDOOR_LOSS_USING_GNSS
 """
 
+
 def _ensureIsList(param):
-	"""
+    """
 	Ensures the passed parameter is an array, even if it is one element 
 		Parameters: 
 			param (any data type): parameter to check if is an array
 		Returns:
 			param: list/array ensuredv version of "param" originally passed in
 	"""
-	if(not isinstance(param, list)):
-		return [param]
-	else:
-		return param 
+    if not isinstance(param, list):
+        return [param]
+    else:
+        return param
+
 
 def _toJsonDictArray(obj_arr):
-	"""
+    """
 	Returns an array of dictonary elements in JSON format.
 	Used when an object as an attribute that is an array of Objects.
 	Arary of Objects must be passed to this to return a JSON friendly datatype. 
@@ -40,55 +42,56 @@ def _toJsonDictArray(obj_arr):
 		Returns:
 			dict_arr: Array with dictonary elements
 	"""
-	dict_arr = []
-	for obj in obj_arr:
-		dict_arr.append(obj.asdict())
-	return dict_arr
+    dict_arr = []
+    for obj in obj_arr:
+        dict_arr.append(obj.asdict())
+    return dict_arr
+
 
 def responseDecode(code):
-	"""
+    """
 	Helper function to decode the values of responceCode into their Name
 		Parameters:
 			code (integer): code provided to translate into error name
 		Returns:
 			name (string): name belonging to provided code
 	"""
-	if(code == 0):
-		return "SUCCESS"
-	elif(code == 100):
-		return "VERSION"
-	elif(code == 101):
-		return "BLACKLISTED"
-	elif(code == 102):
-		return "MISSING_PARAM"
-	elif(code == 103):
-		return "INVALID_VALUE"
-	elif(code == 104):
-		return "CERT_ERROR"
-	elif(code == 105):
-		return "DEREGISTER"
-	elif(code == 200):
-		return "REG_PENDING"
-	elif(code == 201):
-		return "GROUP_ERROR"
-	elif(code == 300):
-		return "UNSUPPORTED_SPECTRUM"
-	elif(code == 200):
-		return "INTERFERENCE"
-	elif(code == 401):
-		return "GRANT_CONFLICT"
-	elif(code == 500):
-		return "TERMINATED_GRANT"
-	elif(code == 501):
-		return "SUSPENDED_GRANT"
-	elif(code == 501):
-		return "UNSYNC_OP_PARAM"
-	else:
-		return "INVALID_CODE"
+    if code == 0:
+        return "SUCCESS"
+    elif code == 100:
+        return "VERSION"
+    elif code == 101:
+        return "BLACKLISTED"
+    elif code == 102:
+        return "MISSING_PARAM"
+    elif code == 103:
+        return "INVALID_VALUE"
+    elif code == 104:
+        return "CERT_ERROR"
+    elif code == 105:
+        return "DEREGISTER"
+    elif code == 200:
+        return "REG_PENDING"
+    elif code == 201:
+        return "GROUP_ERROR"
+    elif code == 300:
+        return "UNSUPPORTED_SPECTRUM"
+    elif code == 200:
+        return "INTERFERENCE"
+    elif code == 401:
+        return "GRANT_CONFLICT"
+    elif code == 500:
+        return "TERMINATED_GRANT"
+    elif code == 501:
+        return "SUSPENDED_GRANT"
+    elif code == 501:
+        return "UNSYNC_OP_PARAM"
+    else:
+        return "INVALID_CODE"
 
 
 class RegistrationRequest:
-	"""
+    """
 	A Registration Request requires an array of these RegistrationRequest data objects. 
 	Each RegistrationRequest data object represents a registration request of a CBSD.
 	
@@ -128,60 +131,63 @@ class RegistrationRequest:
 		Object used for research data collection.
 		This is not a WinnForum specified data type.	
 	"""
-	def __init__(self, userId, fccId, 
-		cbsdSerialNumber, callSign=None, cbsdCategory=None,
-		cbsdInfo=None, airInterface=None, installationParam=None, 
-		measCapability=None, groupingParam=None, cpiSignatureData=None, vtParams=None, trustScore=None, fullyTrusted=None):
 
-		self.userId = userId #R
-		self.fccId = fccId #R
-		self.cbsdSerialNumber = cbsdSerialNumber #R
-		self.callSign = callSign #O
-		self.cbsdCategory = cbsdCategory #C
-		self.cbsdInfo = cbsdInfo #O
-		self.airInterface = airInterface #C
-		self.installationParam = installationParam #C
-		self.measCapability = _ensureIsList(measCapability) #C
-		self.groupingParam = _ensureIsList(groupingParam) #O
-		self.cpiSignatureData = cpiSignatureData #O
-		self.vtParams = vtParams #O
-		self.trustScore = trustScore #O
-		self.fullyTrusted = fullyTrusted #O
+    def __init__(self, userId, fccId,
+                 cbsdSerialNumber, callSign=None, cbsdCategory=None,
+                 cbsdInfo=None, airInterface=None, installationParam=None,
+                 measCapability=None, groupingParam=None, cpiSignatureData=None, vtParams=None, trustScore=None,
+                 fullyTrusted=None):
 
-	def asdict(self):
-		return_dict = {}
-		if(self.userId):
-			return_dict["userId"] = self.userId
-		if(self.fccId):
-			return_dict["fccId"] = self.fccId
-		if(self.cbsdSerialNumber):
-			return_dict["cbsdSerialNumber"] = self.cbsdSerialNumber
-		if(self.callSign):
-			return_dict["callSign"] = self.callSign
-		if(self.cbsdCategory):
-			return_dict["cbsdCategory"] = self.cbsdCategory
-		if(self.cbsdInfo):
-			return_dict["cbsdInfo"] = self.cbsdInfo.asdict()
-		if(self.airInterface):
-			return_dict["airInterface"] = self.airInterface.asdict()
-		if(self.installationParam):
-			return_dict["installationParam"] = self.installationParam.asdict()
-		if(self.measCapability):
-			return_dict["measCapability"] = self.measCapability
-		if(self.groupingParam[0]):
-			return_dict["groupingParam"] = _toJsonDictArray(self.groupingParam)
-		if(self.cpiSignatureData):
-			return_dict["cpiSignatureData"] = self.cpiSignatureData.asdict()
-		if(self.vtParams):
-			return_dict["vtParams"] = self.vtParams.asdict()
-		if(self.trustScore):
-			return_dict["trustScore"] = self.trustScore
-		if(self.fullyTrusted):
-			return_dict["fullyTrusted"] = self.fullyTrusted
-		return return_dict
+        self.userId = userId  # R
+        self.fccId = fccId  # R
+        self.cbsdSerialNumber = cbsdSerialNumber  # R
+        self.callSign = callSign  # O
+        self.cbsdCategory = cbsdCategory  # C
+        self.cbsdInfo = cbsdInfo  # O
+        self.airInterface = airInterface  # C
+        self.installationParam = installationParam  # C
+        self.measCapability = _ensureIsList(measCapability)  # C
+        self.groupingParam = _ensureIsList(groupingParam)  # O
+        self.cpiSignatureData = cpiSignatureData  # O
+        self.vtParams = vtParams  # O
+        self.trustScore = trustScore  # O
+        self.fullyTrusted = fullyTrusted  # O
+
+    def asdict(self):
+        return_dict = {}
+        if self.userId:
+            return_dict["userId"] = self.userId
+        if self.fccId:
+            return_dict["fccId"] = self.fccId
+        if self.cbsdSerialNumber:
+            return_dict["cbsdSerialNumber"] = self.cbsdSerialNumber
+        if self.callSign:
+            return_dict["callSign"] = self.callSign
+        if self.cbsdCategory:
+            return_dict["cbsdCategory"] = self.cbsdCategory
+        if self.cbsdInfo:
+            return_dict["cbsdInfo"] = self.cbsdInfo.asdict()
+        if self.airInterface:
+            return_dict["airInterface"] = self.airInterface.asdict()
+        if self.installationParam:
+            return_dict["installationParam"] = self.installationParam.asdict()
+        if self.measCapability:
+            return_dict["measCapability"] = self.measCapability
+        if self.groupingParam[0]:
+            return_dict["groupingParam"] = _toJsonDictArray(self.groupingParam)
+        if self.cpiSignatureData:
+            return_dict["cpiSignatureData"] = self.cpiSignatureData.asdict()
+        if self.vtParams:
+            return_dict["vtParams"] = self.vtParams.asdict()
+        if self.trustScore:
+            return_dict["trustScore"] = self.trustScore
+        if self.fullyTrusted:
+            return_dict["fullyTrusted"] = self.fullyTrusted
+        return return_dict
+
 
 class AirInterface:
-		"""
+    """
 		Object that includes info on the air interface technology of the CBSD
 		Attributes
 		----------
@@ -189,17 +195,19 @@ class AirInterface:
 			This parameter specifies the radio access technology that the CBSD uses for operation in the CBRS band. 
 			The permitted values are specified in [n.21].
 		"""
-		def __init__(self, radioTechnology=None):
-			self.radioTechnology = radioTechnology #C
 
-		def asdict(self):
-			return_dict = {}
-			if(self.radioTechnology):
-				return_dict["radioTechnology"] = self.radioTechnology
-			return return_dict
+    def __init__(self, radioTechnology=None):
+        self.radioTechnology = radioTechnology  # C
+
+    def asdict(self):
+        return_dict = {}
+        if self.radioTechnology:
+            return_dict["radioTechnology"] = self.radioTechnology
+        return return_dict
+
 
 class InstallationParam:
-	"""
+    """
 	InstallationParam - A data object that includes information on CBSD installation.
 	
 	Attributes
@@ -263,56 +271,58 @@ class InstallationParam:
 		If an external antenna is used, the antenna model is optionally provided in this field.
 		The string has a maximum length of 128 octets.
 	"""
-	def __init__(self, latitude=None, longitude=None, height=None, heightType=None,
-		horizontalAccuracy=None, verticalAccuracy=None, indoorDeployment=None,
-		antennaAzimuth=None, antennaDowntilt=None, antennaGain=None, eirpCapability=None,
-		antennaBeamwidth=None, antennaModel=None):
-		self.latitude = latitude #C
-		self.longitude = longitude #C
-		self.height = height #C
-		self.heightType = heightType #C
-		self.horizontalAccuracy	= horizontalAccuracy #O
-		self.verticalAccuracy = verticalAccuracy #O
-		self.indoorDeployment = indoorDeployment #C
-		self.antennaAzimuth = antennaAzimuth #C
-		self.antennaDowntilt = antennaDowntilt #C
-		self.antennaGain = antennaGain #C
-		self.eirpCapability = eirpCapability #O
-		self.antennaBeamwidth = antennaBeamwidth #C
-		self.antennaModel = antennaModel #O
 
-	def asdict(self):
-		return_dict = {}
-		if(self.latitude):
-			return_dict["latitude"] = self.latitude
-		if(self.longitude):
-			return_dict["longitude"] = self.longitude
-		if(self.height):
-			return_dict["height"] = self.height
-		if(self.heightType):
-			return_dict["heightType"] = self.heightType
-		if(self.horizontalAccuracy):
-			return_dict["horizontalAccuracy"]	= self.horizontalAccuracy
-		if(self.verticalAccuracy):
-			return_dict["verticalAccuracy"] = self.verticalAccuracy
-		if(self.indoorDeployment):
-			return_dict["indoorDeployment"] = self.indoorDeployment
-		if(self.antennaAzimuth):
-			return_dict["antennaAzimuth"] = self.antennaAzimuth
-		if(self.antennaDowntilt):
-			return_dict["antennaDowntilt"] = self.antennaDowntilt
-		if(self.antennaGain):
-			return_dict["antennaGain"] = self.antennaGain
-		if(self.eirpCapability):
-			return_dict["eirpCapability"] = self.eirpCapability
-		if(self.antennaBeamwidth):
-			return_dict["antennaBeamwidth"] = self.antennaBeamwidth
-		if(self.antennaModel):
-			return_dict["antennaModel"] = self.antennaModel
-		return return_dict
+    def __init__(self, latitude=None, longitude=None, height=None, heightType=None,
+                 horizontalAccuracy=None, verticalAccuracy=None, indoorDeployment=None,
+                 antennaAzimuth=None, antennaDowntilt=None, antennaGain=None, eirpCapability=None,
+                 antennaBeamwidth=None, antennaModel=None):
+        self.latitude = latitude  # C
+        self.longitude = longitude  # C
+        self.height = height  # C
+        self.heightType = heightType  # C
+        self.horizontalAccuracy = horizontalAccuracy  # O
+        self.verticalAccuracy = verticalAccuracy  # O
+        self.indoorDeployment = indoorDeployment  # C
+        self.antennaAzimuth = antennaAzimuth  # C
+        self.antennaDowntilt = antennaDowntilt  # C
+        self.antennaGain = antennaGain  # C
+        self.eirpCapability = eirpCapability  # O
+        self.antennaBeamwidth = antennaBeamwidth  # C
+        self.antennaModel = antennaModel  # O
+
+    def asdict(self):
+        return_dict = {}
+        if self.latitude:
+            return_dict["latitude"] = self.latitude
+        if self.longitude:
+            return_dict["longitude"] = self.longitude
+        if self.height:
+            return_dict["height"] = self.height
+        if self.heightType:
+            return_dict["heightType"] = self.heightType
+        if self.horizontalAccuracy:
+            return_dict["horizontalAccuracy"] = self.horizontalAccuracy
+        if self.verticalAccuracy:
+            return_dict["verticalAccuracy"] = self.verticalAccuracy
+        if self.indoorDeployment:
+            return_dict["indoorDeployment"] = self.indoorDeployment
+        if self.antennaAzimuth:
+            return_dict["antennaAzimuth"] = self.antennaAzimuth
+        if self.antennaDowntilt:
+            return_dict["antennaDowntilt"] = self.antennaDowntilt
+        if self.antennaGain:
+            return_dict["antennaGain"] = self.antennaGain
+        if self.eirpCapability:
+            return_dict["eirpCapability"] = self.eirpCapability
+        if self.antennaBeamwidth:
+            return_dict["antennaBeamwidth"] = self.antennaBeamwidth
+        if self.antennaModel:
+            return_dict["antennaModel"] = self.antennaModel
+        return return_dict
+
 
 class GroupParam:
-	"""
+    """
 	GroupParam - incldude information on CBSD grouping
 	Attributes
 	----------
@@ -323,20 +333,22 @@ class GroupParam:
 		This field specifies the identifier for this group of CBSDs. 
 		When the groupType is set to "INTERFERENCE_COORDINATION", the namespace for groupId is userId.
 	"""
-	def __init__(self, groupType, groupId):
-		self.groupType = groupType #R
-		self.groupId = groupId #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.groupType):
-			return_dict["groupType"] = self.groupType
-		if(self.groupId):
-			return_dict["groupId"] = self.groupId
-		return return_dict
+    def __init__(self, groupType, groupId):
+        self.groupType = groupType  # R
+        self.groupId = groupId  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.groupType:
+            return_dict["groupType"] = self.groupType
+        if self.groupId:
+            return_dict["groupId"] = self.groupId
+        return return_dict
+
 
 class CbsdInfo:
-	"""
+    """
 	CbsdInfo - The CbsdInfo object can be extended with other vendor information in additional key-value pairs.
 	
 	Attributes
@@ -356,31 +368,33 @@ class CbsdInfo:
 	firmwareVersion : string (optional)
 		Firmware version of this CBSD.
 		The maximum length of this string is 64 octets.
-	""" 
-	def __init__(self, vendor=None, model=None, softwareVersion=None,
-		hardwareVersion=None, firmwareVersion=None):
-		self.vendor = vendor #O
-		self.model = model #O
-		self.softwareVersion = softwareVersion #O
-		self.hardwareVersion = hardwareVersion #O
-		self.firmwareVersion = firmwareVersion #O
+	"""
 
-	def asdict(self):
-		return_dict = {}
-		if(self.vendor):
-			return_dict["vendor"] = self.vendor
-		if(self.model):
-			return_dict["model"] = self.model
-		if(self.softwareVersion):
-			return_dict["softwareVersion"] = self.softwareVersion
-		if(self.hardwareVersion):
-			return_dict["hardwareVersion"] = self.hardwareVersion
-		if(self.firmwareVersion):
-			return_dict["firmwareVersion"] = self.firmwareVersion
-		return return_dict
+    def __init__(self, vendor=None, model=None, softwareVersion=None,
+                 hardwareVersion=None, firmwareVersion=None):
+        self.vendor = vendor  # O
+        self.model = model  # O
+        self.softwareVersion = softwareVersion  # O
+        self.hardwareVersion = hardwareVersion  # O
+        self.firmwareVersion = firmwareVersion  # O
+
+    def asdict(self):
+        return_dict = {}
+        if self.vendor:
+            return_dict["vendor"] = self.vendor
+        if self.model:
+            return_dict["model"] = self.model
+        if self.softwareVersion:
+            return_dict["softwareVersion"] = self.softwareVersion
+        if self.hardwareVersion:
+            return_dict["hardwareVersion"] = self.hardwareVersion
+        if self.firmwareVersion:
+            return_dict["firmwareVersion"] = self.firmwareVersion
+        return return_dict
+
 
 class CpiSignatureData:
-	"""
+    """
 	CpiSignatureData - Note: The JOSE JSON Web Signature per RFC-7515(see [n.19]) is used to ensure data integrity 
 		and CPI non-repudiation of the signed parameters.
 		The JOSE compact serialization is formed by concatenating the protectedHeader, encodedCpiSignedData, and 
@@ -399,23 +413,25 @@ class CpiSignatureData:
 		The value of this parameter is the CPI digital signature applied to the encodedCpiSignedData field.
 		This signature is the BASE64URL encoding of the digital signature, prepared according to the procedures in RFC 7515 [n.19] Section 3, using the algorithm as declared in the protectedHeaderfield.
 	"""
-	def __init__(self, protectedHeader, encodedCpiSignedData, digitalSignature):
-		self.protectedHeader = protectedHeader #R
-		self.encodedCpiSignedData = encodedCpiSignedData #R
-		self.digitalSignature = digitalSignature #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.protectedHeader):
-			return_dict["protectedHeader"] = self.protectedHeader
-		if(self.encodedCpiSignedData):
-			return_dict["encodedCpiSignedData"] = self.encodedCpiSignedData
-		if(self.digitalSignature):
-			return_dict["digitalSignature"] = self.digitalSignature
-		return return_dict
+    def __init__(self, protectedHeader, encodedCpiSignedData, digitalSignature):
+        self.protectedHeader = protectedHeader  # R
+        self.encodedCpiSignedData = encodedCpiSignedData  # R
+        self.digitalSignature = digitalSignature  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.protectedHeader:
+            return_dict["protectedHeader"] = self.protectedHeader
+        if self.encodedCpiSignedData:
+            return_dict["encodedCpiSignedData"] = self.encodedCpiSignedData
+        if self.digitalSignature:
+            return_dict["digitalSignature"] = self.digitalSignature
+        return return_dict
+
 
 class CpiSignedData:
-	"""
+    """
 	CpiSignedData - 
 	Attributes
 	----------
@@ -431,26 +447,28 @@ class CpiSignedData:
 	professionalInstallerData : object ProfessionalInstallerData (required)
 		The value of this parameter is the data identifying the CPI vouching for the installation parameters included in the installationParamvalue contained in this object.
 	"""
-	def __init__(self, fccId, cbsdSerialNumber, installationParam, professionalInstallerData):
-		self.fccId = fccId #R
-		self.cbsdSerialNumber = cbsdSerialNumber #R
-		self.installationParam = installationParam #R
-		self.professionalInstallerData = professionalInstallerData #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.fccId):
-			return_dict["fccId"] = self.fccId
-		if(self.cbsdSerialNumber):
-			return_dict["cbsdSerialNumber"] = self.cbsdSerialNumber
-		if(self.installationParam):
-			return_dict["installationParam"] = self.installationParam.asdict()
-		if(self.professionalInstallerData):
-			return_dict["professionalInstallerData"] = self.professionalInstallerData.asdict()
-		return return_dict
+    def __init__(self, fccId, cbsdSerialNumber, installationParam, professionalInstallerData):
+        self.fccId = fccId  # R
+        self.cbsdSerialNumber = cbsdSerialNumber  # R
+        self.installationParam = installationParam  # R
+        self.professionalInstallerData = professionalInstallerData  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.fccId:
+            return_dict["fccId"] = self.fccId
+        if self.cbsdSerialNumber:
+            return_dict["cbsdSerialNumber"] = self.cbsdSerialNumber
+        if self.installationParam:
+            return_dict["installationParam"] = self.installationParam.asdict()
+        if self.professionalInstallerData:
+            return_dict["professionalInstallerData"] = self.professionalInstallerData.asdict()
+        return return_dict
+
 
 class ProfessionalInstallerData:
-	"""
+    """
 	ProfessionalInstallerData - 
 	Attributes
 	----------
@@ -461,23 +479,25 @@ class ProfessionalInstallerData:
 	installCertificationTime : string (required)
 		The value of this parameter is the UTC date and time at which the CPI identified in this object certified the CBSD’s installed parameters. It is expressed using the format, YYYY-MM-DDThh:mm:ssZ, as defined by [n.7].
 	"""
-	def __init__(self, cpiId, cpiName, installCertificationTime):
-		self.cpiId = cpiId #R
-		self.cpiName = cpiName #R
-		self.installCertificationTime = installCertificationTime #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cpiId):
-			return_dict["cpiId"] = self.cpiId
-		if(self.cpiName):
-			return_dict["cpiName"] = self.cpiName
-		if(self.installCertificationTime):
-			return_dict["installCertificationTime"] = self.installCertificationTime		
-		return return_dict
+    def __init__(self, cpiId, cpiName, installCertificationTime):
+        self.cpiId = cpiId  # R
+        self.cpiName = cpiName  # R
+        self.installCertificationTime = installCertificationTime  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cpiId:
+            return_dict["cpiId"] = self.cpiId
+        if self.cpiName:
+            return_dict["cpiName"] = self.cpiName
+        if self.installCertificationTime:
+            return_dict["installCertificationTime"] = self.installCertificationTime
+        return return_dict
+
 
 class VTParams:
-	"""
+    """
 	VTParams - This object contains parameters regarding the node being registered used for research purposes.
 	Attributes
 	----------
@@ -494,34 +514,35 @@ class VTParams:
 	isMobile : boolean-string (required)
 		Radio has the ability to operate while moving
 	"""
-	def __init__(self, minFrequency, maxFrequency, minSampleRate, 
-		maxSampleRate, nodeType, isMobile):
-		self.minFrequency = minFrequency
-		self.maxFrequency = maxFrequency
-		self.minSampleRate = minSampleRate
-		self.maxSampleRate = maxSampleRate
-		self.nodeType = nodeType = "VT-CRTS-Node"
-		self.isMobile = isMobile
 
-	def asdict(self):
-		return_dict = {}
-		if(self.minFrequency):
-			return_dict["minFrequency"] = self.minFrequency
-		if(self.maxFrequency):
-			return_dict["maxFrequency"] = self.maxFrequency
-		if(self.minSampleRate):
-			return_dict["minSampleRate"] = self.minSampleRate
-		if(self.maxSampleRate):
-			return_dict["maxSampleRate"] = self.maxSampleRate
-		if(self.nodeType):
-			return_dict["nodeType"] = self.nodeType
-		if(self.isMobile):
-			return_dict["isMobile"] = self.isMobile
-		return return_dict
+    def __init__(self, minFrequency, maxFrequency, minSampleRate,
+                 maxSampleRate, nodeType, isMobile):
+        self.minFrequency = minFrequency
+        self.maxFrequency = maxFrequency
+        self.minSampleRate = minSampleRate
+        self.maxSampleRate = maxSampleRate
+        self.nodeType = nodeType = "VT-CRTS-Node"
+        self.isMobile = isMobile
+
+    def asdict(self):
+        return_dict = {}
+        if self.minFrequency:
+            return_dict["minFrequency"] = self.minFrequency
+        if self.maxFrequency:
+            return_dict["maxFrequency"] = self.maxFrequency
+        if self.minSampleRate:
+            return_dict["minSampleRate"] = self.minSampleRate
+        if self.maxSampleRate:
+            return_dict["maxSampleRate"] = self.maxSampleRate
+        if self.nodeType:
+            return_dict["nodeType"] = self.nodeType
+        if self.isMobile:
+            return_dict["isMobile"] = self.isMobile
+        return return_dict
 
 
 class RegistrationResponse:
-	"""
+    """
 	RegistrationResponse - This parameter is an array of RegistrationResponse data objects. 
 		Each RegistrationResponsedata object represents a registration response to a registration request from a CBSD.
 	Attributes
@@ -539,23 +560,25 @@ class RegistrationResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason. See Table 14: ResponseObject Definition.
 	"""
-	def __init__(self, cbsdId=None, measReportConfig=None, response="ERR: No Response"):
-		self.cbsdId = cbsdId #C
-		self.measReportConfig = _ensureIsList(measReportConfig) #O
-		self.response = response #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.measReportConfig[0]):
-			return_dict["measReportConfig"] = self.measReportConfig
-		if(self.response):
-			return_dict["response"] = self.response.asdict()
-		return return_dict
+    def __init__(self, cbsdId=None, measReportConfig=None, response="ERR: No Response"):
+        self.cbsdId = cbsdId  # C
+        self.measReportConfig = _ensureIsList(measReportConfig)  # O
+        self.response = response  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.measReportConfig[0]:
+            return_dict["measReportConfig"] = self.measReportConfig
+        if self.response:
+            return_dict["response"] = self.response.asdict()
+        return return_dict
+
 
 class Response:
-	"""
+    """
 	Response - 
 	Attributes
 	----------
@@ -567,24 +590,25 @@ class Response:
 	responseData : Dependent on responseCode–see Table 40: responseDataDefinitions. (optional)
 		Additional data can be included to help the CBSD resolve failures.
 	"""
-	def __init__(self, responseCode, responseMessage=None, responseData=None):
-		self.responseCode = responseCode #R
-		self.responseMessage = responseMessage #O
-		self.responseData = responseData #O
 
-	def asdict(self):
-		return_dict = {}
-		if(self.responseCode):
-			return_dict["responseCode"] = self.responseCode
-		if(self.responseMessage):
-			return_dict["responseMessage"] = self.responseMessage
-		if(self.responseData):
-			return_dict["responseData"] = self.responseData
-		return return_dict
+    def __init__(self, responseCode, responseMessage=None, responseData=None):
+        self.responseCode = responseCode  # R
+        self.responseMessage = responseMessage  # O
+        self.responseData = responseData  # O
+
+    def asdict(self):
+        return_dict = {}
+        if self.responseCode:
+            return_dict["responseCode"] = self.responseCode
+        if self.responseMessage:
+            return_dict["responseMessage"] = self.responseMessage
+        if self.responseData:
+            return_dict["responseData"] = self.responseData
+        return return_dict
 
 
 class SpectrumInquiryRequest:
-	"""
+    """
 	SpectrumInquiryRequest - Array of SpectrumInquiryRequest objects. Each SpectrumInquiryRequest object represents a spectrum inquiry request of a CBSD.
 	Attributes
 	----------
@@ -596,24 +620,26 @@ class SpectrumInquiryRequest:
 		The CBSD uses this parameter to report measurements to the SAS. The format of the MeasReport object is provided in [n.21].
 		Refer to section 8 and the measurement capabilities in [n.21] for inclusion rules.
 	"""
-	def __init__(self, cbsdId, inquiredSpectrum, measReport=None, 
-		lowFrequency=-1, highFrequency=-1):
-		self.cbsdId = cbsdId #R
-		self.inquiredSpectrum = _ensureIsList(inquiredSpectrum) #R
-		self.measReport = measReport #C
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdInfo"] = self.cbsdId
-		if(self.inquiredSpectrum):
-			return_dict["inquiredSpectrum"] = _toJsonDictArray(self.inquiredSpectrum)
-		if(self.measReport):
-			return_dict["measReport"] = self.measReport.asdict()
-		return return_dict
+    def __init__(self, cbsdId, inquiredSpectrum, measReport=None,
+                 lowFrequency=-1, highFrequency=-1):
+        self.cbsdId = cbsdId  # R
+        self.inquiredSpectrum = _ensureIsList(inquiredSpectrum)  # R
+        self.measReport = measReport  # C
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdInfo"] = self.cbsdId
+        if self.inquiredSpectrum:
+            return_dict["inquiredSpectrum"] = _toJsonDictArray(self.inquiredSpectrum)
+        if self.measReport:
+            return_dict["measReport"] = self.measReport.asdict()
+        return return_dict
+
 
 class FrequencyRange:
-	"""fx
+    """fx
 	FrequencyRange - 
 	Attributes
 	----------
@@ -622,44 +648,48 @@ class FrequencyRange:
 	highFrequency : number (required)
 		The highest frequency of the frequency range in Hz
 	"""
-	def __init__(self, lowFrequency, highFrequency):
-		self.lowFrequency = lowFrequency #R
-		self.highFrequency = highFrequency #R
-	
-	def asdict(self):
-		return_dict = {}
-		if(self.lowFrequency):
-			return_dict["lowFrequency"] = self.lowFrequency
-		if(self.highFrequency):
-			return_dict["highFrequency"] = self.highFrequency
-		return return_dict
+
+    def __init__(self, lowFrequency, highFrequency):
+        self.lowFrequency = lowFrequency  # R
+        self.highFrequency = highFrequency  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.lowFrequency:
+            return_dict["lowFrequency"] = self.lowFrequency
+        if self.highFrequency:
+            return_dict["highFrequency"] = self.highFrequency
+        return return_dict
+
 
 # https://winnf.memberclicks.net/assets/CBRS/WINNF-SSC-0002.pdf
 class MeasReport:
-	"""
+    """
 	MeasReport - 
 	Attibutes
 	---------
 	measReports : array of object RcvdPowerMeasReport or IndoorLossGNSSMeasReport (unknown)
 	 	An array of separate reports measured as Received Power.
 	"""
-	def __init__(self, measReports=None):
-		self.measReports = _ensureIsList(measReports) #?
 
-	def asdict(self):
-		return_dict = {}
-		try:
-			if(self.measReports[0].measFrequency):
-				return_dict["rcvdPowerMeasReports"] = _toJsonDictArray(self.measReports)
-			elif(self.measReports[0].indoorLoss):
-				return_dict["indoorLossGNSSMeasReports"] = _toJsonDictArray(self.measReports)
-		except:
-			pass
+    def __init__(self, measReports=None):
+        self.measReports = _ensureIsList(measReports)  # ?
 
-		return return_dict
+    def asdict(self):
+        return_dict = {}
+        try:
+            if self.measReports[0].measFrequency:
+                return_dict["rcvdPowerMeasReports"] = _toJsonDictArray(self.measReports)
+            elif self.measReports[0].indoorLoss:
+                return_dict["indoorLossGNSSMeasReports"] = _toJsonDictArray(self.measReports)
+        except:
+            pass
+
+        return return_dict
+
 
 class RcvdPowerMeasReport:
-	"""
+    """
 	RcvdPowerMeasReport - used both for WITH and WITHOUT_GRANT configs
 	Attibutes
 	---------
@@ -675,23 +705,25 @@ class RcvdPowerMeasReport:
 		The range of this parameter is -100dBm .. -25dBm. 
 		The Received Power is measured over the frequency range from measFrequency as the lower bound to (measFrequency + measBandwidth) as the upper bound.
 	"""
-	def __init__(self, measFrequency, measBandwidth, measRcvdPower):
-		self.measFrequency = measFrequency #R
-		self.measBandwidth = measBandwidth #R
-		self.measRcvdPower = measRcvdPower #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.measFrequency):
-			return_dict["measFrequency"] = self.measFrequency
-		if(self.measBandwidth):
-			return_dict["measBandwidth"] = self.measBandwidth
-		if(self.measRcvdPower):
-			return_dict["measRcvdPower"] = self.measRcvdPower
-		return return_dict
+    def __init__(self, measFrequency, measBandwidth, measRcvdPower):
+        self.measFrequency = measFrequency  # R
+        self.measBandwidth = measBandwidth  # R
+        self.measRcvdPower = measRcvdPower  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.measFrequency:
+            return_dict["measFrequency"] = self.measFrequency
+        if self.measBandwidth:
+            return_dict["measBandwidth"] = self.measBandwidth
+        if self.measRcvdPower:
+            return_dict["measRcvdPower"] = self.measRcvdPower
+        return return_dict
+
 
 class IndoorLossGNSSMeasReport:
-	"""
+    """
 	IndoorLossGNSSMeasReport - Reports of indoor loss associated with direction (Azimuth and Elevation)
 	
 	Attributes
@@ -709,26 +741,28 @@ class IndoorLossGNSSMeasReport:
 		A string representing what technology type is being used to measure indoor loss.
 		Allowed types can be found pg. 10 of WINNF-SSC-0002.pdf V8.0
 	"""
-	def __init__(self, indoorLoss, azimuthAngleWithGNSS, elevationAngleWithGNSS, technologyType):
-		self.indoorLoss = indoorLoss
-		self.azimuthAngleWithGNSS = azimuthAngleWithGNSS
-		self.elevationAngleWithGNSS = elevationAngleWithGNSS
-		self.technologyType = technologyType
 
-	def asdict(self):
-		return_dict = {}
-		if(self.indoorLoss):
-				return_dict["indoorLoss"] = self.indoorLoss
-		if(self.azimuthAngleWithGNSS):
-				return_dict["azimuthAngleWithGNSS"] = self.azimuthAngleWithGNSS
-		if(self.elevationAngleWithGNSS):
-				return_dict["elevationAngleWithGNSS"] = self.elevationAngleWithGNSS
-		if(self.technologyType):
-				return_dict["technologyType"] = self.technologyType
-		return return_dict
+    def __init__(self, indoorLoss, azimuthAngleWithGNSS, elevationAngleWithGNSS, technologyType):
+        self.indoorLoss = indoorLoss
+        self.azimuthAngleWithGNSS = azimuthAngleWithGNSS
+        self.elevationAngleWithGNSS = elevationAngleWithGNSS
+        self.technologyType = technologyType
+
+    def asdict(self):
+        return_dict = {}
+        if self.indoorLoss:
+            return_dict["indoorLoss"] = self.indoorLoss
+        if self.azimuthAngleWithGNSS:
+            return_dict["azimuthAngleWithGNSS"] = self.azimuthAngleWithGNSS
+        if self.elevationAngleWithGNSS:
+            return_dict["elevationAngleWithGNSS"] = self.elevationAngleWithGNSS
+        if self.technologyType:
+            return_dict["technologyType"] = self.technologyType
+        return return_dict
+
 
 class SpectrumInquiryResponse:
-	"""
+    """
 	SpectrumInquiryResponse - Array of SpectrumInquiryResponse objects. 
 	Each SpectrumInquiryResponse object represents a spectrum inquiry response to a spectrum inquiry request of a CBSD.
 	Attributes
@@ -740,23 +774,25 @@ class SpectrumInquiryResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason. See Table 14: ResponseObject Definition
 	"""
-	def __init__(self, cbsdId=None, availableChannel=None, response="ERR: No Response"):
-		self.cbsdId = cbsdId #C
-		self.availableChannel = _ensureIsList(availableChannel) #C
-		self.response = response #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.availableChannel):
-			return_dict["availableChannel"] = _toJsonDictArray(self.availableChannel)
-		if(self.response):
-			return_dict["response"] = self.response.asdict()
-		return return_dict
+    def __init__(self, cbsdId=None, availableChannel=None, response="ERR: No Response"):
+        self.cbsdId = cbsdId  # C
+        self.availableChannel = _ensureIsList(availableChannel)  # C
+        self.response = response  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.availableChannel:
+            return_dict["availableChannel"] = _toJsonDictArray(self.availableChannel)
+        if self.response:
+            return_dict["response"] = self.response.asdict()
+        return return_dict
+
 
 class AvailableChannel:
-	"""
+    """
 	AvailableChannel - 
 	Attributes
 	----------
@@ -772,27 +808,28 @@ class AvailableChannel:
 	grantRequest : array of object GrantRequest (required)
 		Array of GrantRequest objects. Each	GrantRequest object represents a Grant request of a CBSD.
 	"""
-	def __init__(self, frequencyRange, channelType, ruleApplied, maxEirp=None):
-		self.frequencyRange = frequencyRange #R
-		self.channelType = channelType #R
-		self.ruleApplied = ruleApplied #R
-		self.maxEirp = maxEirp #O
 
-	def asdict(self):
-		return_dict = {}
-		if(self.frequencyRange):
-			return_dict["frequencyRange"] = self.frequencyRange.asdict()
-		if(self.channelType):
-			return_dict["channelType"] = self.channelType
-		if(self.ruleApplied):
-			return_dict["ruleApplied"] = self.ruleApplied
-		if(self.maxEirp):
-			return_dict["maxEirp"] = self.maxEirp
-		return return_dict
+    def __init__(self, frequencyRange, channelType, ruleApplied, maxEirp=None):
+        self.frequencyRange = frequencyRange  # R
+        self.channelType = channelType  # R
+        self.ruleApplied = ruleApplied  # R
+        self.maxEirp = maxEirp  # O
+
+    def asdict(self):
+        return_dict = {}
+        if self.frequencyRange:
+            return_dict["frequencyRange"] = self.frequencyRange.asdict()
+        if self.channelType:
+            return_dict["channelType"] = self.channelType
+        if self.ruleApplied:
+            return_dict["ruleApplied"] = self.ruleApplied
+        if self.maxEirp:
+            return_dict["maxEirp"] = self.maxEirp
+        return return_dict
 
 
 class GrantRequest:
-	"""
+    """
 	GrantRequest - Array of GrantRequest objects. Each GrantRequest object represents a Grant request of a CBSD.
 	Attributes
 	----------
@@ -809,26 +846,28 @@ class GrantRequest:
 		This is not a WinnForum specified data type.
 	
 	"""
-	def __init__(self, cbsdId, operationParam,  measReport=None, vtGrantParams=None):
-		self.cbsdId = cbsdId #R
-		self.operationParam = operationParam #R
-		self.measReport = measReport #C
-		self.vtGrantParams = vtGrantParams #O
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.operationParam):
-			return_dict["operationParam"] = self.operationParam.asdict()
-		if(self.measReport):
-			return_dict["measReport"] = self.measReport.asdict()
-		if(self.vtGrantParams):
-			return_dict["vtGrantParams"] = self.vtGrantParams.asdict()
-		return return_dict
+    def __init__(self, cbsdId, operationParam, measReport=None, vtGrantParams=None):
+        self.cbsdId = cbsdId  # R
+        self.operationParam = operationParam  # R
+        self.measReport = measReport  # C
+        self.vtGrantParams = vtGrantParams  # O
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.operationParam:
+            return_dict["operationParam"] = self.operationParam.asdict()
+        if self.measReport:
+            return_dict["measReport"] = self.measReport.asdict()
+        if self.vtGrantParams:
+            return_dict["vtGrantParams"] = self.vtGrantParams.asdict()
+        return return_dict
+
 
 class OperationParam:
-	"""
+    """
 	OperationParam -
 	Attributes
 	----------
@@ -839,78 +878,83 @@ class OperationParam:
 	operationFrequencyRange : object FrequencyRange (required)
 		This parameter is frequency range of a contiguous segment.
 	"""
-	def __init__(self, maxEirp, operationFrequencyRange):
-		self.maxEirp = maxEirp #R
-		self.operationFrequencyRange = operationFrequencyRange #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.maxEirp):
-			return_dict["maxEirp"] = self.maxEirp
-		if(self.operationFrequencyRange):
-			return_dict["operationFrequencyRange"] = self.operationFrequencyRange.asdict()
-		return return_dict
+    def __init__(self, maxEirp, operationFrequencyRange):
+        self.maxEirp = maxEirp  # R
+        self.operationFrequencyRange = operationFrequencyRange  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.maxEirp:
+            return_dict["maxEirp"] = self.maxEirp
+        if self.operationFrequencyRange:
+            return_dict["operationFrequencyRange"] = self.operationFrequencyRange.asdict()
+        return return_dict
+
 
 class VTGrantParams:
-	"""
+    """
 	Parameters for extended grant request data.
 	For VT Research purposes only.
 	"""
-	def __init__(self, minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, minBandwidth,
-		maxBandwidth, preferredBandwidth, startTime, endTime, approximateByteSize, dataType, powerLevel, location, 
-		mobility, maxVelocity):
-		self.minFrequency = minFrequency
-		self.maxFrequency = maxFrequency
-		self.preferredFrequency = preferredFrequency
-		self.frequencyAbsolute = frequencyAbsolute
-		self.minBandwidth = minBandwidth
-		self.maxBandwidth = maxBandwidth
-		self.preferredBandwidth = preferredBandwidth
-		self.startTime = startTime
-		self.endTime = endTime
-		self.approximateByteSize = approximateByteSize
-		self.dataType = dataType
-		self.powerLevel = powerLevel
-		self.location = location
-		self.mobility = mobility
-		self.maxVelocity = maxVelocity
 
-	def asdict(self):
-		return_dict = {}
-		if(self.minFrequency):
-			return_dict["minFrequency"] = self.minFrequency
-		if(self.maxFrequency):
-			return_dict["maxFrequency"] = self.maxFrequency
-		if(self.preferredFrequency):
-			return_dict["preferredFrequency"] = self.preferredFrequency
-		if(self.frequencyAbsolute):
-			return_dict["frequencyAbsolute"] = self.frequencyAbsolute
-		if(self.minBandwidth):
-			return_dict["minBandwidth"] = self.minBandwidth
-		if(self.maxBandwidth):
-			return_dict["maxBandwidth"] = self.maxBandwidth
-		if(self.preferredBandwidth):
-			return_dict["preferredBandwidth"] = self.preferredBandwidth
-		if(self.startTime):
-			return_dict["startTime"] = self.startTime
-		if(self.endTime):
-			return_dict["endTime"] = self.endTime
-		if(self.approximateByteSize):
-			return_dict["approximateByteSize"] = self.approximateByteSize
-		if(self.dataType):
-			return_dict["dataType"] = self.dataType
-		if(self.powerLevel):
-			return_dict["powerLevel"] = self.powerLevel
-		if(self.location):
-			return_dict["location"] = self.location
-		if(self.mobility):
-			return_dict["mobility"] = self.mobility
-		if(self.maxVelocity):
-			return_dict["maxVelocity"] = self.maxVelocity
-		return return_dict
+    def __init__(self, minFrequency, maxFrequency, preferredFrequency, frequencyAbsolute, minBandwidth,
+                 maxBandwidth, preferredBandwidth, startTime, endTime, approximateByteSize, dataType, powerLevel,
+                 location,
+                 mobility, maxVelocity):
+        self.minFrequency = minFrequency
+        self.maxFrequency = maxFrequency
+        self.preferredFrequency = preferredFrequency
+        self.frequencyAbsolute = frequencyAbsolute
+        self.minBandwidth = minBandwidth
+        self.maxBandwidth = maxBandwidth
+        self.preferredBandwidth = preferredBandwidth
+        self.startTime = startTime
+        self.endTime = endTime
+        self.approximateByteSize = approximateByteSize
+        self.dataType = dataType
+        self.powerLevel = powerLevel
+        self.location = location
+        self.mobility = mobility
+        self.maxVelocity = maxVelocity
+
+    def asdict(self):
+        return_dict = {}
+        if self.minFrequency:
+            return_dict["minFrequency"] = self.minFrequency
+        if self.maxFrequency:
+            return_dict["maxFrequency"] = self.maxFrequency
+        if self.preferredFrequency:
+            return_dict["preferredFrequency"] = self.preferredFrequency
+        if self.frequencyAbsolute:
+            return_dict["frequencyAbsolute"] = self.frequencyAbsolute
+        if self.minBandwidth:
+            return_dict["minBandwidth"] = self.minBandwidth
+        if self.maxBandwidth:
+            return_dict["maxBandwidth"] = self.maxBandwidth
+        if self.preferredBandwidth:
+            return_dict["preferredBandwidth"] = self.preferredBandwidth
+        if self.startTime:
+            return_dict["startTime"] = self.startTime
+        if self.endTime:
+            return_dict["endTime"] = self.endTime
+        if self.approximateByteSize:
+            return_dict["approximateByteSize"] = self.approximateByteSize
+        if self.dataType:
+            return_dict["dataType"] = self.dataType
+        if self.powerLevel:
+            return_dict["powerLevel"] = self.powerLevel
+        if self.location:
+            return_dict["location"] = self.location
+        if self.mobility:
+            return_dict["mobility"] = self.mobility
+        if self.maxVelocity:
+            return_dict["maxVelocity"] = self.maxVelocity
+        return return_dict
+
 
 class GrantResponse:
-	"""
+    """
 	GrantResponse - Array of GrantResponseobjects.
 		Each GrantResponseobject represents a Grantresponseto a Grant request of a CBSD
 	
@@ -940,41 +984,42 @@ class GrantResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14.
 	"""
-	def __init__(self, cbsdId=None, grantId=None, grantExpireTime=None,
-		heartbeatInterval=None, measReportConfig=None, operationParam=None,
-		channelType=None, response="ERR: No Response"):
-		self.cbsdId = cbsdId #C
-		self.grantId = grantId #C
-		self.grantExpireTime = grantExpireTime #C
-		self.heartbeatInterval = heartbeatInterval #C
-		self.measReportConfig = _ensureIsList(measReportConfig) #O
-		self.operationParam = operationParam #O
-		self.channelType = channelType #C
-		self.response = response #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId 
-		if(self.grantId):
-			return_dict["grantId"] = self.grantId
-		if(self.grantExpireTime):
-			return_dict["grantExpireTime"] = self.grantExpireTime 
-		if(self.heartbeatInterval):
-			return_dict["heartbeatInterval"] = self.heartbeatInterval 
-		if(self.measReportConfig[0]):
-			return_dict["measReportConfig"] = self.measReportConfig 
-		if(self.operationParam):
-			return_dict["operationParam"] = self.operationParam.asdict()
-		if(self.channelType):
-			return_dict["channelType"] = self.channelType 
-		if(self.response):
-			return_dict["response"] = self.response.asdict() 
-		return return_dict
+    def __init__(self, cbsdId=None, grantId=None, grantExpireTime=None,
+                 heartbeatInterval=None, measReportConfig=None, operationParam=None,
+                 channelType=None, response="ERR: No Response"):
+        self.cbsdId = cbsdId  # C
+        self.grantId = grantId  # C
+        self.grantExpireTime = grantExpireTime  # C
+        self.heartbeatInterval = heartbeatInterval  # C
+        self.measReportConfig = _ensureIsList(measReportConfig)  # O
+        self.operationParam = operationParam  # O
+        self.channelType = channelType  # C
+        self.response = response  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.grantId:
+            return_dict["grantId"] = self.grantId
+        if self.grantExpireTime:
+            return_dict["grantExpireTime"] = self.grantExpireTime
+        if self.heartbeatInterval:
+            return_dict["heartbeatInterval"] = self.heartbeatInterval
+        if self.measReportConfig[0]:
+            return_dict["measReportConfig"] = self.measReportConfig
+        if self.operationParam:
+            return_dict["operationParam"] = self.operationParam.asdict()
+        if self.channelType:
+            return_dict["channelType"] = self.channelType
+        if self.response:
+            return_dict["response"] = self.response.asdict()
+        return return_dict
 
 
 class HeartbeatRequest:
-	"""
+    """
 	HeartbeatRequest - Array of HeartbeatRequest objects.
 		Each HeartbeatRequest object represents a heartbeat request of a CBSD.
 	
@@ -992,30 +1037,32 @@ class HeartbeatRequest:
 		The CBSD uses this parameter to report measurements to the SAS. The format of the MeasReport object is provided in [n.21]. 
 		Refer to section 8 and [n.21] for inclusion rules.
 	"""
-	def __init__(self, cbsdId, grantId, grantRenew=None, operationState="ERR: Nothing Provided", 
-		measReport=None):
-		self.cbsdId = cbsdId #R
-		self.grantId = grantId #R
-		self.grantRenew = grantRenew #O
-		self.operationState = operationState #R
-		self.measReport = measReport #C
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.grantId):
-			return_dict["grantId"] = self.grantId
-		if(self.grantRenew):
-			return_dict["grantRenew"] = self.grantRenew
-		if(self.operationState):
-			return_dict["operationState"] = self.operationState
-		if(self.measReport):
-			return_dict["measReport"] = self.measReport.asdict()
-		return return_dict
+    def __init__(self, cbsdId, grantId, grantRenew=None, operationState="ERR: Nothing Provided",
+                 measReport=None):
+        self.cbsdId = cbsdId  # R
+        self.grantId = grantId  # R
+        self.grantRenew = grantRenew  # O
+        self.operationState = operationState  # R
+        self.measReport = measReport  # C
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.grantId:
+            return_dict["grantId"] = self.grantId
+        if self.grantRenew:
+            return_dict["grantRenew"] = self.grantRenew
+        if self.operationState:
+            return_dict["operationState"] = self.operationState
+        if self.measReport:
+            return_dict["measReport"] = self.measReport.asdict()
+        return return_dict
+
 
 class HeartbeatResponse:
-	"""
+    """
 	HeartbeatResponseObject - Array of HeartbeatResponseobjects. Each HeartbeatResponse object represents a heartbeat response of a CBSD.
 	
 	Attributes
@@ -1046,40 +1093,41 @@ class HeartbeatResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14.
 	"""
-	def __init__(self, cbsdId=None, grantId=None, transmitExpireTime="-1", grantExpireTime=None,
-		heartbeatInterval=None, operationParam=None, measReportConfig=None, response="ERR: No Response"):
-		self.cbsdId = cbsdId #C
-		self.grantId = grantId #C
-		self.transmitExpireTime = transmitExpireTime #R
-		self.grantExpireTime = grantExpireTime #C
-		self.heartbeatInterval = heartbeatInterval #O
-		self.operationParam = operationParam #O
-		self.measReportConfig = _ensureIsList(measReportConfig) #O
-		self.response = response #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.grantId):
-			return_dict["grantId"] = self.grantId
-		if(self.transmitExpireTime):
-			return_dict["transmitExpireTime"] = self.transmitExpireTime
-		if(self.grantExpireTime):
-			return_dict["grantExpireTime"] = self.grantExpireTime
-		if(self.heartbeatInterval):
-			return_dict["heartbeatInterval"] = self.heartbeatInterval
-		if(self.operationParam):
-			return_dict["operationParam"] = self.operationParam.asdict()
-		if(self.measReportConfig[0]):
-			return_dict["measReportConfig"] = self.measReportConfig
-		if(self.response):
-			return_dict["response"] = self.response.asdict()
-		return return_dict
+    def __init__(self, cbsdId=None, grantId=None, transmitExpireTime="-1", grantExpireTime=None,
+                 heartbeatInterval=None, operationParam=None, measReportConfig=None, response="ERR: No Response"):
+        self.cbsdId = cbsdId  # C
+        self.grantId = grantId  # C
+        self.transmitExpireTime = transmitExpireTime  # R
+        self.grantExpireTime = grantExpireTime  # C
+        self.heartbeatInterval = heartbeatInterval  # O
+        self.operationParam = operationParam  # O
+        self.measReportConfig = _ensureIsList(measReportConfig)  # O
+        self.response = response  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.grantId:
+            return_dict["grantId"] = self.grantId
+        if self.transmitExpireTime:
+            return_dict["transmitExpireTime"] = self.transmitExpireTime
+        if self.grantExpireTime:
+            return_dict["grantExpireTime"] = self.grantExpireTime
+        if self.heartbeatInterval:
+            return_dict["heartbeatInterval"] = self.heartbeatInterval
+        if self.operationParam:
+            return_dict["operationParam"] = self.operationParam.asdict()
+        if self.measReportConfig[0]:
+            return_dict["measReportConfig"] = self.measReportConfig
+        if self.response:
+            return_dict["response"] = self.response.asdict()
+        return return_dict
 
 
 class RelinquishmentRequest:
-	"""
+    """
 	RelinquishmentRequest - Array of RelinquishmentRequest objects.
 		Each RelinquishmentRequest object Represents a relinquishment request of a CBSD.
 	
@@ -1090,20 +1138,22 @@ class RelinquishmentRequest:
 	grantId : string (required)
 		The CBSD shall set this parameter to the value of the Grant identity of this Grant.
 	"""
-	def __init__(self, cbsdId, grantId):
-		self.cbsdId = cbsdId #R
-		self.grantId = grantId #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.grantId):
-			return_dict["grantId"] = self.grantId
-		return return_dict
-		
+    def __init__(self, cbsdId, grantId):
+        self.cbsdId = cbsdId  # R
+        self.grantId = grantId  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.grantId:
+            return_dict["grantId"] = self.grantId
+        return return_dict
+
+
 class RelinquishmentResponse:
-	"""
+    """
 	RelinquishmentResponse - Array of RelinquishmentResponse objects. 
 		Each RelinquishmentResponseobject represents a relinquishment response to a relinquishment request of a CBSD.
 	
@@ -1116,24 +1166,25 @@ class RelinquishmentResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason. See Table 14: ResponseObject Definition.
 	"""
-	def __init__(self, cbsdId=None, grantId=None, response="ERR: No Response"):
-		self.cbsdId = cbsdId #C
-		self.grantId = grantId #C
-		self.response = response #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.grantId):
-			return_dict["grantId"] = self.grantId
-		if(self.response):
-			return_dict["response"] = self.response.asdict()
-		return return_dict
+    def __init__(self, cbsdId=None, grantId=None, response="ERR: No Response"):
+        self.cbsdId = cbsdId  # C
+        self.grantId = grantId  # C
+        self.response = response  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.grantId:
+            return_dict["grantId"] = self.grantId
+        if self.response:
+            return_dict["response"] = self.response.asdict()
+        return return_dict
 
 
 class DeregistrationRequest:
-	"""
+    """
 	DeregistrationRequest - Array of DeregistrationRequest data objects. 
 		Each DeregistrationRequest data object represents a deregistrationrequest of a CBSD.
 	
@@ -1142,17 +1193,19 @@ class DeregistrationRequest:
 	cbsdId : string (required)
 		The CBSD shall set this parameter to the value of its CBSD identity.
 	"""
-	def __init__(self, cbsdId):
-		self.cbsdId = cbsdId #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		return return_dict
+    def __init__(self, cbsdId):
+        self.cbsdId = cbsdId  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        return return_dict
+
 
 class DeregistrationResponse:
-	"""
+    """
 	DeregistrationResponse - Array of DeregistrationResponsedata objects.
 		Each DeregistrationResponse data object represents a deregistrationresponse to a deregistration request of a CBSD
 	
@@ -1164,20 +1217,22 @@ class DeregistrationResponse:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14: ResponseObject Definition
 	"""
-	def __init__(self, cbsdId=None, response=None):
-		self.cbsdId = cbsdId #C
-		self.response = response #R
 
-	def asdict(self):
-		return_dict = {}
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.response):
-			return_dict["response"] = self.response.asdict()
-		return return_dict
+    def __init__(self, cbsdId=None, response=None):
+        self.cbsdId = cbsdId  # C
+        self.response = response  # R
+
+    def asdict(self):
+        return_dict = {}
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.response:
+            return_dict["response"] = self.response.asdict()
+        return return_dict
+
 
 class Grant:
-	"""
+    """
 	Grant - Array of DeregistrationResponsedata objects.
 		Each DeregistrationResponse data object represents a deregistrationresponse to a deregistration request of a CBSD
 	
@@ -1189,28 +1244,30 @@ class Grant:
 	response : object Response (required)
 		This parameter includes information on whether the corresponding CBSD request is approved or disapproved for a reason.  See Table 14: ResponseObject Definition
 	"""
-	def __init__(self, id, cbsdId, operationParam, vtGrantParams=None, expireTime=None, heartbeatTime=None, heartbeatInterval=None):
-		self.id = id
-		self.cbsdId = cbsdId #R
-		self.operationParam = operationParam #R
-		self.vtGrantParams = vtGrantParams #O
-		self.expireTime = expireTime
-		self.heartbeatTime = heartbeatTime
-		self.heartbeatInterval = heartbeatInterval
 
-	def asdict(self):
-		return_dict = {}
-		return_dict["id"] = self.id
-		if(self.cbsdId):
-			return_dict["cbsdId"] = self.cbsdId
-		if(self.operationParam):
-			return_dict["operationParam"] = self.operationParam.asdict()
-		if(self.vtGrantParams):
-			return_dict["vtGrantParams"] = self.vtGrantParams.asdict()
-		if(self.expireTime):
-			return_dict["expireTime"] = self.expireTime
-		if(self.heartbeatTime):
-			return_dict["heartbeatTime"] = self.heartbeatTime
-		if(self.heartbeatInterval):
-			return_dict["heartbeatInterval"] = self.heartbeatInterval
-		return return_dict
+    def __init__(self, id, cbsdId, operationParam, vtGrantParams=None, expireTime=None, heartbeatTime=None,
+                 heartbeatInterval=None):
+        self.id = id
+        self.cbsdId = cbsdId  # R
+        self.operationParam = operationParam  # R
+        self.vtGrantParams = vtGrantParams  # O
+        self.expireTime = expireTime
+        self.heartbeatTime = heartbeatTime
+        self.heartbeatInterval = heartbeatInterval
+
+    def asdict(self):
+        return_dict = {}
+        return_dict["id"] = self.id
+        if self.cbsdId:
+            return_dict["cbsdId"] = self.cbsdId
+        if self.operationParam:
+            return_dict["operationParam"] = self.operationParam.asdict()
+        if self.vtGrantParams:
+            return_dict["vtGrantParams"] = self.vtGrantParams.asdict()
+        if self.expireTime:
+            return_dict["expireTime"] = self.expireTime
+        if self.heartbeatTime:
+            return_dict["heartbeatTime"] = self.heartbeatTime
+        if self.heartbeatInterval:
+            return_dict["heartbeatInterval"] = self.heartbeatInterval
+        return return_dict

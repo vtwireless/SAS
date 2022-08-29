@@ -7,8 +7,7 @@ from settings import settings
 def set_schema(metadata):
     Table(
         settings.GRANT_TABLE, metadata,
-        Column('requestID', Integer, primary_key=True, autoincrement=True),
-        Column('grantId', Integer, autoincrement=True),
+        Column('grantId', Integer, primary_key=True, autoincrement=True),
         Column('secondaryUserID', String(80), index=False, unique=False, nullable=False, default=''),
         Column('secondaryUserName', String(80), index=False, unique=False, nullable=False, default=''),
         Column('tier', String(80), index=False, unique=False, nullable=False, default=''),
@@ -27,5 +26,5 @@ def set_schema(metadata):
         Column('mobility', Boolean, index=False, unique=False, nullable=False),
         Column('maxVelocity', String(80), index=False, unique=False, nullable=False),
         Column('range', String(80), index=False, unique=False, nullable=False, default=''),
-        Column('cbsdId', String(80), index=False, unique=True, nullable=False, default='')
+        Column('cbsdId', String(80), index=False, unique=True, nullable=False)
     )

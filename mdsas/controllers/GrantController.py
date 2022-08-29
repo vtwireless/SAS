@@ -1,4 +1,5 @@
 import threading
+from datetime import datetime, timezone, timedelta
 
 import sqlalchemy as db
 from sqlalchemy import select, and_, insert, delete, update
@@ -58,6 +59,23 @@ class GrantController:
             raise Exception(f"Grant with Id {grantId} not found")
         else:
             return Utilities.loadGrantFromJSON(rows[0])
+
+    def delete_grant_with_id(self, grantId):
+        query = delete([self.GRANTS]).where(self.GRANTS.columns.grantId == grantId)
+        rows = self._execute_query(query)
+
+        query = select([self.GRANTS]).where(self.GRANTS.columns.grantId == grantId)
+        rows = self._execute_query(query)
+        if len(rows) > 0:
+            return {
+                "status": 0,
+                "message": 'Grant could not be deleted'
+            }
+
+        return {
+            "status": 1,
+            "message": f"Grant {grantId} has been deleted."
+        }
 
     def spectrum_inquiry(self, data):
         inquiryArr = []
@@ -130,3 +148,129 @@ class GrantController:
     def resetRadioStatuses(self, radios):
         for radio in radios:
             self.nodeCtrl.update_cbsd_justChangedParams(radio.cbsdID, False)
+
+    def grant_request(self, payload):
+        responseArr = []
+
+        for item in payload['grantRequest']:
+            if 'secondaryUserID' not in item:
+                item['secondaryUserID'] = self.nodeCtrl.get_cbsd_by_id(item['cbsdId'])['userId']
+
+            query = select([self.GRANTS]).where(and_(
+                self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
+                self.GRANTS.columns.minFrequency == item['minFrequency'],
+                self.GRANTS.columns.startTime == item['startTime']
+            ))
+            rows = self._execute_query(query)
+
+            if len(rows) > 0:
+                return {
+                    "status": 0,
+                    "exists": 1,
+                    "message": "Grant already exists. Grant processing rollback complete"
+                }
+
+            self.CONNECTION.execute(self.GRANTS.insert(), [item])
+            rows = self._execute_query(query)
+            if len(rows) < 1:
+                return {
+                    "status": 0,
+                    "message": "Grant Request could not be processed"
+                }
+
+            grantRequest = WinnForum.GrantRequest(item["cssdId"], None)
+            ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
+            grantRequest.operationParam = WinnForum.OperationParam(item["powerLevel"], ofr)
+            vtgp = WinnForum.VTGrantParams(
+                item['minFrequency'], item['maxFrequency'], item["preferredFrequency"], item["frequencyAbsolute"],
+                item["minBandwidth"], item["preferredBandwidth"], item["preferredBandwidth"],
+                item["startTime"], item["endTime"], item["approximateByteSize"],
+                item["dataType"], item["powerLevel"], item["location"], item["mobility"],
+                item["maxVelocity"]
+            )
+            grantRequest.vtGrantParams = vtgp
+
+            grantResponse = self.algorithms.runGrantAlgorithm(
+                self.get_grants()['spectrumGrants'], self.rem, grantRequest
+            )
+            grantResponse.grantId = rows[0]['grantId']
+            if grantResponse.response.responseCode == "0":
+                g = WinnForum.Grant(
+                    grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
+                    vtgp, grantResponse.grantExpireTime
+                )
+
+            responseArr.append(grantResponse.asdict())
+
+        return {
+            "status": 1,
+            "message": "Grants have been created",
+            "grantResponse": responseArr
+        }
+
+    def heartbeat_request(self, data):
+        heartbeatArr, grantArr = [], []
+
+        for heartbeat in data["heartbeatRequest"]:
+            cbsd = self.nodeCtrl.get_cbsd_by_id(heartbeat['cbsdId'])
+            grant = self.get_grant_with_id(heartbeat['grantId'])
+
+            if heartbeat["measReport"]:
+                for rpmr in heartbeat["measReport"]["rcvdPowerMeasReports"]:
+                    # TODO: check to see if frequency range already exists as a submission
+                    #  from specific CBSD to prevent spamming
+                    mr = Utilities.measReportObjectFromJSON(rpmr)
+                    self.rem.measReportToSASREMObject(mr, cbsd)
+
+            response = self.algorithms.runHeartbeatAlgorithm(
+                self.get_grants()['spectrumGrants'], self.rem, heartbeat, grant
+            )
+            grant.heartbeatTime = datetime.now(timezone.utc)
+            grant.heartbeatInterval = response.heartbeatInterval
+            grantArr.append(grant)
+            heartbeatArr.append(response.asdict())
+
+        return {
+            'status': 0,
+            "heartbeatResponse": heartbeatArr
+        }, grantArr
+
+    def relinquishment_request(self, data):
+        relinquishArr = []
+
+        for relinquishmentRequest in data["relinquishmentRequest"]:
+            self.cancel_grant_by_grantId(relinquishmentRequest["grantId"], True)
+            response = {
+                "cbsdId": relinquishmentRequest["cbsdId"],
+                "grantId": relinquishmentRequest["grantId"],
+                "response": Utilities.generateResponse(0)
+            }
+
+            if relinquishmentRequest["cbsdId"] is None or relinquishmentRequest["grantId"] is None:
+                response["response"] = Utilities.generateResponse(102)
+            relinquishArr.append(response)
+
+        return {"relinquishmentResponse": relinquishArr}
+
+    def cancel_grant_by_grantId(self, grant, force=False):
+        now = datetime.now(timezone.utc)
+        if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now or force:
+            query = delete([self.GRANTS]).where(and_(
+                self.GRANTS.columns.grantId == grant['grantId'],
+                self.GRANTS.columns.secondaryUserID == grant['secondaryUserID']
+            ))
+            row = self._execute_query(query)
+
+            print(f"Grant {grant['grantId']} has been cancelled")
+
+    def spectrumData(self, payload):
+        cbsd = self.nodeCtrl.get_cbsd_by_id(payload["spectrumData"]["cbsdId"])
+        if cbsd:
+            deviceInfo = payload["spectrumData"]
+            cbsd.latitude = deviceInfo["latitude"]
+            cbsd.longitude = deviceInfo["longitude"]
+
+            if 'spectrumData' in deviceInfo and 'rcvdPowerMeasReports' in deviceInfo['spectrumData']:
+                for rpmr in deviceInfo['spectrumData']['rcvdPowerMeasReports']:
+                    self.rem.measReportToSASREMObject(Utilities.measReportObjectFromJSON(rpmr), cbsd)
+

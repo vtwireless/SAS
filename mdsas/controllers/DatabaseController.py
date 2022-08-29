@@ -316,232 +316,63 @@ class DatabaseController:
         return self.grants_controller.spectrum_inquiry(data)
 
     def create_grant_request(self, payload):
-        responseArr, insertionArr = [], []
-
-        for item in payload["grantRequest"]:
-            query = select([self.GRANTS]).where(and_(
-                self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
-                self.GRANTS.columns.minFrequency == item['minFrequency'],
-                self.GRANTS.columns.startTime == item['startTime']
-            ))
-            rows = self._execute_query(query)
-
-            if len(rows) > 0:
-                message = f"Grant already exists. Grant processing rollback complete"
-                return {
-                    "status": 0,
-                    "exists": 1,
-                    "message": message
-                }
-
-            grantRequest = WinnForum.GrantRequest(item["secondaryUserID"], None)
-            ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
-            grantRequest.operationParam = WinnForum.OperationParam(item["powerLevel"], ofr)
-            vtgp = WinnForum.VTGrantParams(
-                None, None, item["preferredFrequency"], item["frequencyAbsolute"],
-                item["minBandwidth"], item["preferredBandwidth"], item["preferredBandwidth"],
-                item["startTime"], item["endTime"], item["approximateByteSize"],
-                item["dataType"], item["powerLevel"], item["location"], item["mobility"],
-                item["maxVelocity"]
-            )
-            grantRequest.vtGrantParams = vtgp
-
-            grantResponse = self.algorithms.runGrantAlgorithm(self.__grantRecords, self.rem, grantRequest)  # algorithm
-            grantResponse.grantId = str(uuid.uuid4())
-
-            if grantResponse.response.responseCode == "0":
-                g = WinnForum.Grant(
-                    grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
-                    vtgp, grantResponse.grantExpireTime
-                )
-                self.__grantRecords.append(g)
-
-            responseArr.append(grantResponse.asdict())
-            insertionArr.append(item)
-
-        try:
-            self.CONNECTION.execute(self.GRANTS.insert(), insertionArr)
-        except Exception as err:
-            print(str(err))
-            return {
-                "status": 0,
-                "message": f"Grant request could not be completed due to '{str(err)}'. Contact an administrator."
-            }
-
-        return {
-            "status": 1,
-            "message": "Grants have been created",
-            "grantResponse": responseArr
-        }
+        return self.grants_controller.grant_request(payload)
 
     def heartbeat_request(self, data):
-        try:
-            heartbeatArr, grantArr = [], []
-
-            for heartbeat in data["heartbeatRequest"]:
-                cbsdQuery = select([self.NODES]).where(self.NODES.columns.cbsdId == heartbeat['cbsdId'])
-                cbsd = self._execute_query(cbsdQuery)[0]
-
-                grantQuery = select([self.GRANTS]).where(self.GRANTS.columns.grantId == heartbeat['grantId'])
-                grant = self._execute_query(grantQuery)[0]
-
-                if heartbeat["measReport"]:
-                    for rpmr in heartbeat["measReport"]["rcvdPowerMeasReports"]:
-                        # TODO: check to see if frequency range already exists as a submission
-                        #  from specific CBSD to prevent spamming
-                        mr = Utilities.measReportObjectFromJSON(rpmr)
-                        self.rem.measReportToSASREMObject(mr, cbsd)
-
-                response = self.algorithms.runHeartbeatAlgorithm(self.__grantRecords, self.rem, heartbeat, grant)
-                grant.heartbeatTime = datetime.now(timezone.utc)
-                grant.heartbeatInterval = response.heartbeatInterval
-                grantArr.append(grant)
-                heartbeatArr.append(response.asdict())
-
-            return {
-                       'status': 0,
-                       "heartbeatResponse": heartbeatArr
-                   }, grantArr
-
-        except Exception as err:
-            return {
-                       'status': 1,
-                       "message": str(err)
-                   }, []
+        return self.grants_controller.heartbeat_request(data)
 
     def cancel_grant(self, grant):
-        now = datetime.now(timezone.utc)
-        if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now:
-            query = delete([self.GRANTS]).where(and_(
-                self.GRANTS.columns.grantId == grant['grantId'],
-                self.GRANTS.columns.secondaryUserID == grant['secondaryUserID']
-            ))
-            row = self._execute_query(query)[0]
-
-            print(f"Grant {grant['grantId']} has been cancelled")
+        self.grants_controller.cancel_grant_by_grantId(grant)
 
     def delete_grant_by_id(self, payload):
-        requestID = payload['grantRequestID']
-        if not requestID:
-            return {
-                'status': 0,
-                'message': 'Request ID not provided'
-            }
-
-        query = delete([self.GRANTS]).where(
-            self.GRANTS.columns.requestID == requestID
-        )
-        rows = self._execute_query(query)
-
-        query = select([self.GRANTS]).where(
-            self.GRANTS.columns.requestID == requestID
-        )
-        rows = self._execute_query(query)
-        if len(rows) > 0:
-            return {
-                "status": 0,
-                "message": 'Grant could not be deleted'
-            }
-
-        return {
-            "status": 1,
-            "message": f"Grant {requestID} deleted."
-        }
+        self.grants_controller.delete_grant_with_id(payload['grantId'])
 
     def relinquishment_request(self, data):
-        relinquishArr = []
-
-        for relinquishmentRequest in data["relinquishmentRequest"]:
-            # TODO: Connect to DB
-            # params = {
-            #     "cbsdId": relinquishmentRequest["cbsdId"],
-            #     "grantId": relinquishmentRequest["grantId"],
-            #     "action": "relinquishGrant"
-            # }
-            # if databaseLogging:
-            #     sendPostRequest(params)
-
-            success = Utilities.removeGrant(
-                self.get_grant_with_id(relinquishmentRequest["grantId"]).id,
-                relinquishmentRequest["cbsdId"],
-                self.__grantRecords
-            )
-
-            response = {
-                "cbsdId": relinquishmentRequest["cbsdId"],
-                "grantId": relinquishmentRequest["grantId"]
-            }
-
-            if relinquishmentRequest["cbsdId"] is None or relinquishmentRequest["grantId"] is None:
-                response["response"] = Utilities.generateResponse(102)
-            elif success:
-                response["response"] = Utilities.generateResponse(0)
-            else:
-                response["response"] = Utilities.generateResponse(103)
-            relinquishArr.append(response)
-
-        return {"relinquishmentResponse": relinquishArr}
+        return self.grants_controller.relinquishment_request(data)
 
     def spectrumData(self, jsonData):
-        try:
-            cbsd = self._get_node_by_cbsdId(jsonData["spectrumData"]["cbsdId"])
+        return self.grants_controller.spectrumData(jsonData)
 
-            if cbsd:
-                deviceInfo = jsonData["spectrumData"]
-                cbsd.latitude = deviceInfo["latitude"]
-                cbsd.longitude = deviceInfo["longitude"]
-                # TODO: # If simulating, dump previously logged data
-                # if (isSimulating):
-                #     REM.objects = []
-
-                if deviceInfo["spectrumData"]:
-                    for rpmr in deviceInfo["spectrumData"]["rcvdPowerMeasReports"]:
-                        mr = Utilities.measReportObjectFromJSON(rpmr)
-                        self.rem.measReportToSASREMObject(mr, cbsd)
-
-        except Exception as err:
-            raise Exception(str(err))
-
-    def _get_grantlog_table(self):
-        self.GRANTLOG = db.Table(
-            settings.GRANTLOG, self.METADATA, autoload=True, autoload_with=self.ENGINE
-        )
-
-    def log_grant(self, payload):
-        if not payload['grantID'] or not payload['status']:
-            return {
-                'status': 0,
-                'message': 'All parameters were not provided'
-            }
-
-        query = select([self.GRANTLOG]).where(and_(
-            self.GRANTLOG.columns.grantLogID == payload['grantLogID'],
-            self.GRANTLOG.columns.secondaryUserID == payload['secondaryUserID']
-        ))
-        rows = self._execute_query(query)
-
-        if len(rows) > 0:
-            message = f"Grant already logged."
-            return {
-                "status": 0,
-                "exists": 1,
-                "message": message
-            }
-
-        self.CONNECTION.execute(self.GRANTLOG.insert(), [payload])
-
-        rows = self._execute_query(query)
-        if len(rows) < 1:
-            message = f"Grant could not be logged"
-            return {
-                "status": 0,
-                "message": message
-            }
-
-        return {
-            "status": 1,
-            "message": f"Grant {payload['grantLogID']} logged."
-        }
+    # def _get_grantlog_table(self):
+    #     self.GRANTLOG = db.Table(
+    #         settings.GRANTLOG, self.METADATA, autoload=True, autoload_with=self.ENGINE
+    #     )
+    #
+    # def log_grant(self, payload):
+    #     if not payload['grantID'] or not payload['status']:
+    #         return {
+    #             'status': 0,
+    #             'message': 'All parameters were not provided'
+    #         }
+    #
+    #     query = select([self.GRANTLOG]).where(and_(
+    #         self.GRANTLOG.columns.grantLogID == payload['grantLogID'],
+    #         self.GRANTLOG.columns.secondaryUserID == payload['secondaryUserID']
+    #     ))
+    #     rows = self._execute_query(query)
+    #
+    #     if len(rows) > 0:
+    #         message = f"Grant already logged."
+    #         return {
+    #             "status": 0,
+    #             "exists": 1,
+    #             "message": message
+    #         }
+    #
+    #     self.CONNECTION.execute(self.GRANTLOG.insert(), [payload])
+    #
+    #     rows = self._execute_query(query)
+    #     if len(rows) < 1:
+    #         message = f"Grant could not be logged"
+    #         return {
+    #             "status": 0,
+    #             "message": message
+    #         }
+    #
+    #     return {
+    #         "status": 1,
+    #         "message": f"Grant {payload['grantLogID']} logged."
+    #     }
 
     # In[ --- PU DETECTIONS CONTROLS --- ]
 

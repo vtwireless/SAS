@@ -46,7 +46,7 @@ export class NodeListComponent implements AfterViewInit {
                             mobility: '',
                             status: ''
                         };
-                        node_model.nodeID = node.nodeID;
+                        node_model.nodeID = node.cbsdID;
                         node_model.nodeName = node.nodeName;
                         node_model.location = node.location;
                         node_model.trustLevel = node.trustLevel;

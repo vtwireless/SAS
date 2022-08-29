@@ -79,7 +79,7 @@ class CBSDController:
         responseArr, assignmentArr = [], []
 
         for item in payload["registrationRequest"]:
-            if not item['fccId']:
+            if 'fccId' not in item:
                 item['fccId'] = str(uuid.uuid4())
             item['sid'] = sid
 
@@ -194,7 +194,7 @@ class CBSDController:
                               itl):
         return {
             'fccId': str(uuid.uuid4()),
-            'name': name,
+            'nodeName': name,
             'location': location,
             'trustLevel': random.randint(0, 10),
             'IPAddress': ip,
