@@ -25,3 +25,12 @@ print("Emitted event")
 
 time.sleep(4)
 client.disconnect()
+
+
+"""
+3 -> SU user creation, Node Registration and Grant Request
+
+1. Test Framework -> 
+2. Client Method -> 
+3. Load all of your req data via seed
+"""
