@@ -61,7 +61,7 @@ This application needs **python 3.6 or above**.
 ## FrontEnd Dev Environment Setup
 1. Install nodejs and npm.
    * `sudo apt-get install nodejs` and `sudo apt-get install npm`.
-   * Currently, we are using nodejs v10.19.0 and npm v6.14.4
+   * Currently, we are using nodejs v16.17.0 and npm v8.15.0
 2. Install Angular 8.2.0 \[as suggested in the package.json\].
    * `sudo npm install -g @angular/cli@8.2.0`
 3. Install the rest of the dependencies. While the 2 commands above can be run from
