@@ -159,13 +159,13 @@ class UsersController:
 
     def load_seed_data(self):
         self.create_user(
-            self.generate_seed_payload('abc', 'abc@abc.com', 'password', '100.121.1.15', '35.6673,-81.5411'), True
+            self.generate_seed_payload('abc', 'abc@abc.com', 'password', '100.121.1.15', '35.6673,-81.5411'), False
         )
         self.create_user(
-            self.generate_seed_payload('bbc', 'bbc@abc.com', 'password', '100.121.1.16', '36.6673,-85.5411'), True
+            self.generate_seed_payload('bbc', 'bbc@abc.com', 'password', '100.121.1.16', '36.6673,-85.5411'), False
         )
         self.create_user(
-            self.generate_seed_payload('cbc', 'cbc@abc.com', 'password', '100.121.1.17', '39.6673,-89.5411'), True
+            self.generate_seed_payload('cbc', 'cbc@abc.com', 'password', '100.121.1.17', '39.6673,-89.5411'), False
         )
 
     @staticmethod
