@@ -1,47 +1,44 @@
-#!/usr/bin/env python
 import json
 import os
-
 import pandas as pd
-
 from DataGenerator import DataGenerator
 
 pd.set_option("display.max_rows", None, "display.max_columns", None, 'display.max_colwidth', None)
 
+"""
+##### Now that we have the relevant context, lets decide on priorities for SUs in their individual locations:
+def priority_engine():
+    target_bands = [(12.2, 12.7), .... , ()]
+    for location in locations:
+        users = get_users_in_current_location()
 
-# ##### Now that we have the relevant context, lets decide on priorities for SUs in their individual locations:
-# ```
-# def priority_engine():
-#     target_bands = [(12.2, 12.7), .... , ()]
-#     for location in locations:
-#         users = get_users_in_current_location()
-#
-#         # Relevant for all SUs in a region or diff SUs may have diff scores based on their LOCATION in a REGION
-#         user_distribution_priority = get_SU_distribution_priority()
-#         pu_distribution_priority = get_PU_distribution_priority()
-#
-#
-#
-#         for user in users:
-#             # Check user constraints
-#             if user.op_band not in target_bands:
-#                 # Calculate priority based on which we might need to move the user into the target band
-#             else:
-#                 # Ignore the user
-#
-#             # Goal is to generate a score
-#             class_priority_score = get_class_priority(user['class'])
-#             location_priority_score = get_location_priority(user['location'])
-#             mobility_priority_score = get_mobility_priority(user['mobile'])
-#             traffic_priority_score = get_traffic_priority(user['traffic_type'])
-#
-#             score = sum([all_priorities])
-# ```
-# To consider:
-# * Divide overall space into multiple regions and every region into multiple locations.
-#     * Every region may have its own SU/PU distribution, available spectrum, policies, etc.
-#     * Operational context may vary from one location to another.
-# * Simulate channel characteristics - number & distribution of SU/PU, fading, path loss, etc.
+        # Relevant for all SUs in a region or diff SUs may have diff scores based on their LOCATION in a REGION
+        user_distribution_priority = get_SU_distribution_priority()
+        pu_distribution_priority = get_PU_distribution_priority()
+
+
+
+        for user in users:
+            # Check user constraints
+            if user.op_band not in target_bands:
+                # Calculate priority based on which we might need to move the user into the target band
+            else:
+                # Ignore the user
+
+            # Goal is to generate a score
+            class_priority_score = get_class_priority(user['class'])
+            location_priority_score = get_location_priority(user['location'])
+            mobility_priority_score = get_mobility_priority(user['mobile'])
+            traffic_priority_score = get_traffic_priority(user['traffic_type'])
+
+            score = sum([all_priorities])
+
+To consider:
+* Divide overall space into multiple regions and every region into multiple locations.
+    * Every region may have its own SU/PU distribution, available spectrum, policies, etc.
+    * Operational context may vary from one location to another.
+* Simulate channel characteristics - number & distribution of SU/PU, fading, path loss, etc.
+"""
 
 
 # Get score based on user's class/hierarchy
@@ -141,8 +138,8 @@ def priority_engine(algorithm, target_bands: list):
 
 
 # test
-priority_file = 'priorities.json'
-rejected_file = 'invalid_cases.json'
+priority_file = 'out/priorities.json'
+rejected_file = 'out/invalid_cases.json'
 
 try:
     os.remove(priority_file)
