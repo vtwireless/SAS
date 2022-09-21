@@ -30,6 +30,7 @@ export class CreateRequestComponent {
 	creatorID = '';
 	trustLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	dataTypes = ['AUDIO', 'IMAGE-VIDEO', 'DRONE', 'RADAR', 'RADIO', 'OTHER'];
+	nodes: Array<Node> = []
 
 	submitted = false;
 
@@ -61,6 +62,16 @@ export class CreateRequestComponent {
 				this.router.navigate(['/']);
 			}
 		}
+
+		// Fetch Nodes from DB
+		this.httpRequests.getAllNodes().subscribe((data) => {
+			if (data['status'] == '1') {
+				for (const node of data['nodes']) {
+					this.nodes.push(node.cbsdID)
+				}
+			}
+		});
+
 		this.model.maxVelocity = 0;
 		this.model.frequencyAbsolute = false;
 		this.model.mobility = false;
@@ -74,7 +85,7 @@ export class CreateRequestComponent {
 
 	onSubmit() {
 		this.submitted = true;
-		console.log(this.model);
+		console.log("Grant Request:", JSON.stringify(this.model));
 		this.httpRequests.createRequest(this.model, this.isAdmin).subscribe(
 			(data) => {
 				if (data['status'] == '1') {
