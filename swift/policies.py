@@ -1,6 +1,3 @@
-import copy
-
-
 class RULE:
     channel_size = 10
     user = ['ordinary', 'scientific', 'educational', 'government', 'emergency']
@@ -18,7 +15,7 @@ class RULE:
         }
 
 
-# CONSTANTS
+# In[CONSTANTS]
 PU_TYPE = ['DBS', 'MVDDS', 'NGSOFSS']
 USER_TYPE = ['ordinary', 'scientific', 'educational', 'government', 'emergency']
 WEATHER = ['sunny', 'cloudy', 'foggy', 'rainy', 'snowy', 'emergency']
@@ -26,7 +23,7 @@ DENSITY = ['rural', 'semi-urban', 'urban']
 TRAFFIC = ['video', 'data', 'voice', 'emergency']
 
 
-# RULES
+# In[RULES]
 RULES = {
     "default": RULE(),
     "NEW_RULE": RULE(),
@@ -41,7 +38,7 @@ RULES["Another_Rule"].traffic = RULES["default"].traffic[::-1]
 RULES["Another_Rule"].user = RULES["default"].user[::-1]
 
 
-# BANDS
+# In[BANDS]
 BANDS = {
     "n1": {
         "min-op-fr": 2300, "max-op-fr": 2400,

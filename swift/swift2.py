@@ -112,7 +112,7 @@ class SWIFT:
 
 
 def main():
-    infile = "out/experiment_input.csv"
+    infile = "out/sample_input.csv"
     outfile = "out/experiment_results.csv"
 
     number_of_users = 10000
