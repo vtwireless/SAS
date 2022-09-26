@@ -47,7 +47,7 @@ GNURadio: **3.8.5.0**, UHD: **3.15.0.0-2build5**
 
 ## Python Dev Environment Setup
 Once gnuradio and uhd-host packages are successfully installed, we can move on to setting up the python environment. 
-This application needs **python 3.6 or above**.
+This application needs **python 3.8**.
 1. Verify that python3.X is installed in your system.
    * `which python3` [or if you have a specific version installed, then `which python3.8`]
 2. Create a virtual environment at the base of the repository.
