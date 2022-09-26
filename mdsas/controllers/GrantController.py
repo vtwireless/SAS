@@ -178,7 +178,7 @@ class GrantController:
                     "message": "Grant Request could not be processed"
                 }
 
-            grantRequest = WinnForum.GrantRequest(item["cssdId"], None)
+            grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
             ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
             grantRequest.operationParam = WinnForum.OperationParam(item["powerLevel"], ofr)
             vtgp = WinnForum.VTGrantParams(

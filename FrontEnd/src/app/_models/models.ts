@@ -93,6 +93,7 @@ export class GrantLog {
 
 export class GrantRequest {
     public requestID: number;
+    public cbsdId: number;
     public secondaryUserID: string;
     public secondaryUserName: string;
     public tier: string;

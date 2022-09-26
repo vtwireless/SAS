@@ -177,15 +177,15 @@ class CBSDController:
 
     def load_seed_data(self):
         self.create_cbsd(self.generate_seed_payload(
-            'node1', '30.2234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
+            'node1', '30.2234,-80.7756', '1.1.1.1', 1200, 1300, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
             'abc@abc.com', 1, 1
         ))
         self.create_cbsd(self.generate_seed_payload(
-            'node2', '30.3234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
+            'node2', '30.3234,-80.7756', '1.1.1.1', 1200, 1300, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
             'bbc@abc.com', 1, 1
         ))
         self.create_cbsd(self.generate_seed_payload(
-            'node3', '30.4234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
+            'node3', '30.4234,-80.7756', '1.1.1.1', 1200, 1300, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
             'cbc@abc.com', 1, 1
         ))
 

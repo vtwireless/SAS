@@ -5,6 +5,19 @@
         <form (ngSubmit)="onSubmit()" #createRequestForm="ngForm" style="max-width:500px;">
 
             <div class="form-group">
+                <label for="cbsdId">CBSD ID</label>
+                <select class="form-control" id="dataType"
+                        required
+                        [(ngModel)]="model.cbsdId" name="cbsdId"
+                        #cbsdId="ngModel">
+                    <option *ngFor="let cbsdId of nodes" [value]="cbsdId">{{cbsdId}}</option>
+                </select>
+                <div [hidden]="cbsdId.valid || cbsdId.pristine" class="alert alert-danger">
+                    Choose a cbsdId.
+                </div>
+            </div>
+
+            <div class="form-group">
                 <label for="location">Location ex: 12.345678,98.7654321</label>
                 <input type="text" class="form-control" id="location"
                        required
