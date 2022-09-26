@@ -38,6 +38,7 @@ export class HttpRequestsService {
 	}
 
 	private sendRequest(requestCode: string, requestBody: any, responseCode: string): Observable<any> {
+		console.log(requestCode, requestBody)
 		this.socketClient.emit(requestCode, requestBody);
 		
 		return this.socketClient.listen(responseCode);
@@ -114,7 +115,9 @@ export class HttpRequestsService {
 	// ------------------------------ Grant Requests -----------------------------------
 
 	public createRequest(model: GrantRequest, isAdmin: boolean): Observable<any> {
-		let MHz = 10000000;
+		// let MHz = 10000000;
+		let MHz = 1; // Done to keep freq always in MHz
+		
 		var body = {
 			grantRequest: [{
 				secondaryUserID: model.secondaryUserID,
@@ -133,7 +136,8 @@ export class HttpRequestsService {
 				powerLevel: model.powerLevel,
 				mobility: model.mobility,
 				maxVelocity: model.maxVelocity,
-				range: model.range
+				range: model.range,
+				cbsdId: model.cbsdId
 			}]
 		};
 
