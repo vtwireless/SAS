@@ -4,7 +4,7 @@ import { NodeDetailsComponent } from './node-details.component';
 
 describe('NodeDetailsComponent', () => {
   let component: NodeDetailsComponent;
-  let fixture: ComponentFixture<DetailsComponent>;
+  let fixture: ComponentFixture<NodeDetailsComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({

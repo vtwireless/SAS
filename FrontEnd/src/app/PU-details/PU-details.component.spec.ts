@@ -4,7 +4,7 @@ import { PUDetailsComponent } from './PU-details.component';
 
 describe('PUDetailsComponent', () => {
   let component: PUDetailsComponent;
-  let fixture: ComponentFixture<DetailsComponent>;
+  let fixture: ComponentFixture<PUDetailsComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
