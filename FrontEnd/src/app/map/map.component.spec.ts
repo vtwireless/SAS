@@ -29,9 +29,9 @@ describe('MapComponent', () => {
         expect(component.showingGrants).toBeTruthy();
     });
 
-    it('submitted true after onSubmit()', () => {
-        component.onSubmit();
-        expect(component.submitted).toBeTruthy();
-    });
+    // it('submitted true after onSubmit()', () => {
+    //     component.onSubmit();
+    //     expect(component.submitted).toBeTruthy();
+    // });
 
 })

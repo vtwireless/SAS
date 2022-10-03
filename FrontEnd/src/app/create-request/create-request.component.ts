@@ -16,6 +16,7 @@ import { HttpRequestsService } from '../_services/http-requests.service';
 @Component({
 	selector: 'app-create-request',
 	templateUrl: './create-request.component.html',
+	styleUrls: ['./create-request.component.css'],
 })
 export class CreateRequestComponent {
 	GETAPI = AppConstants.GETURL;
