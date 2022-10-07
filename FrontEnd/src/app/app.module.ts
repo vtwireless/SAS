@@ -39,7 +39,8 @@ import { LogoutComponent } from './logout/logout.component';
 import { JwtInterceptor } from './_helpers';
 import { ErrorInterceptor } from './_helpers/error.interceptor';;
 import { NotFoundComponent } from './not-found/not-found.component'
-import { AppRoutingModule } from './app-routing.module';
+import { AppRoutingModule } from './app-routing.module';;
+import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
 
 @NgModule({
   declarations: [
@@ -64,7 +65,8 @@ import { AppRoutingModule } from './app-routing.module';
     GrantDetailsComponent,
     CreateRequestComponent,
     NotFoundComponent
-    // SocketComponent
+,
+    SepctrumInquiryRequestComponent    // SocketComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
