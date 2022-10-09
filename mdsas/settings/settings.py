@@ -12,7 +12,7 @@ DATABASE = dict(
     db=''
 )
 SQLITE_FILE = 'mdsas.db'
-DEVELOPMENT_DATABASE_URI = f'sqlite:///{SQLITE_FILE}'
+DEVELOPMENT_DATABASE_URI = f'sqlite:///{SQLITE_FILE}?check_same_thread=False'
 PRODUCTION_DATABASE_URI = f"dialect+driver://{DATABASE['username']}:{DATABASE['password']}@{DATABASE['hostname']}:" \
                           f"{DATABASE['password']}/{DATABASE['db']}"
 
