@@ -6,3 +6,8 @@
     display: flex;
     justify-content: space-between;
 }
+
+.page-wrapper {
+    margin-left: 30%;
+    margin-top: 5%;
+}

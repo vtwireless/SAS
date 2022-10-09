@@ -1,0 +1,27 @@
+.page-wrapper {
+    margin-left: 30%;
+}
+
+.header-text {
+    margin-left: 4rem;
+    margin-bottom: 2rem;
+}
+
+.check-box {
+    display: flex;
+    flex-direction: row;
+    font-size: 1.4rem;
+}
+
+.checkBox-label {
+    width: 800rem;
+}
+
+.page-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.btn-group {
+    margin-left: 10rem;
+}

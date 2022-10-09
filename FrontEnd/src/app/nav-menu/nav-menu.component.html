@@ -35,6 +35,11 @@
             <span class="icon-name"> ACTIVE GRANTS</span>
         </button>
 
+        <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/spectrum-inquiry-request">
+            <mat-icon>edit</mat-icon>
+            <span class="icon-name">Spectrum Inquiry Request</span>
+        </button>
+
         <!-- <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/logged">
             <mat-icon>hourglass_full</mat-icon>
             <span class="icon-name"> LOGGED GRANTS</span>

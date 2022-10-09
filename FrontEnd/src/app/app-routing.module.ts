@@ -19,7 +19,7 @@ import { SUDetailsComponent } from './SU-details/SU-details.component';
 import { TierComponent } from './tier/tier.component';
 import { TiersComponent } from './tiers/tiers.component';
 import { NotFoundComponent } from './not-found/not-found.component'
-
+import {SepctrumInquiryRequestComponent} from './sepctrum-inquiry-request/sepctrum-inquiry-request.component';
 const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
   { path: 'contact', component: ContactComponent },
@@ -39,6 +39,8 @@ const routes: Routes = [
   { path: 'grant-details/:type/:id', component: GrantDetailsComponent },
   { path: 'create-request', component: CreateRequestComponent },
   { path: 'admin-login', component: AdminLoginComponent },
+  { path: 'spectrum-inquiry-request', component: SepctrumInquiryRequestComponent },
+
   {path: '**', component: NotFoundComponent}
 ];
 
