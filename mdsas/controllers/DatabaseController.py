@@ -22,16 +22,6 @@ from controllers.UsersController import UsersController
 from algorithms.SASAlgorithms import SASAlgorithms
 from algorithms import Server_WinnForum as WinnForum
 
-# sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-# from settings import settings
-# from models.Schemas import Schemas
-# from algorithms import SASREM
-# from algorithms.SASAlgorithms import SASAlgorithms
-# from Utilities import Utilities
-# from algorithms import CBSD
-# from algorithms import Server_WinnForum as WinnForum
-
 
 class DatabaseController:
     ENGINE = None
