@@ -1,0 +1,9 @@
+cbsd_id,type,band,weather,density,traffic
+5,educational,n1,rainy,rural,video
+6,educational,n2,rainy,rural,video
+7,ordinary,n1,sunny,semi-urban,data
+8,ordinary,n2,sunny,semi-urban,data
+9,scientific,n1,emergency,urban,voice
+10,scientific,n2,emergency,urban,voice
+11,emergency,n1,rainy,urban,emergency
+12,emergency,n2,rainy,urban,emergency

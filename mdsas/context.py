@@ -247,8 +247,8 @@ if __name__ == '__main__':
     # current_time = "today"
 
     contextEngine = context()
-    weather = contextEngine.scrapeWeatherForLocation(current_time, lat, long, True)
-    print(weather)
+    weather = contextEngine.scrapeWeatherForLocation(current_time, lat, long)
+    print("\n\n", json.dumps(weather, indent=4))
     # with open('context.json', "w+") as outfile:
     #     json.dump(weather, outfile, indent=4)
 
