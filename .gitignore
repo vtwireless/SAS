@@ -10,3 +10,7 @@ mdsas/*.db
 
 # API Key
 mdsas/weatherapi.key
+
+# Test Logs
+mdsas/tests/*.log
+mdsas/tests/*.xml
