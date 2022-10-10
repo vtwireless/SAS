@@ -119,7 +119,7 @@ class GrantController:
         ).start()
 
         return {
-            'status': 0,
+            'status': 1,
             "spectrumInquiryResponse": inquiryArr
         }, radiosToCommunicate
 
