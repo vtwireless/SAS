@@ -3,6 +3,8 @@ import requests
 from enum import Enum
 
 POST_HEADERS, GET_HEADERS = {'Content-Type': 'application/json'}, {}
+HOST, PORT = 'localhost', 8000
+
 with open('test_data.json', 'r+') as infile:
     payloads = json.load(infile)
 
@@ -15,7 +17,7 @@ class HttpMethod(Enum):
 
 
 def send_request_to_server(method: HttpMethod, url: str):
-    URL = "http://localhost:8000/" + url
+    URL = f"http://{HOST}:{PORT}/" + url
     response = None
     if method == HttpMethod.GET:
         response = requests.request("GET", URL, headers=GET_HEADERS, data={})
