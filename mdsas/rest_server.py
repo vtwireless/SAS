@@ -6,17 +6,13 @@ Author/s: Saurav Kumar
 Advised by Dr. Carl Dietrich (cdietric@vt.edu)
 For Wireless@VT
 """
-import uvicorn
-from flask import Flask, jsonify, request
 import threading
-import time
+from flask import Flask, request
 
-from controllers import DatabaseController
 from algorithms import SASAlgorithms
 from algorithms import SASREM
-from Utilities import Utilities
+from controllers import DatabaseController
 from settings import settings
-from rest_models import *
 
 allClients = []
 allRadios = []  # CBSDSocket
