@@ -1,0 +1,21 @@
+Launching pytest with arguments --no-header --no-summary -q in D:\USB\workspace\research\SAS\mdsas\tests
+
+##teamcity[enteredTheMatrix timestamp='2022-10-09T00:49:58.894']
+============================= test session starts =============================
+collecting ... collected 3 items
+##teamcity[testCount timestamp='2022-10-09T00:49:58.990' count='3']
+
+test_rest_server.py::test_getUsers ##teamcity[testSuiteStarted timestamp='2022-10-09T00:49:58.992' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server' name='test_rest_server' nodeId='1' parentNodeId='0']
+##teamcity[testStarted timestamp='2022-10-09T00:49:58.992' captureStandardOutput='false' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_getUsers' metainfo='test_getUsers' name='test_getUsers' nodeId='2' parentNodeId='1']
+PASSED                                [ 33%]##teamcity[testFinished timestamp='2022-10-09T00:50:01.035' duration='2042' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_getUsers' name='test_getUsers' nodeId='2' parentNodeId='1']
+
+test_rest_server.py::test_getUser ##teamcity[testStarted timestamp='2022-10-09T00:50:01.036' captureStandardOutput='false' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_getUser' metainfo='test_getUser' name='test_getUser' nodeId='3' parentNodeId='1']
+FAILED                                 [ 66%]##teamcity[testFailed timestamp='2022-10-09T00:50:03.146' actual='0' details='def test_getUser():|n        payload = {|n            "username": "abc@abc.com",|n            "password": "password"|n        }|n    |n        response = generate_request(HttpMethod.POST, |'getUser|')|n>       assert response.json()|[|'status|'|] == 1|nE       assert 0 == 1|n|ntest_rest_server.py:41: AssertionError' expected='1' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_getUser' message='test_rest_server.py:33 (test_getUser)|n0 != 1|n' name='test_getUser' nodeId='3' parentNodeId='1' type='comparisonFailure']
+##teamcity[testFinished timestamp='2022-10-09T00:50:03.146' duration='2041' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_getUser' name='test_getUser' nodeId='3' parentNodeId='1']
+
+test_rest_server.py::test_spectrumInquiry ##teamcity[testStarted timestamp='2022-10-09T00:50:03.147' captureStandardOutput='false' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_spectrumInquiry' metainfo='test_spectrumInquiry' name='test_spectrumInquiry' nodeId='4' parentNodeId='1']
+FAILED                         [100%]##teamcity[testFailed timestamp='2022-10-09T00:50:05.200' actual='0' details='def test_spectrumInquiry():|n        payload = {|n            "spectrumInquiryRequest": |[|n                {|n                    "cbsdId": 1,|n                    "inquiredSpectrum": |[|n                        {|n                            "lowFrequency": 3550000000,|n                            "highFrequency": 3560000000|n                        }|n                    |]|n                }|n            |]|n        }|n    |n        response = generate_request(HttpMethod.POST, |'spectrumInquiryRequest|')|n>       assert response.json()|[|'status|'|] == 1|nE       assert 0 == 1|n|ntest_rest_server.py:60: AssertionError' expected='1' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_spectrumInquiry' message='test_rest_server.py:43 (test_spectrumInquiry)|n0 != 1|n' name='test_spectrumInquiry' nodeId='4' parentNodeId='1' type='comparisonFailure']
+##teamcity[testFinished timestamp='2022-10-09T00:50:05.201' duration='2050' locationHint='python<D:\USB\workspace\research\SAS\mdsas\tests>://test_rest_server.test_spectrumInquiry' name='test_spectrumInquiry' nodeId='4' parentNodeId='1']
+
+
+========================= 2 failed, 1 passed in 6.30s =========================

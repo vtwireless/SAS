@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import threading
 import numpy
 
+
 class SASAlgorithms:
     """
     This class determines the parameters and algorithms used by the SAS
@@ -11,15 +12,16 @@ class SASAlgorithms:
     MINCBRSFREQ = 3550000000
     MAXCBRSFREQ = 3700000000
     TENMHZ = 10000000
+
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
-        self.REMAlgorithm = 'DEFAULT' #DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
+        self.REMAlgorithm = 'DEFAULT'  # DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
         self.defaultHeartbeatInterval = 5
-        self.threshold = 30.0 #POWER THRESHOLD
-        self.longitude = -80.4 #Blacksburg location
+        self.threshold = 30.0  # POWER THRESHOLD
+        self.longitude = -80.4  # Blacksburg location
         self.latitude = 37.2
-        self.radius = 1000#Kilometers
-        self.maxGrantTime = 300#seconds
+        self.radius = 1000  # Kilometers
+        self.maxGrantTime = 300  # seconds
         self.ignoringREM = True
         self.offerNewParams = True
         self.maxEIRP = 30
@@ -39,27 +41,27 @@ class SASAlgorithms:
 
     def getREMAlgorithm(self):
         return self.REMAlgorithm
-    
+
     def getHeartbeatInterval(self):
         return self.defaultHeartbeatInterval
 
     def getHeartbeatIntervalForGrantId(self, grantId):
-        #TODO change
+        # TODO change
         return self.defaultHeartbeatInterval
 
     def getMaxEIRP(self):
         return self.maxEIRP
 
-
     def runGrantAlgorithm(self, grants, REM, request):
         grantResponse = WinnForum.GrantResponse()
-        if not self.acceptableRange(self.getLowFreqFromOP(request.operationParam), self.getHighFreqFromOP(request.operationParam)):
+        if not self.acceptableRange(self.getLowFreqFromOP(request.operationParam),
+                                    self.getHighFreqFromOP(request.operationParam)):
             grantResponse.response = self.generateResponse(103)
             grantResponse.response.responseData = "Frequency range outside of license"
             return grantResponse
         elif self.grantAlgorithm == 'DEFAULT':
             grantResponse = self.defaultGrantAlg(grants, REM, request)
-        elif self.grantAlgorithm =='TIER':
+        elif self.grantAlgorithm == 'TIER':
             grantResponse = self.tierGrantAlg(grants, REM, request)
         return grantResponse
 
@@ -72,7 +74,7 @@ class SASAlgorithms:
         response.grantId = grant.id
         if "grantRenew" in heartbeat:
             if heartbeat["grantRenew"] == True:
-                response.grantExpireTime= self.calculateGrantExpireTime(grants, REM, grant, True)
+                response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant, True)
             else:
                 response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant, False)
         response.transmitExpireTime = self.calculateGrantExpireTime(grants, REM, grant, False)
@@ -92,12 +94,12 @@ class SASAlgorithms:
         present = self.isPUPresentREM(REM, highFreq, lowFreq, latitude, longitude, radius)
         if present == 1 and not self.ignoringREM:
             response.transmitExpireTime = datetime.now(timezone.utc).strftime("%Y%m%dT%H:%M:%S%Z")
-            response.response = self.generateResponse(501)#Suspended Grant
+            response.response = self.generateResponse(501)  # Suspended Grant
         else:
             response.response = self.generateResponse(0)
             if self.offerNewParams:
                 freqRange = self.MAXCBRSFREQ - self.MINCBRSFREQ
-                blocks = freqRange/self.TENMHZ
+                blocks = freqRange / self.TENMHZ
                 for i in range(int(blocks)):
                     low = (i * self.TENMHZ) + self.MINCBRSFREQ
                     high = ((i + 1) * self.TENMHZ) + self.MINCBRSFREQ
@@ -111,7 +113,7 @@ class SASAlgorithms:
         return response
 
     def isGrantSuspended(self):
-        #return "SUSPENDED_GRANT"
+        # return "SUSPENDED_GRANT"
         return "SUCCESS"
 
     def defaultGrantAlg(self, grants, REM, request):
@@ -145,18 +147,18 @@ class SASAlgorithms:
         return response
 
     def isPUPresentREM(self, REM, highFreq, lowFreq, latitude, longitude, radius):
-        #Return 0 = not present, 1 = present, 2 = no spectrum data, 3 = error with alorithm select
+        # Return 0 = not present, 1 = present, 2 = no spectrum data, 3 = error with alorithm select
         latit = self.latitude
         longit = self.longitude
         rad = self.radius
-        if latitude != None and longitude != None:
+        if latitude is not None and longitude is not None:
             longit = longitude
             latit = latitude
-        if radius != None:
+        if radius is not None:
             rad = radius
-        remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)#GET ALL  REM DATA
+        remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)  # GET ALL  REM DATA
         if not remData:
-            #print("Currently no spectrum data") # TODO: remove comment
+            # print("Currently no spectrum data") # TODO: remove comment
             return 2
         if self.getREMAlgorithm() == 'DEFAULT':
             if self.defaultREMAlgorithm(remData):
@@ -200,37 +202,36 @@ class SASAlgorithms:
         grantCount = len(grants)
         t = datetime.now(timezone.utc)
         if grantCount <= 1:
-            t = t + timedelta(seconds = self.maxGrantTime)
+            t = t + timedelta(seconds=self.maxGrantTime)
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
         else:
-            t = t + timedelta(seconds = (self.defaultHeartbeatInterval * 2))
+            t = t + timedelta(seconds=(self.defaultHeartbeatInterval * 2))
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
 
     def getHighFreqFromOP(self, params):
         return params.operationFrequencyRange.highFrequency
-    
+
     def getLowFreqFromOP(self, params):
         return params.operationFrequencyRange.lowFrequency
 
     def frequencyOverlap(self, freqa, freqb, rangea, rangeb):
-        if (freqa <= rangea and freqb >= rangea):
+        if freqa <= rangea <= freqb:
             return True
-        elif (freqa >= rangea and freqb <= rangeb):
+        elif freqa >= rangea and freqb <= rangeb:
             return True
-        elif (freqa <= rangeb and freqb >= rangeb):
+        elif freqa <= rangeb <= freqb:
             return True
-        elif (freqa <= rangea and freqb >= rangeb):
+        elif freqa <= rangea and freqb >= rangeb:
             return True
         else:
             return False
 
-
     def defaultREMAlgorithm(self, remData):
         total = 0.0
-        #Equal weight with threshold parameter, no location, all parameters
+        # Equal weight with threshold parameter, no location, all parameters
         for data_point in remData:
             total = total + float(data_point.powerLevel)
-        if (total*1.0/len(remData)) > self.threshold:
+        if (total * 1.0 / len(remData)) > self.threshold:
             return True
         else:
             return False
@@ -238,7 +239,7 @@ class SASAlgorithms:
     def nofKREMAlgorith(self, remData):
         yes = 0
         no = 0
-        #Equal weight with threshold parameter, no location, all parameters
+        # Equal weight with threshold parameter, no location, all parameters
         for data_point in remData:
             if data_point.powerLevel >= self.threshold:
                 yes = yes + 1
@@ -251,33 +252,33 @@ class SASAlgorithms:
             return False
 
     def trustScoreREMAlgorithm(self, remData):
-        #Trust scores with threshold parameter, no location, all parameters
+        # Trust scores with threshold parameter, no location, all parameters
         totalTandP = 0.0
         totalTrustLevel = 0
         for data_point in remData:
             totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
             totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
-        if totalTandP > (self.threshold*totalTrustLevel):
+        if totalTandP > (self.threshold * totalTrustLevel):
             return True
         else:
             return False
 
     def secREMAlgorithm(self, remData):
-        #Trust scores with threshold parameter, no location, all parameters
+        # Trust scores with threshold parameter, no location, all parameters
         totalTandP = 0.0
         totalTrustLevel = 0.0
         variance = self.getVarianceOfData(remData)
         for data_point in remData:
-            if (variance > 600 and data_point.cbsd.fullyTrusted):
+            if variance > 600 and data_point.cbsd.fullyTrusted:
                 totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
-                totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel           
+                totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
             else:
                 totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
                 totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
-            if (variance > 200 and data_point.cbsd.fullyTrusted):#double count secure nodes
+            if variance > 200 and data_point.cbsd.fullyTrusted:  # double count secure nodes
                 totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
                 totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
-        if totalTandP > (self.threshold*totalTrustLevel):
+        if totalTandP > (self.threshold * totalTrustLevel):
             return True
         else:
             return False
@@ -287,17 +288,16 @@ class SASAlgorithms:
         for data in remData:
             dataForVar.append(data.powerLevel)
         return numpy.var(dataForVar)
-        
 
     def trustScoreRemoveLowestREMAlgorithm(self, remData):
-        #Trust scores with threshold parameter, no location, all parameters
+        # Trust scores with threshold parameter, no location, all parameters
         totalTandP = 0.0
         totalTrustLevel = 0.0
         choppedRemData = self.removeDataWithLowestTrustScores(5, remData)
         for data_point in choppedRemData:
             totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
             totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
-        if totalTandP > (self.threshold*totalTrustLevel):
+        if totalTandP > (self.threshold * totalTrustLevel):
             return True
         else:
             return False
@@ -307,16 +307,16 @@ class SASAlgorithms:
         for data_point in remData:
             if data_point.cbsd not in cbsds:
                 cbsds.append(data_point.cbsd)
-        removeCount = max(1, (float(percentRemoved)/100.0)*len(cbsds))
-        removeCount = int(removeCount)#make whole number
-        if len(cbsds) < 5:#if there are less than 5 cbsds
+        removeCount = max(1, (float(percentRemoved) / 100.0) * len(cbsds))
+        removeCount = int(removeCount)  # make whole number
+        if len(cbsds) < 5:  # if there are less than 5 cbsds
             return remData
         lowestTrustNodes = []
-            
+
         for x in range(5, 40):
             if len(lowestTrustNodes) < removeCount:
                 for cbsd in cbsds:
-                    if (cbsd.trustLevel == x/10.0):
+                    if cbsd.trustLevel == x / 10.0:
                         lowestTrustNodes.append(cbsd)
                         cbsds.remove(cbsd)
 
@@ -325,21 +325,20 @@ class SASAlgorithms:
                 remData.remove(data)
         return remData
 
-
     def secREMAlgorithmWithCells(self, remData, REM):
-        #Trust scores with threshold parameter, no location, all parameters
+        # Trust scores with threshold parameter, no location, all parameters
         totalTandP = 0.0
         totalTrustLevel = 0.0
         variance = self.getVarianceOfData(remData)
-        for x in REM.cells:#clear data
+        for x in REM.cells:  # clear data
             x.data = []
 
-        for d in remData:#put each data point into its cell or cells
+        for d in remData:  # put each data point into its cell or cells
             for cell in REM.cells:
                 if cell.isInCell(d):
                     cell.data.append(d)
 
-        for c in REM.cells:#calculate the variance of each cell
+        for c in REM.cells:  # calculate the variance of each cell
             c.variance = self.getVarianceOfData(c.data)
         if len(REM.cells) > 1:
             worst = 0
@@ -353,65 +352,63 @@ class SASAlgorithms:
                         bestId = cell.id
                     if cell.variance > worst:
                         worst = cell.variance
-                        worstId = cell.id 
+                        worstId = cell.id
 
             for cellCheck in REM.cells:
                 if cellCheck.id == worstId and cellCheck.id == bestId:
                     cellCheck.worst = False
                     cellCheck.best = False
                 elif cellCheck.id == worstId:
-                    cellCheck.worst = True  
+                    cellCheck.worst = True
                     cellCheck.best = False
                 else:
                     cellCheck.worst = False
-                    cellCheck.best = True   
+                    cellCheck.best = True
 
         for cell in REM.cells:
             for data_point in cell.data:
-                if (variance > 6000 and data_point.cbsd.fullyTrusted):#system variance
+                if variance > 6000 and data_point.cbsd.fullyTrusted:  # system variance
                     totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
-                    totalTrustLevel = totalTrustLevel + (data_point.cbsd.trustLevel)           
+                    totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
                 elif data_point.cbsd.fullyTrusted:
                     totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
                     totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
-                else:                
+                else:
                     if cell.worst:
-                        totalTandP = totalTandP + 0.9*(data_point.cbsd.trustLevel * data_point.powerLevel)
-                        totalTrustLevel = totalTrustLevel + 0.9*data_point.cbsd.trustLevel
+                        totalTandP = totalTandP + 0.9 * (data_point.cbsd.trustLevel * data_point.powerLevel)
+                        totalTrustLevel = totalTrustLevel + 0.9 * data_point.cbsd.trustLevel
                     elif cell.best:
-                        totalTandP = totalTandP + 1.1*(data_point.cbsd.trustLevel * data_point.powerLevel)
-                        totalTrustLevel = totalTrustLevel + 1.1*data_point.cbsd.trustLevel
+                        totalTandP = totalTandP + 1.1 * (data_point.cbsd.trustLevel * data_point.powerLevel)
+                        totalTrustLevel = totalTrustLevel + 1.1 * data_point.cbsd.trustLevel
                     else:
                         totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
                         totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
 
-                if (cell.variance > 200 and data_point.cbsd.fullyTrusted):#double count secure nodes
+                if cell.variance > 200 and data_point.cbsd.fullyTrusted:  # double count secure nodes
                     totalTandP = totalTandP + (data_point.cbsd.trustLevel * data_point.powerLevel)
                     totalTrustLevel = totalTrustLevel + data_point.cbsd.trustLevel
-        if totalTandP > (self.threshold*totalTrustLevel):
+        if totalTandP > (self.threshold * totalTrustLevel):
             return True
         else:
             return False
-        
-        
+
     def trustedREMAlgorithm(self, remData):
-        #Only use if trust score is high enough
-        #Trust scores with threshold parameter, no location, all parameters
+        # Only use if trust score is high enough
+        # Trust scores with threshold parameter, no location, all parameters
         count = 0
         total = 0.0
-        trustCutoff = 7.0 #don't count if less than score
+        trustCutoff = 7.0  # don't count if less than score
         for data_point in remData:
             if data_point.cbsd.trustScore > trustCutoff:
                 total = total + float(data_point.powerLevel)
                 count = count + 1
-        if (total*1.0/count) > self.threshold:
+        if (total * 1.0 / count) > self.threshold:
             return True
         else:
             return False
 
-
     def acceptableRange(self, lowFreq, highFreq):
-        if((lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ)):
+        if (lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ):
             return True
         else:
             return False

@@ -1,0 +1,20 @@
+{
+    "getUser": {
+        "username": "abc@abc.com",
+        "password": "password"
+    },
+
+    "spectrumInquiryRequest": {
+        "spectrumInquiryRequest": [
+            {
+                "cbsdId": 1,
+                "inquiredSpectrum": [
+                    {
+                        "lowFrequency": 3550000000,
+                        "highFrequency": 3560000000
+                    }
+                ]
+            }
+        ]
+    }
+}

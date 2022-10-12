@@ -105,6 +105,7 @@ class GrantController:
                         response.availableChannel.append(availChan)
 
                     elif present == 2:  # Spectrum Data not available
+                        print("~~~~ Something weird happened. I can't explain it ~~~~")
                         rTCB, rTC = self.initiateSensing(lowFreq, highFreq)
                         radiosToChangeBack.extend(rTCB)
                         radiosToCommunicate.extend(rTC)
@@ -118,7 +119,7 @@ class GrantController:
         ).start()
 
         return {
-            'status': 0,
+            'status': 1,
             "spectrumInquiryResponse": inquiryArr
         }, radiosToCommunicate
 
@@ -127,16 +128,16 @@ class GrantController:
         radiosToChangeBack, radiosToCommunicate = [], []
 
         allRadios = self.nodeCtrl.get_cbsd()
-        for radio in allRadios:
-            if not radio.justChangedParams:
+        for radio in allRadios['nodes']:
+            if not radio['justChangedParams']:
                 changeParams = dict(
                     lowFrequency=lowFreq,
                     highFrequency=highFreq,
-                    cbsdId=radio.cbsdID
+                    cbsdId=radio['cbsdID']
                 )
-                radio.justChangedParams = True
+                radio['justChangedParams'] = True
                 radiosToChangeBack.append(radio)
-                radiosToCommunicate.append({'data': changeParams, 'room': radio.sid})
+                radiosToCommunicate.append({'data': changeParams, 'room': radio['sid']})
                 count += 1
 
             if count >= radioCountLimit or count > len(allRadios) / 3:
@@ -147,7 +148,7 @@ class GrantController:
 
     def resetRadioStatuses(self, radios):
         for radio in radios:
-            self.nodeCtrl.update_cbsd_justChangedParams(radio.cbsdID, False)
+            self.nodeCtrl.update_cbsd_justChangedParams(radio['cbsdID'], False)
 
     def grant_request(self, payload):
         responseArr = []

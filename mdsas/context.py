@@ -204,7 +204,9 @@ class context:
 
         return url
 
-    def scrapeWeather(self, currentTime, latitude, longitude):
+    def scrapeWeatherForLocation(self, currentTime, latitude, longitude, aggregate=False, debug=False):
+        jsonData = None
+
         try:
             ResultBytes = urllib.request.urlopen(
                 self.queryBuilder(currentTime, latitude, longitude)
@@ -213,41 +215,41 @@ class context:
             # Parse the results as JSON
             jsonData = json.loads(ResultBytes.read())
 
-        except urllib.error.HTTPError as e:
-            ErrorInfo = e.read().decode()
-            print('Error code: ', e.code, ErrorInfo)
-            sys.exit()
-
-        except urllib.error.URLError as e:
-            ErrorInfo = e.read().decode()
-            print('Error code: ', e.code, ErrorInfo)
-            sys.exit()
-
         except Exception as e:
             print(e)
 
         if 'currentConditions' not in jsonData:
             raise Exception('Current data not available')
-        jsonData = jsonData['currentConditions']
 
-        weather = {
-            "temperature": jsonData['temp'],
-            "humidity": jsonData["humidity"],
-            "precipitation": jsonData['precip'],
-            'windspeed': jsonData['windspeed'],
-            'pressure': jsonData['pressure'],
-            'visibility': jsonData['visibility'],
-            'weather': jsonData['conditions'],
-            'cloudcover': jsonData['cloudcover']
+        currentWeather = jsonData['currentConditions']
+        if aggregate:
+            currentWeather = jsonData['days'][0]
+
+        returnable = {
+            "temperature": currentWeather['temp'],
+            "humidity": currentWeather["humidity"],
+            "precipitation": currentWeather['precip'],
+            'windspeed': currentWeather['windspeed'],
+            'pressure': currentWeather['pressure'],
+            'visibility': currentWeather['visibility'],
+            'weather': currentWeather['conditions'],
+            'cloudcover': currentWeather['cloudcover']
         }
 
-        return weather
+        if debug:
+            return jsonData
+
+        return returnable
 
 
 if __name__ == '__main__':
-    current_time, lat, long = '2020-12-15T13:00:00', "37.2296", "-80.4139"
+    current_time, lat, long = '2022-09-25T20:31:00', "37.2296", "-80.4139"
+    # current_time = "today"
 
-    contextEnginge = context()
-    weather = contextEnginge.scrapeWeather(current_time, lat, long)
-    print(weather['weather'])
+    contextEngine = context()
+    weather = contextEngine.scrapeWeatherForLocation(current_time, lat, long)
+    print("\n\n", json.dumps(weather, indent=4))
+    # with open('context.json', "w+") as outfile:
+    #     json.dump(weather, outfile, indent=4)
+
 

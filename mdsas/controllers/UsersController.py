@@ -59,7 +59,7 @@ class UsersController:
         rows = self._execute_query(query)
 
         return {
-            'status': 0,
+            'status': 1,
             'user': rows
         }
 
