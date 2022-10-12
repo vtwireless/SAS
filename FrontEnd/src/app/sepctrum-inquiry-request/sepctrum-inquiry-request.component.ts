@@ -75,7 +75,7 @@ export class SepctrumInquiryRequestComponent implements OnInit {
 
     const user = JSON.parse(localStorage.getItem('currentUser'));
 
-    this.httpRequests.createNode(this.modelSpectrumInquiryRequest).subscribe(
+    this.httpRequests.spectrumInqRequest(this.modelSpectrumInquiryRequest).subscribe(
         (data) => {
           if (data['status'] == '1') {
             this.router.navigate(['/']);

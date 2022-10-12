@@ -90,7 +90,7 @@ export class HttpRequestsService {
 	public spectrumInqRequest(model: any) {
 		var body = {
 			spectrumInquiryRequest: [{
-				cbsdId: model.cbsdId.toString(),
+				cbsdId: model.cbsdId,
 				selectedFrequencyRanges: model.selectedFrequencyRanges
 			}]
 		};
