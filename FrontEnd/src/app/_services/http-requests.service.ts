@@ -90,6 +90,24 @@ export class HttpRequestsService {
 	public createNode(model: any) {
 		var body = {
 			registrationRequest: [{
+				cbsdId: model.cbsdId.toString(),
+				frequnecyRange: model.frequnecyRange
+			}]
+		};
+
+		return this.sendRequest('registrationRequest', body, 'registrationResponse');
+	}
+	
+	public getAllNodes(): Observable<any> {
+		return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
+	}
+
+
+	// ------------------------------ Spectrum Inquiry Requests -----------------------------------
+
+	public createSpectrumInquiryReqeust(model: any) {
+		var body = {
+			registrationRequest: [{
 				nodeName: model.nodeName.toString(),
 				location: model.location,
 				IPAddress: model.IPAddress,
@@ -105,12 +123,9 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendRequest('registrationRequest', body, 'registrationResponse');
+		return this.sendRequest('spectrumInquiryRequest', body, 'spectrumInquiryResponse');
 	}
-	
-	public getAllNodes(): Observable<any> {
-		return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
-	}
+
 
 	// ------------------------------ Grant Requests -----------------------------------
 

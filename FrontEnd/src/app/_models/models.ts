@@ -128,6 +128,22 @@ export class Heartbeat {
         ) { }
 
 }
+export class SpectrumInquiryRequest {
+    constructor(
+        public cbsdID: number,
+        public selectedFrequencyRanges: freqRange[],
+    ) {
+    }
+}
+
+export class freqRange {
+    constructor(
+        public minFrequency: number,
+        public maxFrequency: number
+
+    ) {
+    }
+}
 
 export class Node {
 
