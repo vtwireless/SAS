@@ -85,27 +85,24 @@ export class HttpRequestsService {
 		return this.sendRequest('getUsers', {}, 'getUsersResponse');
 	}
 
-	// ------------------------------ Node Requests ------------------------------------
+	// ------------------------------ Spectrum Inquiry Requests -----------------------------------
 
-	public createNode(model: any) {
+	public spectrumInqRequest(model: any) {
 		var body = {
-			registrationRequest: [{
+			spectrumInquiryRequest: [{
 				cbsdId: model.cbsdId.toString(),
-				frequnecyRange: model.frequnecyRange
+				selectedFrequencyRanges: model.selectedFrequencyRanges
 			}]
 		};
 
-		return this.sendRequest('registrationRequest', body, 'registrationResponse');
-	}
-	
-	public getAllNodes(): Observable<any> {
-		return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
+		return this.sendRequest('spectrumInquiryRequest', body, 'spectrumInquiryRequest');
 	}
 
 
-	// ------------------------------ Spectrum Inquiry Requests -----------------------------------
 
-	public createSpectrumInquiryReqeust(model: any) {
+	// ------------------------------ Node Requests ------------------------------------
+
+	public createNode(model: any) {
 		var body = {
 			registrationRequest: [{
 				nodeName: model.nodeName.toString(),
@@ -123,8 +120,11 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendRequest('spectrumInquiryRequest', body, 'spectrumInquiryResponse');
+		return this.sendRequest('registrationRequest', body, 'registrationResponse');
 	}
+
+	public getAllNodes(): Observable<any> {
+		return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');	}
 
 
 	// ------------------------------ Grant Requests -----------------------------------
@@ -192,6 +192,15 @@ export class HttpRequestsService {
 		params = params.set('email', model.email);
 		params = params.set('phone', model.phone);
 		params = params.set('password', model.password);
+		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+	}
+
+	public createSpectrumInquiryRequest(model: any): Observable<any> {
+		let params = new HttpParams();
+		params = params.set('action', 'spectrumInqRequest');
+		params = params.set('cbsdId', model.cbsdId.toString());
+		params = params.set('selectedFrequencyRanges', model.selectedFrequencyRanges);
+
 		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 

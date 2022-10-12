@@ -65,13 +65,24 @@ export class SepctrumInquiryRequestComponent implements OnInit {
   }
 
   onSubmit(){
-
+    this.submitted = true;
     this.chosenFreqRanges.push(new freqRange(this.lowFreq, this.highFreq));
     this.lowFreq = 0;
     this.highFreq = 0;
     this.modelSpectrumInquiryRequest.selectedFrequencyRanges = this.chosenFreqRanges;
     console.log(this.chosenFreqRanges);
     console.log(this.modelSpectrumInquiryRequest);
+
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+
+    this.httpRequests.createNode(this.modelSpectrumInquiryRequest).subscribe(
+        (data) => {
+          if (data['status'] == '1') {
+            this.router.navigate(['/']);
+          }
+        },
+        (error) => console.error(error)
+    );
 
   }
 
