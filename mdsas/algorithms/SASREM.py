@@ -12,7 +12,20 @@ class SASREM:
         self.cells = []
 
     def makeCells(self, latitude, longitude, numberOfCells, radius):
-        cellWidth = radius  # ~km
+        """
+        Create REM cells and add them to the REM
+        Parameters
+        ----------
+        latitude
+        longitude
+        numberOfCells
+        radius: in KM
+
+        Returns
+        -------
+
+        """
+        cellWidth = radius
         rows = int(sqrt(numberOfCells))
         self.cells = []
         id = 0
@@ -44,10 +57,11 @@ class SASREM:
 
     def clearOldData(self, now, secondsAgo):
         for object in self.objects:
-            if object.timeStamp < (now - datetime.timedelta(seconds=secondsAgo)):
+            if object.timeStamp < (now - timedelta(seconds=secondsAgo)):
                 self.objects.remove(object)
 
     # Tell nodes to sense data, actively
+    # TODO: Incomplete Implementation
     def senseRegionWithParameters(self, longitude, latitude, highFrequency, lowFrequency, radius):
         objectsToSend = []
         for node in self.nodes:
