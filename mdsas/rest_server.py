@@ -8,6 +8,7 @@ For Wireless@VT
 """
 import threading
 from flask import Flask, request
+import traceback
 
 from algorithms import SASAlgorithms
 from algorithms import SASREM
@@ -172,17 +173,46 @@ def updateNode():
 
 # In[ --- Grant Management --- ]
 
+
+@socket.route('/spectrumInquiryRequest', methods=['POST'])
+def spectrumInquiryRequest():
+    try:
+        response, radiosToCommunicate = db.spectrum_inquiry(request.get_json())
+
+        # TODO: Does dev server need a socket?
+        # for radio in radiosToCommunicate:
+        #     socket.emit(
+        #         "changeRadioParams", data=radio['data'], room=radio['room']
+        #     )
+
+        return response
+
+    except Exception:
+        return {
+            'status': 0, 'message': traceback.format_exc()
+        }
+
+
 @socket.route('/getGrantsRequest', methods=['GET'])
 def getGrantRequests():
-    response = db.get_grants()
-    return response
+    try:
+        response = db.get_grants()
+        return response
+    except Exception:
+        return {
+            'status': 0, 'message': traceback.format_exc()
+        }
 
 
 @socket.route('/grantRequest', methods=['POST'])
 def grantRequest():
-    response = db.create_grant_request(request.get_json())
-    return response
-
+    try:
+        response = db.create_grant_request(request.get_json())
+        return response
+    except Exception:
+        return {
+            'status': 0, 'message': traceback.format_exc()
+        }
 
 @socket.route('/heartbeatRequest', methods=['POST'])
 def heartbeat():
@@ -192,19 +222,6 @@ def heartbeat():
         threading.Timer(
             (grant.heartbeatInterval * 1.1) + 2, db.cancel_grant, [grant]
         ).start()
-
-    return response
-
-
-@socket.route('/spectrumInquiryRequest', methods=['POST'])
-def spectrumInquiryRequest():
-    response, radiosToCommunicate = db.spectrum_inquiry(request.get_json())
-
-    # TODO: Does dev server need a socket?
-    # for radio in radiosToCommunicate:
-    #     socket.emit(
-    #         "changeRadioParams", data=radio['data'], room=radio['room']
-    #     )
 
     return response
 
