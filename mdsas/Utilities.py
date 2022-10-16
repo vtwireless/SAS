@@ -97,11 +97,11 @@ class Utilities:
         latitude = locArr[0]
 
         return CBSD.CBSD(
-            json["id"], json["trustLevel"], json["fccId"], json["name"], longitude, latitude, json["IPAddress"],
-            json["minFrequency"], json["maxFrequency"], json["minSampleRate"], json["maxSampleRate"], json["cbsdType"],
+            json['cbsdID'], json["trustLevel"], json["fccId"], json['nodeName'], longitude, latitude, json["IPAddress"],
+            json["minFrequency"], json["maxFrequency"], json["minSampleRate"], json["maxSampleRate"], json['nodeType'],
             json["mobility"], json["status"], json["cbsdSerialNumber"], json["callSign"], json["cbsdCategory"],
             json["cbsdInfo"], json["airInterface"], json["installationParam"], json["measCapability"],
-            json["groupingParam"]
+            json["groupingParam"], userId=json["userId"], tierClassID=json["tierClassID"]
         )
 
     @staticmethod
