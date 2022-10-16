@@ -119,9 +119,9 @@ class GrantController:
         ).start()
 
         return {
-            'status': 1,
-            "spectrumInquiryResponse": inquiryArr
-        }, radiosToCommunicate
+                   'status': 1,
+                   "spectrumInquiryResponse": inquiryArr
+               }, radiosToCommunicate
 
     def initiateSensing(self, lowFreq, highFreq):
         count, radioCountLimit = 0, 3
@@ -155,7 +155,8 @@ class GrantController:
 
         for item in payload['grantRequest']:
             if 'secondaryUserID' not in item:
-                item['secondaryUserID'] = self.nodeCtrl.get_cbsd_by_id(item['cbsdId'])['userId']
+                cbsd = self.nodeCtrl.get_cbsd_by_id(item['cbsdId'])
+                item['secondaryUserID'] = cbsd.userId
 
             query = select([self.GRANTS]).where(and_(
                 self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
@@ -171,20 +172,12 @@ class GrantController:
                     "message": "Grant already exists. Grant processing rollback complete"
                 }
 
-            self.CONNECTION.execute(self.GRANTS.insert(), [item])
-            rows = self._execute_query(query)
-            if len(rows) < 1:
-                return {
-                    "status": 0,
-                    "message": "Grant Request could not be processed"
-                }
-
             grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
             ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
             grantRequest.operationParam = WinnForum.OperationParam(item["powerLevel"], ofr)
             vtgp = WinnForum.VTGrantParams(
                 item['minFrequency'], item['maxFrequency'], item["preferredFrequency"], item["frequencyAbsolute"],
-                item["minBandwidth"], item["preferredBandwidth"], item["preferredBandwidth"],
+                item["minBandwidth"], item["maxBandwidth"], item["preferredBandwidth"],
                 item["startTime"], item["endTime"], item["approximateByteSize"],
                 item["dataType"], item["powerLevel"], item["location"], item["mobility"],
                 item["maxVelocity"]
@@ -194,12 +187,21 @@ class GrantController:
             grantResponse = self.algorithms.runGrantAlgorithm(
                 self.get_grants()['spectrumGrants'], self.rem, grantRequest
             )
-            grantResponse.grantId = rows[0]['grantId']
             if grantResponse.response.responseCode == "0":
-                g = WinnForum.Grant(
+                self.CONNECTION.execute(self.GRANTS.insert(), [item])
+                rows = self._execute_query(query)
+
+                if len(rows) < 1:
+                    return {
+                        "status": 0,
+                        "message": "Grant Request could not be processed"
+                    }
+
+                grantResponse.grantId = rows[0]['grantId']
+                grant = WinnForum.Grant(
                     grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
                     vtgp, grantResponse.grantExpireTime
-                )
+                )  # TODO: Check if this can be returned
 
             responseArr.append(grantResponse.asdict())
 
@@ -232,9 +234,9 @@ class GrantController:
             heartbeatArr.append(response.asdict())
 
         return {
-            'status': 0,
-            "heartbeatResponse": heartbeatArr
-        }, grantArr
+                   'status': 0,
+                   "heartbeatResponse": heartbeatArr
+               }, grantArr
 
     def relinquishment_request(self, data):
         relinquishArr = []
@@ -274,4 +276,3 @@ class GrantController:
             if 'spectrumData' in deviceInfo and 'rcvdPowerMeasReports' in deviceInfo['spectrumData']:
                 for rpmr in deviceInfo['spectrumData']['rcvdPowerMeasReports']:
                     self.rem.measReportToSASREMObject(Utilities.measReportObjectFromJSON(rpmr), cbsd)
-
