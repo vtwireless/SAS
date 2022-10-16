@@ -123,18 +123,19 @@ class SASAlgorithms:
         gr = WinnForum.GrantResponse()
         gr.grantId = None
         gr.cbsdId = request.cbsdId
-        gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None, True)
+        gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None, True, request)
         gr.heartbeatInterval = self.getHeartbeatIntervalForGrantId(gr.grantId)
         gr.measReportConfig = ["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"]
         conflict = False
         for grant in grants:
-            rangea = self.getHighFreqFromOP(grant.operationParam)
-            rangeb = self.getLowFreqFromOP(grant.operationParam)
+            rangea = grant["maxFrequency"]
+            rangeb = grant["minFrequency"]
             freqa = self.getHighFreqFromOP(request.operationParam)
             freqb = self.getLowFreqFromOP(request.operationParam)
             if self.frequencyOverlap(freqa, freqb, rangea, rangeb):
                 conflict = True
-        if conflict == True:
+
+        if conflict:
             gr.response = self.generateResponse(401)
         else:
             gr.response = self.generateResponse(0)
@@ -162,7 +163,8 @@ class SASAlgorithms:
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)  # GET ALL  REM DATA
         if not remData:
             # print("Currently no spectrum data") # TODO: remove comment
-            return 2
+            # return 2
+            self.setREMAlgorithm('DEFAULT')
         if self.getREMAlgorithm() == 'DEFAULT':
             if self.defaultREMAlgorithm(remData):
                 return 1
@@ -189,7 +191,7 @@ class SASAlgorithms:
             else:
                 return 0
         elif self.getREMAlgorithm() == 'NOFK':
-            if self.nofKREMAlgorithm(remData):
+            if self.nofkREMAlgorithm(remData):
                 return 1
             else:
                 return 0
@@ -201,9 +203,9 @@ class SASAlgorithms:
         else:
             return 3
 
-    def calculateGrantExpireTime(self, grants, REM, grant, renew):
+    def calculateGrantExpireTime(self, grants, REM, grant, renew, request=None):
         grantCount = len(grants)
-        t = datetime.now(timezone.utc)
+        t = datetime.now(timezone.utc) if not request else datetime.fromisoformat(request.vtGrantParams.startTime)
         if grantCount <= 1:
             t = t + timedelta(seconds=self.maxGrantTime)
             return t.strftime("%Y%m%dT%H:%M:%S%Z")
@@ -232,14 +234,14 @@ class SASAlgorithms:
     def defaultREMAlgorithm(self, remData):
         total = 0.0
         # Equal weight with threshold parameter, no location, all parameters
-        for data_point in remData:
-            total = total + float(data_point.powerLevel)
-        if (total * 1.0 / len(remData)) > self.threshold:
-            return True
-        else:
-            return False
+        if remData:
+            for data_point in remData:
+                total = total + float(data_point.powerLevel)
+            if (total * 1.0 / len(remData)) > self.threshold:
+                return True
+        return False
 
-    def nofKREMAlgorith(self, remData):
+    def nofkREMAlgorithm(self, remData):
         yes = 0
         no = 0
         # Equal weight with threshold parameter, no location, all parameters
