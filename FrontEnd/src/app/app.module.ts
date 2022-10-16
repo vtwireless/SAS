@@ -1,6 +1,5 @@
 ﻿import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { DragDropModule } from '@angular/cdk/drag-drop';
@@ -13,7 +12,6 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule  } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-
 //import { MatSliderModule } from '@angular/material';
 
 import { AppComponent } from './app.component';
@@ -41,6 +39,9 @@ import { ErrorInterceptor } from './_helpers/error.interceptor';;
 import { NotFoundComponent } from './not-found/not-found.component'
 import { AppRoutingModule } from './app-routing.module';;
 import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
+import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
+import { FormsModule } from '@angular/forms';
+
 
 @NgModule({
   declarations: [
@@ -68,6 +69,7 @@ import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepc
 ,
     SepctrumInquiryRequestComponent    // SocketComponent
   ],
+
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
     AppRoutingModule,
@@ -79,6 +81,7 @@ import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepc
     MatSidenavModule,
     MatButtonModule,
     MatIconModule,
+    AngularMultiSelectModule,
     MatDividerModule,
     MatCheckboxModule,
     MatTableModule,

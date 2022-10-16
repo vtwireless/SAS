@@ -37,6 +37,19 @@ export class HttpRequestsService {
 		this.socketClient.configure(this.HOSTNAME, this.PORT);
 	}
 
+	// Common Method for http or socket request
+	private sendReq(typeOfRequest:string, requestCode: string, requestBody: any, responseCode: string, typeOfRESTReq: string, params: any): Observable<any>{
+		if(typeOfRequest === 'SOCKET'){
+			return this.sendRequest(requestCode, requestBody, responseCode);
+		}else if(typeOfRequest === 'REST'){
+			if(typeOfRESTReq === 'GET'){
+				return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+			}else if(typeOfRESTReq === 'POST'){
+				return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+			}
+		}
+	}
+
 	private sendRequest(requestCode: string, requestBody: any, responseCode: string): Observable<any> {
 		console.log(requestCode, requestBody)
 		this.socketClient.emit(requestCode, requestBody);
@@ -60,8 +73,9 @@ export class HttpRequestsService {
 			password: model.password,
 			username: model.username
 		};
-
-		return this.sendRequest('adminLogin', body, 'adminLoginResponse');
+		return this.sendReq('SOCKET', 'adminLogin', body, 'adminLoginResponse',
+			'NONE', {});
+		// return this.sendRequest('adminLogin', body, 'adminLoginResponse');
 	}
 
 	public createSecondaryAccount(model: any): Observable<any> {
@@ -74,16 +88,42 @@ export class HttpRequestsService {
 			location: model.location,
 		};
 
-		return this.sendRequest('createSU', body, 'createSUResponse');
+		return this.sendReq('SOCKET', 'createSU', body, 'createSUResponse',
+			'NONE', {});
+
+		// return this.sendRequest('createSU', body, 'createSUResponse');
 	}
 
 	public getSecondaryUsers(): Observable<any> {
-		return this.sendRequest('getUsers', {}, 'getUsersResponse');
+
+		return this.sendReq('SOCKET', 'getUsers', {}, 'getUsersResponse','NONE', {});
+
+		// return this.sendRequest('getUsers', {}, 'getUsersResponse');
 	}
 
 	public getPrimaryUsers(): Observable<any> {
-		return this.sendRequest('getUsers', {}, 'getUsersResponse');
+		return this.sendReq('SOCKET', 'getUsers', {}, 'getUsersResponse','NONE', {});
+
+		// return this.sendRequest('getUsers', {}, 'getUsersResponse');
 	}
+
+	// ------------------------------ Spectrum Inquiry Requests -----------------------------------
+
+	public spectrumInqRequest(model: any) {
+		var body = {
+			spectrumInquiryRequest: [{
+				cbsdId: model.cbsdId,
+				selectedFrequencyRanges: model.selectedFrequencyRanges
+			}]
+		};
+
+		return this.sendReq('SOCKET', 'spectrumInquiryRequest', body, 'spectrumInquiryRequest','NONE', {});
+
+
+		// return this.sendRequest('spectrumInquiryRequest', body, 'spectrumInquiryRequest');
+	}
+
+
 
 	// ------------------------------ Node Requests ------------------------------------
 
@@ -105,12 +145,18 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendRequest('registrationRequest', body, 'registrationResponse');
+		return this.sendReq('SOCKET', 'registrationRequest', body, 'registrationResponse','NONE', {});
+
+		// return this.sendRequest('registrationRequest', body, 'registrationResponse');
 	}
-	
+
 	public getAllNodes(): Observable<any> {
-		return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
+
+		return this.sendReq('SOCKET', 'getNodesRequest', {}, 'getNodesResponse','NONE', {});
+
+		// return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
 	}
+
 
 	// ------------------------------ Grant Requests -----------------------------------
 
@@ -141,11 +187,16 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendRequest('grantRequest', body, 'grantResponse');
+		return this.sendReq('SOCKET', 'grantRequest', body, 'grantResponse','NONE', {});
+
+		// return this.sendRequest('grantRequest', body, 'grantResponse');
 	}
 
 	public getSpectrumGrants(): Observable<any> {
-		return this.sendRequest('getGrantsRequest', {}, 'getGrantsResponse');
+
+		return this.sendReq('SOCKET', 'getGrantsRequest', {}, 'getGrantsResponse','NONE', {});
+
+		// return this.sendRequest('getGrantsRequest', {}, 'getGrantsResponse');
 	}
 
 	// ------------------------------ Todo Requests ------------------------------------
@@ -156,7 +207,10 @@ export class HttpRequestsService {
 		params = params.set('action', 'getAllNodes');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public logGrant(grantID: any): Observable<any> {
@@ -165,7 +219,9 @@ export class HttpRequestsService {
 		params = params.set('grantID', grantID.toString());
 		params = params.set('status', 'DELETED');
 
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public createJudge(model: any): Observable<any> {
@@ -177,7 +233,21 @@ export class HttpRequestsService {
 		params = params.set('email', model.email);
 		params = params.set('phone', model.phone);
 		params = params.set('password', model.password);
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+	}
+
+	public createSpectrumInquiryRequest(model: any): Observable<any> {
+		let params = new HttpParams();
+		params = params.set('action', 'spectrumInqRequest');
+		params = params.set('cbsdId', model.cbsdId.toString());
+		params = params.set('selectedFrequencyRanges', model.selectedFrequencyRanges);
+
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public createNodeRequest(model: any): Observable<any> {
@@ -211,7 +281,9 @@ export class HttpRequestsService {
 		params = params.set('mobility', model.mobility.toString());
 		params = params.set('maxVelocity', model.maxVelocity.toString());
 
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public checkEmail(model: any): Observable<any> {
@@ -228,7 +300,9 @@ export class HttpRequestsService {
 		params = params.set('grantID', grantID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 	
 	public getGrantLogs(): Observable<any> {
@@ -236,7 +310,9 @@ export class HttpRequestsService {
 		params = params.set('action', 'getGrantLogs');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public getGrantLogByID(grantID: any): Observable<any> {
@@ -245,7 +321,10 @@ export class HttpRequestsService {
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 		params = params.set('grantID', grantID.toString());
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public getRegionSchedules(): Observable<any> {
@@ -253,15 +332,19 @@ export class HttpRequestsService {
 		params = params.set('action', 'getRegionSchedules');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 	
 	public getGrantRequests(): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getGrantRequests');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
-		
-		return this.httpClient.post(this.GETAPI, params);
+
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params);
 	}
 
 	public getNodeByID(nodeID: any): Observable<any> {
@@ -270,7 +353,9 @@ export class HttpRequestsService {
 		params = params.set('nodeID', nodeID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public createRegionSchedule(model: any): Observable<any> {
@@ -290,7 +375,10 @@ export class HttpRequestsService {
 		params = params.set('isDefault', model.isDefault.toString());
 		params = params.set('isActive', model.isActive.toString());
 
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public updateTierClass(model: any): Observable<any> {
@@ -307,7 +395,10 @@ export class HttpRequestsService {
 		params = params.set('tierUpperBand', model.tierUpperBand.toString());
 		params = params.set('tierLowerBand', model.tierLowerBand.toString());
 
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public updateRegionSchedule(model: any): Observable<any> {
@@ -328,7 +419,10 @@ export class HttpRequestsService {
 		params = params.set('isDefault', model.isDefault.toString());
 		params = params.set('isActive', model.isActive.toString());
 
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public updateNode(model: any): Observable<any> {
@@ -347,7 +441,10 @@ export class HttpRequestsService {
 		params = params.set('mobility', model.mobility.toString());
 		params = params.set('status', model.status);
 		params = params.set('comment', model.comment.toString());
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public getPrimaryUserByID(userID: any): Observable<any> {
@@ -356,7 +453,9 @@ export class HttpRequestsService {
 		params = params.set('primaryUserID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 	
 	public getPrimaryUserActivityByID(userID: any): Observable<any> {
@@ -365,7 +464,9 @@ export class HttpRequestsService {
 		params = params.set('primaryUserID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public getSecondaryUserByID(userID: any): Observable<any> {
@@ -374,7 +475,10 @@ export class HttpRequestsService {
 		params = params.set('secondaryUserID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public createTierClass(
@@ -392,15 +496,21 @@ export class HttpRequestsService {
 			tierLowerBand: model.tierLowerBand * scale
 		};
 
-		return this.sendRequest('createTierClass', body, 'createTierClassResponse');
+		return this.sendReq('SOCKET', 'createTierClass', body, 'createTierClassResponse','NONE', {});
+
+
+		// return this.sendRequest('createTierClass', body, 'createTierClassResponse');
 	}
 
 	public getTierClassID(tierID: any): Observable<any> {
-		return this.sendRequest(
-			'getTierClassById',
-			{'tierClassID': tierID},
-			'getTierClassByIdResponse'
-		);
+
+		return this.sendReq('SOCKET', 'getTierClassById', {'tierClassID': tierID}, 'getTierClassByIdResponse','NONE', {});
+
+		// return this.sendRequest(
+		// 	'getTierClassById',
+		// 	{'tierClassID': tierID},
+		// 	'getTierClassByIdResponse'
+		// );
 	}
 
 	public getSUsNotInTierClassByID(tierID: any): Observable<any> {
@@ -409,18 +519,26 @@ export class HttpRequestsService {
 		params = params.set('tierClassID', tierID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public deleteTierClassAssignmentsByID(secondaryUser: any): Observable<any> {
 		let params = new HttpParams();
         params = params.set('action',  'deleteTierClassAssignment');
         params = params.set('assignmentID',  secondaryUser.tierAssignmentID);
-        return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public getTierClass(): Observable<any> {
-		return this.sendRequest('getTierClass', {}, 'getTierClassResponse');
+
+		return this.sendReq('SOCKET', 'getTierClass', {}, 'getTierClassResponse','NONE', {});
+
+		// return this.sendRequest('getTierClass', {}, 'getTierClassResponse');
 	}
 
 	public alterTierClassAssignmentByID(tierID: any, model: any): Observable<any> {
@@ -430,7 +548,10 @@ export class HttpRequestsService {
 		params = params.set('tierClassID', tierID);
 		params = params.set('innerTierLevel', model.innerTierLevel.toString());
 		params = params.set('isNewTA', true.toString());
-		return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
 	}
 
 	public getAllGrantsBySUID(userID: any): Observable<any> {
@@ -439,7 +560,9 @@ export class HttpRequestsService {
 		params = params.set('SUID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		return this.sendReq('REST', '', {}, '','GET', params);
+
+		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
 	}
 
 	public deleteGrantRequest(grantRequest: any): Observable<any> {
@@ -447,7 +570,9 @@ export class HttpRequestsService {
 		params = params.set('action', 'deleteGrantRequest');
 		params = params.set('grantRequestID', grantRequest.requestID);
 
-		return this.httpClient.post(this.POSTAPI, params);
+		return this.sendReq('REST', '', {}, '','POST', params);
+
+		// return this.httpClient.post(this.POSTAPI, params);
 	}
 
 	private handleError(error: Response) {
