@@ -1,0 +1,207 @@
+{
+	"info": {
+		"_postman_id": "4373b6e2-4a63-4f5f-8ac8-419ee170f510",
+		"name": "MD-SAS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21906920"
+	},
+	"item": [
+		{
+			"name": "RootURL",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetUsers",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/getUsers",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"getUsers"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetAUser",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\": \"abc@abc.com\",\r\n    \"password\": \"password\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/getUser",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"getUser"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "SpectrumInquiry",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"spectrumInquiryRequest\": [\r\n        {\r\n            \"cbsdId\": 1,\r\n            \"inquiredSpectrum\": [{\"lowFrequency\": 3550e6, \"highFrequency\": 3560e6}]\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/spectrumInquiryRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"spectrumInquiryRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getNodesRequest",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/getNodesRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"getNodesRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "spectrumInquiryRequest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"spectrumInquiryRequest\": [\r\n        {\r\n            \"cbsdId\": 1,\r\n            \"inquiredSpectrum\": [\r\n                {\r\n                    \"lowFrequency\": 3650000000,\r\n                    \"highFrequency\": 3660000000\r\n                }\r\n            ]\r\n        },\r\n        {\r\n            \"cbsdId\": 2,\r\n            \"inquiredSpectrum\": [\r\n                {\r\n                    \"lowFrequency\": 4550000000,\r\n                    \"highFrequency\": 4560000000\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/spectrumInquiryRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"spectrumInquiryRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "getGrantsRequest",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"spectrumInquiryRequest\": [\r\n        {\r\n            \"cbsdId\": 1,\r\n            \"inquiredSpectrum\": [\r\n                {\r\n                    \"lowFrequency\": 3650000000,\r\n                    \"highFrequency\": 3660000000\r\n                }\r\n            ]\r\n        },\r\n        {\r\n            \"cbsdId\": 2,\r\n            \"inquiredSpectrum\": [\r\n                {\r\n                    \"lowFrequency\": 4550000000,\r\n                    \"highFrequency\": 4560000000\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/getGrantsRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"getGrantsRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "grantRequest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"grantRequest\": [\r\n        {\r\n            \"cbsdId\": 1,\r\n            \"minFrequency\": 3600000000,\r\n            \"maxFrequency\": 3650000000,\r\n            \"preferredFrequency\": 3650000000,\r\n            \"frequencyAbsolute\": true,\r\n            \"minBandwidth\": 10000000,\r\n            \"maxBandwidth\": 10000000,\r\n            \"preferredBandwidth\": 10000000,\r\n            \"startTime\": \"2022-10-25T22:24\",\r\n            \"endTime\": \"2022-10-25T23:24\",\r\n            \"approximateByteSize\": 20,\r\n            \"dataType\": \"AUDIO\",\r\n            \"powerLevel\": 30,\r\n            \"location\": \"20.171,13.242\",\r\n            \"mobility\": true,\r\n            \"maxVelocity\": 20\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/grantRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"grantRequest"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
