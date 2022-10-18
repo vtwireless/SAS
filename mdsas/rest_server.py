@@ -14,6 +14,8 @@ from algorithms import SASAlgorithms
 from algorithms import SASREM
 from controllers import DatabaseController
 from settings import settings
+from flask_cors import CORS
+
 
 allClients = []
 allRadios = []  # CBSDSocket
@@ -36,6 +38,7 @@ REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
 
 socket = Flask(__name__)
+cors = CORS(socket, resources={r"/*": {"origins": "*"}})
 
 
 @socket.route('/', methods=['GET', 'POST'])

@@ -19,6 +19,8 @@ export class SepctrumInquiryRequestComponent implements OnInit {
   chosenFreqRanges = [];
   creatorID = '';
   submitted = false;
+  response = '';
+
 
 
   constructor(
@@ -51,17 +53,34 @@ export class SepctrumInquiryRequestComponent implements OnInit {
   ngOnInit(){
 
   }
+  currList = [];
+  currSubList = [];
+  currLowFreq = 0;
+  currHighFreq = 0;
 
   addRange(){
+    this.currLowFreq =  this.lowFreq;
+    this.currHighFreq = this.highFreq;
+
+    this.currSubList.push(this.currLowFreq);
+    this.currSubList.push(this.currHighFreq);
+    this.currList.push(this.currSubList);
     this.chosenFreqRanges.push(new freqRange(this.lowFreq, this.highFreq));
+    console.log(this.chosenFreqRanges);
+    console.log(this.chosenFreqRanges[0].lowFrequency);
+
+    console.log(this.lowFreq + " - " + this.highFreq);
     this.lowFreq = 0;
     this.highFreq = 0;
+
   }
 
   newRequest() {
     this.modelSpectrumInquiryRequest = new SpectrumInquiryRequest(
         null,null
     );
+
+    this.chosenFreqRanges = []
   }
 
   onSubmit(){
@@ -69,16 +88,19 @@ export class SepctrumInquiryRequestComponent implements OnInit {
     this.chosenFreqRanges.push(new freqRange(this.lowFreq, this.highFreq));
     this.lowFreq = 0;
     this.highFreq = 0;
-    this.modelSpectrumInquiryRequest.selectedFrequencyRanges = this.chosenFreqRanges;
-    console.log(this.chosenFreqRanges);
-    console.log(this.modelSpectrumInquiryRequest);
+    // console.log(this.chosenFreqRanges[0]);
+    this.modelSpectrumInquiryRequest.inquiredSpectrum = this.chosenFreqRanges;
+    // console.log(this.chosenFreqRanges);
+    // console.log(this.modelSpectrumInquiryRequest);
 
     const user = JSON.parse(localStorage.getItem('currentUser'));
-
     this.httpRequests.spectrumInqRequest(this.modelSpectrumInquiryRequest).subscribe(
         (data) => {
+          let val = data['spectrumInquiryResponse'];
+          this.response = val[0]['response']['responseMessage'];
+          console.log(data);
           if (data['status'] == '1') {
-            this.router.navigate(['/']);
+
           }
         },
         (error) => console.error(error)

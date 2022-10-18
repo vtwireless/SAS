@@ -130,16 +130,16 @@ export class Heartbeat {
 }
 export class SpectrumInquiryRequest {
     constructor(
-        public cbsdID: number,
-        public selectedFrequencyRanges: freqRange[],
+        public cbsdId: number,
+        public inquiredSpectrum: freqRange[],
     ) {
     }
 }
 
 export class freqRange {
     constructor(
-        public minFrequency: number,
-        public maxFrequency: number
+        public lowFrequency: number,
+        public highFrequency: number
 
     ) {
     }

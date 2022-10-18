@@ -29,6 +29,7 @@ export class HttpRequestsService {
 	});
 	HOSTNAME = 'http://localhost'
 	PORT = '8000'
+	RESTURL = this.HOSTNAME + ":" + this.PORT + "/"
 
 	constructor(
 		private httpClient: HttpClient, 
@@ -39,13 +40,15 @@ export class HttpRequestsService {
 
 	// Common Method for http or socket request
 	private sendReq(typeOfRequest:string, requestCode: string, requestBody: any, responseCode: string, typeOfRESTReq: string, params: any): Observable<any>{
+
+		let URL = this.RESTURL + requestCode;
 		if(typeOfRequest === 'SOCKET'){
 			return this.sendRequest(requestCode, requestBody, responseCode);
 		}else if(typeOfRequest === 'REST'){
 			if(typeOfRESTReq === 'GET'){
-				return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+				return this.httpClient.get(URL, params).catch(this.handleError);
 			}else if(typeOfRESTReq === 'POST'){
-				return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+				return this.httpClient.post(URL, requestBody, params).catch(this.handleError);
 			}
 		}
 	}
@@ -65,7 +68,11 @@ export class HttpRequestsService {
 			username: model.username
 		};
 
-		return this.sendRequest('suLogin', body, 'suLoginResponse');
+		return this.sendReq('SOCKET', 'suLogin', body, 'suLoginResponse',
+			'NONE', {});
+
+		// return this.sendReq('REST', 'suLogin', body, 'suLoginResponse',
+		// 'POST', {});
 	}
 
 	public adminLogin(model: any): Observable<any> {
@@ -73,9 +80,15 @@ export class HttpRequestsService {
 			password: model.password,
 			username: model.username
 		};
+
+		let params = new HttpParams();
+		params = params.set('password', model.password);
+		params = params.set('username', model.username);
 		return this.sendReq('SOCKET', 'adminLogin', body, 'adminLoginResponse',
 			'NONE', {});
-		// return this.sendRequest('adminLogin', body, 'adminLoginResponse');
+
+		// return this.sendReq('REST', 'adminLogin', body, 'adminLoginResponse',
+		// 	'POST', params);
 	}
 
 	public createSecondaryAccount(model: any): Observable<any> {
@@ -91,20 +104,17 @@ export class HttpRequestsService {
 		return this.sendReq('SOCKET', 'createSU', body, 'createSUResponse',
 			'NONE', {});
 
-		// return this.sendRequest('createSU', body, 'createSUResponse');
 	}
 
 	public getSecondaryUsers(): Observable<any> {
 
 		return this.sendReq('SOCKET', 'getUsers', {}, 'getUsersResponse','NONE', {});
 
-		// return this.sendRequest('getUsers', {}, 'getUsersResponse');
 	}
 
 	public getPrimaryUsers(): Observable<any> {
 		return this.sendReq('SOCKET', 'getUsers', {}, 'getUsersResponse','NONE', {});
 
-		// return this.sendRequest('getUsers', {}, 'getUsersResponse');
 	}
 
 	// ------------------------------ Spectrum Inquiry Requests -----------------------------------
@@ -112,15 +122,13 @@ export class HttpRequestsService {
 	public spectrumInqRequest(model: any) {
 		var body = {
 			spectrumInquiryRequest: [{
-				cbsdId: model.cbsdId,
-				selectedFrequencyRanges: model.selectedFrequencyRanges
+				cbsdId: parseInt(model.cbsdId),
+				inquiredSpectrum: model.inquiredSpectrum
 			}]
 		};
 
-		return this.sendReq('SOCKET', 'spectrumInquiryRequest', body, 'spectrumInquiryRequest','NONE', {});
+		return this.sendReq('REST', 'spectrumInquiryRequest', body, 'spectrumInquiryResponse','POST', {});
 
-
-		// return this.sendRequest('spectrumInquiryRequest', body, 'spectrumInquiryRequest');
 	}
 
 
@@ -147,12 +155,11 @@ export class HttpRequestsService {
 
 		return this.sendReq('SOCKET', 'registrationRequest', body, 'registrationResponse','NONE', {});
 
-		// return this.sendRequest('registrationRequest', body, 'registrationResponse');
 	}
 
 	public getAllNodes(): Observable<any> {
 
-		return this.sendReq('SOCKET', 'getNodesRequest', {}, 'getNodesResponse','NONE', {});
+		return this.sendReq('REST', 'getNodesRequest', {}, 'getNodesResponse','GET', {});
 
 		// return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
 	}
@@ -189,14 +196,12 @@ export class HttpRequestsService {
 
 		return this.sendReq('SOCKET', 'grantRequest', body, 'grantResponse','NONE', {});
 
-		// return this.sendRequest('grantRequest', body, 'grantResponse');
 	}
 
 	public getSpectrumGrants(): Observable<any> {
 
 		return this.sendReq('SOCKET', 'getGrantsRequest', {}, 'getGrantsResponse','NONE', {});
 
-		// return this.sendRequest('getGrantsRequest', {}, 'getGrantsResponse');
 	}
 
 	// ------------------------------ Todo Requests ------------------------------------

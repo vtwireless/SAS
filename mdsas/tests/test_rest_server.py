@@ -41,3 +41,13 @@ def test_getUser():
 def test_spectrumInquiry():
     response = send_request_to_server(HttpMethod.POST, 'spectrumInquiryRequest')
     assert response.json()['status'] == 1
+
+def test_suLogin():
+    response = send_request_to_server(HttpMethod.POST, 'suLogin')
+    assert response.json()['status'] == 1
+
+def test_adminLogin():
+    response = send_request_to_server(HttpMethod.POST, 'adminLogin')
+    assert response.json()['status'] == 1
+
+
