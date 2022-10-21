@@ -39,7 +39,6 @@ import { ErrorInterceptor } from './_helpers/error.interceptor';;
 import { NotFoundComponent } from './not-found/not-found.component'
 import { AppRoutingModule } from './app-routing.module';;
 import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
-import { AngularMultiSelectModule } from 'angular2-multiselect-dropdown';
 import { FormsModule } from '@angular/forms';
 
 
@@ -81,7 +80,6 @@ import { FormsModule } from '@angular/forms';
     MatSidenavModule,
     MatButtonModule,
     MatIconModule,
-    AngularMultiSelectModule,
     MatDividerModule,
     MatCheckboxModule,
     MatTableModule,
