@@ -78,16 +78,14 @@ class GrantController:
         }
 
     def spectrum_inquiry(self, data):
-        inquiryArr = []
+        inquiryArr, responseArr = [], []
         radiosToChangeBack = []
         radiosToCommunicate = []
 
         for request in data["spectrumInquiryRequest"]:
-            response = WinnForum.SpectrumInquiryResponse(
-                request["cbsdId"], [], self.algorithms.generateResponse(0)
-            )
-
             for fr in request["inquiredSpectrum"]:
+                available_channels, errorCode, response = [], None, None
+
                 lowFreq, highFreq = int(fr["lowFrequency"]), int(fr["highFrequency"])
                 channelType, ruleApplied = "PAL", "FCC_PART_96"
                 maxEirp = self.algorithms.getMaxEIRP()
@@ -102,7 +100,7 @@ class GrantController:
                     if present == 0:  # No PU is present
                         fr = WinnForum.FrequencyRange(lowFreq, highFreq)
                         availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
-                        response.availableChannel.append(availChan)
+                        available_channels.append(availChan)
 
                     elif present == 2:  # Spectrum Data not available
                         print("~~~~ Something weird happened. I can't explain it ~~~~")
@@ -111,8 +109,20 @@ class GrantController:
                         radiosToCommunicate.extend(rTC)
 
                     # TODO: present == 1  # PU is present?
+                else:
+                    errorCode = 300
 
-            inquiryArr.append(response.asdict())
+                if available_channels:
+                    response = WinnForum.SpectrumInquiryResponse(
+                        request["cbsdId"], available_channels, self.algorithms.generateResponse(0)
+                    )
+                if not errorCode:
+                    errorCode = 0
+
+                response = WinnForum.SpectrumInquiryResponse(
+                    request["cbsdId"], [], self.algorithms.generateResponse(errorCode)
+                )
+                inquiryArr.append(response.asdict())
 
         threading.Timer(
             3.0, self.resetRadioStatuses, [radiosToChangeBack]
