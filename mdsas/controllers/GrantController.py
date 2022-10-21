@@ -89,6 +89,7 @@ class GrantController:
                 lowFreq, highFreq = int(fr["lowFrequency"]), int(fr["highFrequency"])
                 channelType, ruleApplied = "PAL", "FCC_PART_96"
                 maxEirp = self.algorithms.getMaxEIRP()
+                grants = []  # TODO: Fetch grants related to this?
 
                 if self.algorithms.acceptableRange(lowFreq, highFreq):
                     if 3700000000 > highFreq > 3650000000:
@@ -99,7 +100,7 @@ class GrantController:
                     )
                     if present == 0:  # No PU is present
                         fr = WinnForum.FrequencyRange(lowFreq, highFreq)
-                        availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp)
+                        availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp, grants)
                         available_channels.append(availChan)
 
                     elif present == 2:  # Spectrum Data not available
@@ -112,15 +113,11 @@ class GrantController:
                 else:
                     errorCode = 300
 
-                if available_channels:
-                    response = WinnForum.SpectrumInquiryResponse(
-                        request["cbsdId"], available_channels, self.algorithms.generateResponse(0)
-                    )
                 if not errorCode:
                     errorCode = 0
 
                 response = WinnForum.SpectrumInquiryResponse(
-                    request["cbsdId"], [], self.algorithms.generateResponse(errorCode)
+                    request["cbsdId"], available_channels, self.algorithms.generateResponse(errorCode)
                 )
                 inquiryArr.append(response.asdict())
 

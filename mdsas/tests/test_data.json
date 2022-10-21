@@ -20,5 +20,20 @@
                 ]
             }
         ]
+    },
+
+    "grantRequest" : {
+        "grantRequest": [
+            {
+                "cbsdId": 1,
+                "operationParam": {
+                    "maxEirp": 30,
+                    "operationFrequencyRange": {
+                        "lowFrequency": 3550000000,
+                        "highFrequency": 3650000000
+                    }
+                }
+            }
+        ]
     }
 }

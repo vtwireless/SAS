@@ -47,9 +47,27 @@ class TestRestServer:
         assert len(response_json["spectrumInquiryResponse"]) == 2
         for response_item in response_json["spectrumInquiryResponse"]:
             assert "cbsdId" in response_item
+            assert response_item["cbsdId"] == 1
+
             assert "response" in response_item
             assert "responseCode" in response_item["response"]
             assert "responseMessage" in response_item["response"]
+
+            if "availableChannel" in response_item:
+                assert isinstance(response_item["availableChannel"], list)
+                assert len(response_item["availableChannel"]) > 0
+
+                available_channels = response_item["availableChannel"][0]
+                assert "channelType" in available_channels
+                assert "frequencyRange" in available_channels
+                assert "maxEirp" in available_channels
+                assert "ruleApplied" in available_channels
+
+                assert "highFrequency" in available_channels["frequencyRange"]
+                assert "lowFrequency" in available_channels["frequencyRange"]
+            else:
+                assert response_item["response"]["responseCode"] == "300"
+                assert response_item["response"]["responseMessage"] == "UNSUPPORTED_SPECTRUM"
 
     def test_suLogin(self):
         response = self.send_request_to_server(HttpMethod.POST, 'suLogin')
