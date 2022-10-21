@@ -12,6 +12,10 @@
                     {
                         "lowFrequency": 3550000000,
                         "highFrequency": 3560000000
+                    },
+                    {
+                        "lowFrequency": 3550,
+                        "highFrequency": 3560
                     }
                 ]
             }
