@@ -27,6 +27,7 @@ eventlet==0.33.1
 executing==0.8.3
 fastjsonschema==2.16.1
 Flask==2.2.2
+Flask-Cors==3.0.10
 greenlet==1.1.2
 h11==0.13.0
 httptools==0.5.0
