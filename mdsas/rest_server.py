@@ -16,7 +16,6 @@ from controllers import DatabaseController
 from settings import settings
 from flask_cors import CORS
 
-
 allClients = []
 allRadios = []  # CBSDSocket
 allWebApps = []
@@ -216,6 +215,7 @@ def grantRequest():
         return {
             'status': 0, 'message': traceback.format_exc()
         }
+
 
 @socket.route('/heartbeatRequest', methods=['POST'])
 def heartbeat():

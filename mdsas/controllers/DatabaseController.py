@@ -28,7 +28,7 @@ class DatabaseController:
     CONNECTION = None
     METADATA = None
 
-    algorithms = SASAlgorithms()
+    algorithms: SASAlgorithms = SASAlgorithms()
     rem = SASREM.SASREM()
 
     USERS = None
