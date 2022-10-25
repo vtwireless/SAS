@@ -19,7 +19,13 @@ class SASAlgorithms:
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT'  # DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
-        self.defaultHeartbeatInterval = 5
+        self.defaultHeartbeatInterval = 60
+        self.retryInterval = 30
+        self.transmitExpireTime = 240
+        self.minimumGrantSize = self.TENMHZ / 2
+        self.maximumGrantSize = 15 * self.TENMHZ
+        self.defaultChannelSize = self.TENMHZ
+
         self.threshold = 30.0  # POWER THRESHOLD
         self.longitude = -80.4  # Blacksburg location
         self.latitude = 37.2
@@ -57,12 +63,20 @@ class SASAlgorithms:
 
     def runGrantAlgorithm(self, grants, REM, request):
         grantResponse = WinnForum.GrantResponse()
-        if not self.acceptableRange(self.getLowFreqFromOP(request.operationParam),
-                                    self.getHighFreqFromOP(request.operationParam)):
+        lowFreq, highFreq = self.getLowFreqFromOP(request.operationParam), self.getHighFreqFromOP(
+            request.operationParam)
+
+        if not self.acceptableRange(lowFreq, highFreq):
             grantResponse.response = self.generateResponse(103)
             grantResponse.response.responseData = "Frequency range outside of license"
             return grantResponse
-        elif self.grantAlgorithm == 'DEFAULT':
+
+        elif not self.acceptableBandwidth(lowFreq, highFreq):
+            grantResponse.response = self.generateResponse(103)
+            grantResponse.response.responseData = "Max Channel Size is " + str(self.defaultChannelSize)
+            return grantResponse
+
+        if self.grantAlgorithm == 'DEFAULT':
             grantResponse = self.defaultGrantAlg(grants, REM, request)
         elif self.grantAlgorithm == 'TIER':
             grantResponse = self.tierGrantAlg(grants, REM, request)
@@ -119,7 +133,7 @@ class SASAlgorithms:
         # return "SUSPENDED_GRANT"
         return "SUCCESS"
 
-    def defaultGrantAlg(self, grants, REM, request):
+    def defaultGrantAlg(self, grants, REM, request: WinnForum.GrantRequest):
         gr = WinnForum.GrantResponse()
         gr.grantId = None
         gr.cbsdId = request.cbsdId
@@ -132,8 +146,21 @@ class SASAlgorithms:
             rangeb = grant["minFrequency"]
             freqa = self.getHighFreqFromOP(request.operationParam)
             freqb = self.getLowFreqFromOP(request.operationParam)
+
             if self.frequencyOverlap(freqa, freqb, rangea, rangeb):
+                if request.vtGrantParams and request.vtGrantParams.startTime and request.vtGrantParams.endTime:
+                    cbsd_grant_start_time = datetime.strptime(request.vtGrantParams.startTime, "%Y-%m-%dT%H:%M")
+                    cbsd_grant_end_time = datetime.strptime(request.vtGrantParams.endTime, "%Y-%m-%dT%H:%M")
+                    conflict_grant_start_time = datetime.strptime(grant["startTime"], "%Y-%m-%dT%H:%M:%S")
+                    conflict_grant_end_time = datetime.strptime(grant["endTime"], "%Y-%m-%dT%H:%M:%S")
+
+                    if (cbsd_grant_start_time > conflict_grant_end_time) or (cbsd_grant_end_time <
+                                                                             conflict_grant_start_time):
+                        conflict = False
+                        continue
+
                 conflict = True
+                break
 
         if conflict:
             gr.response = self.generateResponse(401)
@@ -413,7 +440,8 @@ class SASAlgorithms:
             return False
 
     def acceptableRange(self, lowFreq, highFreq):
-        if ((lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ)):
-            return True
-        else:
-            return False
+        return (lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ)
+
+    def acceptableBandwidth(self, lowFreq, highFreq):
+        return self.minimumGrantSize <= highFreq - lowFreq <= self.maximumGrantSize and lowFreq % 5 == 0 and \
+               highFreq % 5 == 0

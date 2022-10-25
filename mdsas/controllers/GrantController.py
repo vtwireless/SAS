@@ -1,4 +1,5 @@
 import threading
+import math
 from datetime import datetime, timezone, timedelta
 
 import sqlalchemy as db
@@ -9,17 +10,18 @@ from settings import settings
 from Utilities import Utilities
 from algorithms import SASREM
 from algorithms import Server_WinnForum as WinnForum
+from algorithms.SASAlgorithms import SASAlgorithms
 from controllers.CBSDController import CBSDController
 
 
 class GrantController:
     GRANTS = None
 
-    def __init__(self, metadata, engine, connection, algorithms, nodeCtrl):
+    def __init__(self, metadata, engine, connection, algorithms: SASAlgorithms, nodeCtrl):
         self.METADATA = metadata
         self.ENGINE = engine
         self.CONNECTION = connection
-        self.algorithms = algorithms
+        self.algorithms: SASAlgorithms = algorithms
         self.nodeCtrl: CBSDController = nodeCtrl
         self.rem = SASREM.SASREM()
 
@@ -165,52 +167,61 @@ class GrantController:
                 cbsd = self.nodeCtrl.get_cbsd_by_id(item['cbsdId'])
                 item['secondaryUserID'] = cbsd.userId
 
-            query = select([self.GRANTS]).where(and_(
-                self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
-                self.GRANTS.columns.minFrequency == item['minFrequency'],
-                self.GRANTS.columns.startTime == item['startTime']
-            ))
-            rows = self._execute_query(query)
-
-            if len(rows) > 0:
-                return {
-                    "status": 0,
-                    "exists": 1,
-                    "message": "Grant already exists. Grant processing rollback complete"
-                }
-
-            grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
-            ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
-            grantRequest.operationParam = WinnForum.OperationParam(item["powerLevel"], ofr)
-            vtgp = WinnForum.VTGrantParams(
-                item['minFrequency'], item['maxFrequency'], item["preferredFrequency"], item["frequencyAbsolute"],
-                item["minBandwidth"], item["maxBandwidth"], item["preferredBandwidth"],
-                item["startTime"], item["endTime"], item["approximateByteSize"],
-                item["dataType"], item["powerLevel"], item["location"], item["mobility"],
-                item["maxVelocity"]
+            minFreq = round(int(item['minFrequency']) / self.algorithms.minimumGrantSize) * \
+                      self.algorithms.minimumGrantSize
+            number_of_channels = (item['maxFrequency'] - item['minFrequency']) // self.algorithms.defaultChannelSize + 1
+            number_of_channels = math.ceil(
+                (item['maxFrequency'] - item['minFrequency']) / self.algorithms.defaultChannelSize
             )
-            grantRequest.vtGrantParams = vtgp
 
-            grantResponse = self.algorithms.runGrantAlgorithm(
-                self.get_grants()['spectrumGrants'], self.rem, grantRequest
-            )
-            if grantResponse.response.responseCode == "0":
-                self.CONNECTION.execute(self.GRANTS.insert(), [item])
-                rows = self._execute_query(query)
+            for index in range(number_of_channels):
+                item["minFrequency"] = minFreq + (index * self.algorithms.defaultChannelSize)
+                item["maxFrequency"] = item["minFrequency"] + self.algorithms.defaultChannelSize
 
-                if len(rows) < 1:
-                    return {
-                        "status": 0,
-                        "message": "Grant Request could not be processed"
-                    }
+                grantRequest = WinnForum.GrantRequest(item["cbsdId"], None)
+                ofr = WinnForum.FrequencyRange(item["minFrequency"], item["maxFrequency"])
 
-                grantResponse.grantId = rows[0]['grantId']
-                grant = WinnForum.Grant(
-                    grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
-                    vtgp, grantResponse.grantExpireTime
-                )  # TODO: Check if this can be returned
+                grantRequest.operationParam = WinnForum.OperationParam(item["powerLevel"], ofr)
+                vtgp = WinnForum.VTGrantParams(
+                    item["minFrequency"], item["maxFrequency"], item["preferredFrequency"], item["frequencyAbsolute"],
+                    item["minBandwidth"], item["maxBandwidth"], item["preferredBandwidth"],
+                    item["startTime"], item["endTime"], item["approximateByteSize"],
+                    item["dataType"], item["powerLevel"], item["location"], item["mobility"],
+                    item["maxVelocity"]
+                )
+                grantRequest.vtGrantParams = vtgp
 
-            responseArr.append(grantResponse.asdict())
+                grants = self.get_grants()['spectrumGrants']
+                grantResponse = self.algorithms.runGrantAlgorithm(grants, self.rem, grantRequest)
+                if grantResponse.response.responseCode == "0":
+                    item["endTime"] = str(grantResponse.grantExpireTime)
+
+                    self.CONNECTION.execute(self.GRANTS.insert(), [item])
+                    query = select([self.GRANTS]).where(and_(
+                        self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
+                        self.GRANTS.columns.minFrequency == item["minFrequency"],
+                        self.GRANTS.columns.maxFrequency == item["maxFrequency"],
+                        self.GRANTS.columns.startTime == item['startTime']
+                    ))
+                    rows = self._execute_query(query)
+
+                    if len(rows) < 1:
+                        grantResponse = WinnForum.GrantResponse()
+                        grantResponse.response = self.algorithms.generateResponse(103)
+                        grantResponse.response.responseData = \
+                            "Grant Request data not committed to DB. Please contact an administrator"
+                        # return {
+                        #     "status": 0,
+                        #     "message": "Grant Request could not be processed"
+                        # }
+
+                    # grantResponse.grantId = rows[0]['grantId']
+                    # grant = WinnForum.Grant(
+                    #     grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
+                    #     vtgp, grantResponse.grantExpireTime
+                    # )  # TODO: Check if this can be returned
+
+                responseArr.append(grantResponse.asdict())
 
         return {
             "status": 1,
