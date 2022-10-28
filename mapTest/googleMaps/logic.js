@@ -1,17 +1,12 @@
-/**
- * @license
- * Copyright 2019 Google LLC. All Rights Reserved.
- * SPDX-License-Identifier: Apache-2.0
- */
- function initMap() {
+function initMap() {
     // const center = { lat: 37.783, lng: -122.403 };
     const center = { lat: 37.231393, lng: -80.422373 };
 
     const mapOptions = {
         center: center,
-        zoom: 20,
-        // heading: 45,
-        // tilt: 0,
+        zoom: 20.2,
+        heading: 45,
+        tilt: 0,
         mapId: "90f87356969d889c",
         // zoomControl: false,
         // gestureHandling: "none",
@@ -38,25 +33,33 @@
     };
     const imageMapType = new google.maps.ImageMapType({
       getTileUrl: function (coord, zoom) {
-        console.log(coord.x, coord.y, zoom)
-        if (
-          zoom != 20 ||
-          bounds[zoom][0][0] > coord.x ||
-          coord.x > bounds[zoom][0][1] ||
-          bounds[zoom][1][0] > coord.y ||
-          coord.y > bounds[zoom][1][1]
-        ) {
+          console.log(coord.x, coord.y, zoom)
+          bounds[zoom] = [
+              [580080, 580080],
+              [814583, 814583],
+          ]
+          if (
+              zoom != 20 ||
+              bounds[zoom][0][0] > coord.x ||
+              coord.x > bounds[zoom][0][1] ||
+              bounds[zoom][1][0] > coord.y ||
+              coord.y > bounds[zoom][1][1]
+          ) {
+              return "";
+          }
+
+          return "FloorPlan.png"
+
           return "";
-        }
-        return "FloorPlan.png"
-        return [
-            "https://www.gstatic.com/io2010maps/tiles/5/L2_",
-            zoom,
-            "_",
-            coord.x,
-            "_",
-            coord.y,
-            ".png",
+
+          return [
+              "https://www.gstatic.com/io2010maps/tiles/5/L2_",
+              zoom,
+              "_",
+              coord.x,
+              "_",
+              coord.y,
+              ".png",
           ].join("");
       },
       tileSize: new google.maps.Size(128, 128),
