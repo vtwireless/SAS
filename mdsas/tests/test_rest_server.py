@@ -20,7 +20,8 @@ class TestRestServer:
     
     @staticmethod
     def send_request_to_server(method: HttpMethod, url: str):
-        URL = f"http://{HOST}:{PORT}/" + url
+        URL = f"http://{HOST}:{PORT}/{url}"
+
         response = None
         if method == HttpMethod.GET:
             response = requests.request("GET", URL, headers=GET_HEADERS, data={})

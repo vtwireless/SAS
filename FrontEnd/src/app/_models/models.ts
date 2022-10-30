@@ -1,12 +1,11 @@
-﻿export class AppConstants{
-    //public static GETURL = "http://192.168.64.2/HonorBand/HBapi2.php";
-    //public static POSTURL = "http://192.168.64.2/HonorBand/HBapi.php";
+﻿export class AppConstants {
     public static ROOTURL = "http://localhost/SASAPI/";
     public static GETURL = `${AppConstants.ROOTURL}SAS_API_GET.php`;
     public static POSTURL = `${AppConstants.ROOTURL}SAS_API.php`;
     public static SAS_KEY = "qowpe029348fuqw9eufhalksdjfpq3948fy0q98ghefqi";
 
-    public static BACKEND = "http://localhost:8000/";
+    public static SERVER_HOSTNAME = 'http://localhost'
+	public static SERVER_PORT = '8000'
 }
 
 export class SecondaryUser {
@@ -21,7 +20,7 @@ export class SecondaryUser {
         public deviceID: string,
         public location: string,
         public passwordb: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -55,7 +54,7 @@ export class SpectrumGrant {
         public requestMobility: boolean,
         public requestMaxVelocity: number,
         public range: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -87,7 +86,7 @@ export class GrantLog {
         public requestMobility: boolean,
         public requestMaxVelocity: number,
         public range: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -125,7 +124,7 @@ export class Heartbeat {
         public secondaryuserVelocity: number,
         public heartbeatGrantStatus: number,
         public heartbeatBandwidth: number,
-        ) { }
+    ) { }
 
 }
 export class SpectrumInquiryRequest {
@@ -161,7 +160,7 @@ export class Node {
         public mobility: boolean,
         public status: string,
         public comment: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -171,7 +170,7 @@ export class PrimaryUser {
         public primaryUserID: number,
         public primaryUserName: string,
 
-        ) {  }
+    ) { }
 
 }
 
@@ -188,7 +187,7 @@ export class PrimaryUserActivity {
         public location: string,
         public locationConfidence: string,
         public activityStatus: string,
-        ) { }
+    ) { }
 }
 
 export class PrimaryUserLog {
@@ -204,7 +203,7 @@ export class PrimaryUserLog {
         public location: string,
         public locationConfidence: number,
         public comment: string,
-        ) { }
+    ) { }
 }
 
 export class Director {
@@ -221,7 +220,7 @@ export class Director {
         public password: string,
         public passwordb: string,
         public emailBody: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -236,7 +235,7 @@ export class Judge {
         public email: string,
         public passwordb: string,
         public password: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -254,7 +253,7 @@ export class Evaluation {
         public dynamics: number,
         public expression: number,
         public comments: string,
-        ) { }
+    ) { }
 
 }
 
@@ -274,7 +273,7 @@ export class Student {
         public invited: boolean,
         public shirtSize: string,
         public highSchool: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -300,7 +299,7 @@ export class JudgedStudent {
         public mouseHover: boolean,
         public shirtSize: string,
         public bandID: string,
-        ) {  }
+    ) { }
 
 }
 
@@ -309,7 +308,7 @@ export class Eval {
         public score: string,
         public judgeName: string,
         public comment: string,
-        ) { }
+    ) { }
 }
 
 export class Band {
@@ -317,7 +316,7 @@ export class Band {
         public bandID: string,
         public bandName: string,
         public level: number,
-        ) { }
+    ) { }
 }
 
 export class User {
@@ -325,7 +324,7 @@ export class User {
         public id: string,
         public userType: string,
         public name: string,
-        ) { }
+    ) { }
 }
 
 export class TierClass {
@@ -338,7 +337,7 @@ export class TierClass {
         public tierUpperBand: number,
         public tierLowerBand: number,
         public range: string,
-        ) { }
+    ) { }
 
 }
 
@@ -357,7 +356,7 @@ export class TierClassAssignment {
         public secondaryUserEmail: string,
         public innerTierLevel: string,
         public range: string,
-        ) { }
+    ) { }
 
 }
 
@@ -366,7 +365,7 @@ export class Finalization {
         public confirm: string,
         public code: string,
         public action: string,
-        ) { }
+    ) { }
 
 }
 
@@ -389,10 +388,8 @@ export class RegionScheduler {
         public polygon: google.maps.Polygon,
         public marker: google.maps.Marker,
         public polygonCoordinates: google.maps.LatLng[],
-        ) { }
+    ) { }
 }
-
-
 
 export class MapColorConstants {
     public static regionColor = '#FFFF00';
@@ -409,33 +406,43 @@ export class MapColorConstants {
 }
 
 export class PUMap {
-    constructor (
+    constructor(
         public primaryUser: PrimaryUser,
         public marker: google.maps.Marker,
-        ) { }
+    ) { }
 }
 
 export class SUMap {
-    constructor (
+    constructor(
         public secondaryUser: SecondaryUser,
         public marker: google.maps.Marker,
-        ) { }
+    ) { }
 }
 
 export class NodeMap {
-    constructor (
+    constructor(
         public node: Node,
         public marker: google.maps.Marker,
         public circle: google.maps.Circle,
         public polygon: google.maps.Polygon,
-        ) { }
+    ) { }
 }
 
 export class GrantMap {
-    constructor (
+    constructor(
         public grant: SpectrumGrant,
         public marker: google.maps.Marker,
         public circle: google.maps.Circle,
         public polygon: google.maps.Polygon,
-        ) { }
+    ) { }
+}
+
+export enum RequestMethod {
+    GET = "GET",
+    POST = "POST"
+}
+
+export enum RequestProtocol {
+    HTTP,
+    SOCKET
 }

@@ -1,4 +1,14 @@
 {
+    "suLogin": {
+        "username": "abc@abc.com",
+        "password": "password"
+    },
+
+    "adminLogin": {
+        "username": "admin",
+        "password": "admin"
+    },
+
     "getUser": {
         "username": "abc@abc.com",
         "password": "password"
