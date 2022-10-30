@@ -51,6 +51,18 @@ class GrantController:
         except Exception as err:
             raise Exception(str(err))
 
+    def get_grants_by_freq_range(self, lowFrequency, highFrequency):
+        query = select([self.GRANTS]).where(and_(
+            self.GRANTS.columns.minFrequency == lowFrequency,
+            self.GRANTS.columns.maxFrequency == highFrequency,
+        ))
+        rows = self._execute_query(query)
+
+        if len(rows) == 0:
+            raise Exception(f"Grant could not be found for specified range")
+        else:
+            return Utilities.loadGrantFromJSON(rows[0])
+
     def get_grant_with_id(self, grantId):
         query = select([self.GRANTS]).where(
             self.GRANTS.columns.grantId == grantId
@@ -83,40 +95,55 @@ class GrantController:
         inquiryArr, responseArr = [], []
         radiosToChangeBack = []
         radiosToCommunicate = []
+        channel_stack = []
 
         for request in data["spectrumInquiryRequest"]:
             for fr in request["inquiredSpectrum"]:
-                available_channels, errorCode, response = [], None, None
+                minFreq = round(int(fr['lowFrequency']) / self.algorithms.minimumGrantSize) * \
+                          self.algorithms.minimumGrantSize
+                number_of_channels = math.ceil(
+                    (fr['highFrequency'] - fr['lowFrequency']) / self.algorithms.defaultChannelSize
+                )
 
-                lowFreq, highFreq = int(fr["lowFrequency"]), int(fr["highFrequency"])
-                channelType, ruleApplied = "PAL", "FCC_PART_96"
-                maxEirp = self.algorithms.getMaxEIRP()
-                grants = []  # TODO: Fetch grants related to this?
-
-                if self.algorithms.acceptableRange(lowFreq, highFreq):
-                    if 3700000000 > highFreq > 3650000000:
-                        channelType = "GAA"
-
-                    present = self.algorithms.isPUPresentREM(
-                        self.rem, highFreq, lowFreq, None, None, None
-                    )
-                    if present == 0:  # No PU is present
-                        fr = WinnForum.FrequencyRange(lowFreq, highFreq)
-                        availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp, grants)
-                        available_channels.append(availChan)
-
-                    elif present == 2:  # Spectrum Data not available
-                        print("~~~~ Something weird happened. I can't explain it ~~~~")
-                        rTCB, rTC = self.initiateSensing(lowFreq, highFreq)
-                        radiosToChangeBack.extend(rTCB)
-                        radiosToCommunicate.extend(rTC)
-
-                    # TODO: present == 1  # PU is present?
+                if minFreq in channel_stack:
+                    pass
                 else:
-                    errorCode = 300
+                    channel_stack.append(minFreq)
 
-                if not errorCode:
-                    errorCode = 0
+                available_channels, errorCode, response = [], None, None
+                for index in range(number_of_channels):
+                    lowFreq = minFreq + (index * self.algorithms.defaultChannelSize)
+                    highFreq = lowFreq + self.algorithms.defaultChannelSize
+                    channelType, ruleApplied = "PAL", "FCC_PART_96"
+                    maxEirp = self.algorithms.getMaxEIRP()
+                    grantRequests = []  # TODO: Fetch grant requests related to this for this cbsd?
+
+                    if self.algorithms.acceptableRange(lowFreq, highFreq):
+                        if 3700000000 > highFreq > 3650000000:
+                            channelType = "GAA"
+
+                        present = self.algorithms.isPUPresentREM(
+                            self.rem, highFreq, lowFreq, None, None, None
+                        )
+                        if present == 0:  # No PU is present
+                            fr = WinnForum.FrequencyRange(lowFreq, highFreq)
+                            availChan = WinnForum.AvailableChannel(fr, channelType, ruleApplied, maxEirp, grantRequests)
+                            available_channels.append(availChan)
+
+                        elif present == 2:  # Spectrum Data not available
+                            print("~~~~ Something weird happened. I can't explain it ~~~~")
+                            rTCB, rTC = self.initiateSensing(lowFreq, highFreq)
+                            radiosToChangeBack.extend(rTCB)
+                            radiosToCommunicate.extend(rTC)
+
+                        # TODO: present == 1  # PU is present?
+                    else:
+                        errorCode = 300
+                        available_channels = []
+                        break
+
+                    if not errorCode:
+                        errorCode = 0
 
                 response = WinnForum.SpectrumInquiryResponse(
                     request["cbsdId"], available_channels, self.algorithms.generateResponse(errorCode)
@@ -128,9 +155,9 @@ class GrantController:
         ).start()
 
         return {
-                   'status': 1,
-                   "spectrumInquiryResponse": inquiryArr
-               }, radiosToCommunicate
+            'status': 1,
+            "spectrumInquiryResponse": inquiryArr
+        }, radiosToCommunicate
 
     def initiateSensing(self, lowFreq, highFreq):
         count, radioCountLimit = 0, 3
@@ -169,7 +196,6 @@ class GrantController:
 
             minFreq = round(int(item['minFrequency']) / self.algorithms.minimumGrantSize) * \
                       self.algorithms.minimumGrantSize
-            number_of_channels = (item['maxFrequency'] - item['minFrequency']) // self.algorithms.defaultChannelSize + 1
             number_of_channels = math.ceil(
                 (item['maxFrequency'] - item['minFrequency']) / self.algorithms.defaultChannelSize
             )
