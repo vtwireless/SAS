@@ -46,6 +46,7 @@ class TestRestServer:
         assert response_json['status'] == 1
         assert "spectrumInquiryResponse" in response_json
         assert len(response_json["spectrumInquiryResponse"]) == 2
+
         for response_item in response_json["spectrumInquiryResponse"]:
             assert "cbsdId" in response_item
             assert response_item["cbsdId"] == 1
@@ -56,7 +57,7 @@ class TestRestServer:
 
             if "availableChannel" in response_item:
                 assert isinstance(response_item["availableChannel"], list)
-                assert len(response_item["availableChannel"]) > 0
+                assert len(response_item["availableChannel"]) == 2
 
                 available_channels = response_item["availableChannel"][0]
                 assert "channelType" in available_channels

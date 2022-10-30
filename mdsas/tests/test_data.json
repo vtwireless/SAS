@@ -21,7 +21,7 @@
                 "inquiredSpectrum": [
                     {
                         "lowFrequency": 3550000000,
-                        "highFrequency": 3560000000
+                        "highFrequency": 3570000000
                     },
                     {
                         "lowFrequency": 3550,
