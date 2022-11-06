@@ -2,7 +2,9 @@ import threading
 import math
 from datetime import datetime, timezone, timedelta
 
+import pytz
 import sqlalchemy as db
+import sqlalchemy.exc
 from sqlalchemy import select, and_, insert, delete, update
 from sqlalchemy.engine import CursorResult
 
@@ -29,10 +31,15 @@ class GrantController:
 
     def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
-        queryResult = resultProxy.fetchall()
-        rows = [row._asdict() for row in queryResult]
 
-        return rows
+        try:
+            queryResult = resultProxy.fetchall()
+            rows = [row._asdict() for row in queryResult]
+
+            return rows
+
+        except sqlalchemy.exc.ResourceClosedError:
+            return None
 
     def _set_grants_table(self):
         self.GRANTS = db.Table(
@@ -158,9 +165,9 @@ class GrantController:
         ).start()
 
         return {
-            'status': 1,
-            "spectrumInquiryResponse": inquiryArr
-        }, radiosToCommunicate
+                   'status': 1,
+                   "spectrumInquiryResponse": inquiryArr
+               }, radiosToCommunicate
 
     def initiateSensing(self, lowFreq, highFreq):
         count, radioCountLimit = 0, 3
@@ -289,27 +296,50 @@ class GrantController:
         relinquishArr = []
 
         for relinquishmentRequest in data["relinquishmentRequest"]:
-            self.cancel_grant_by_grantId(relinquishmentRequest["grantId"], True)
-            response = {
-                "cbsdId": relinquishmentRequest["cbsdId"],
-                "grantId": relinquishmentRequest["grantId"],
-                "response": Utilities.generateResponse(0)
-            }
-
             if relinquishmentRequest["cbsdId"] is None or relinquishmentRequest["grantId"] is None:
-                response["response"] = Utilities.generateResponse(102)
+                response = {"response": Utilities.generateResponse(102)}
+            else:
+                if self.cancel_grant_for_cbsd(
+                    relinquishmentRequest["cbsdId"], relinquishmentRequest["grantId"], True
+                ):
+                    response = {
+                        "cbsdId": relinquishmentRequest["cbsdId"],
+                        "grantId": relinquishmentRequest["grantId"],
+                        "response": Utilities.generateResponse(0)
+                    }
+                else:
+                    response = {"response": Utilities.generateResponse(103)}
+
             relinquishArr.append(response)
 
         return {"relinquishmentResponse": relinquishArr}
 
+    def cancel_grant_for_cbsd(self, cbsdId, grantId, force=False):
+        rows = self._execute_query(
+            select([self.GRANTS]).where(and_(
+                self.GRANTS.columns.grantId == grantId,
+                self.GRANTS.columns.cbsdId == cbsdId,
+            ))
+        )
+
+        if rows:
+            self.cancel_grant_by_grantId(rows[0], force)
+            return True
+
+        else:
+            return False
+
     def cancel_grant_by_grantId(self, grant, force=False):
         now = datetime.now(timezone.utc)
-        if grant.heartbeatTime + timedelta(0, grant.heartbeatInterval) < now or force:
-            query = delete([self.GRANTS]).where(and_(
-                self.GRANTS.columns.grantId == grant['grantId'],
-                self.GRANTS.columns.secondaryUserID == grant['secondaryUserID']
-            ))
-            row = self._execute_query(query)
+        grant_startTime = datetime.strptime(grant['startTime'], "%Y-%m-%dT%H:%M").astimezone(pytz.UTC)
+
+        if grant_startTime + timedelta(0, self.algorithms.defaultHeartbeatInterval) < now or force:
+            # query = delete(self.GRANTS).where(and_(
+            #     self.GRANTS.columns.grantId == grant['grantId'],
+            #     self.GRANTS.columns.secondaryUserID == grant['secondaryUserID']
+            # ))
+            query = delete(self.GRANTS).where(self.GRANTS.columns.grantId == grant['grantId'])
+            rows = self._execute_query(query)
 
             print(f"Grant {grant['grantId']} has been cancelled")
 

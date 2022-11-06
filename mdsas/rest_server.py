@@ -230,8 +230,15 @@ def heartbeat():
 
 @socket.route('/relinquishmentRequest', methods=['POST'])
 def relinquishment():
-    response, radiosToCommunicate = db.relinquishment_request(request.get_json())
-    return response
+    try:
+        response = db.relinquishment_request(request.get_json())
+        return response
+
+    except Exception as err:
+        print(traceback.format_exc())
+        return {
+            'status': 0, 'message': str(err)
+        }
 
 
 @socket.route('/deleteGrantRequest', methods=['POST'])
