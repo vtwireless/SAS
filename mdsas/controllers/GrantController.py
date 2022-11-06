@@ -314,6 +314,16 @@ class GrantController:
 
         return {"relinquishmentResponse": relinquishArr}
 
+    def cancel_grants_for_cbsd(self, cbsdId):
+        query = delete(self.GRANTS).where(self.GRANTS.columns.cbsdId == cbsdId)
+        rows = self._execute_query(query)
+
+        rows = self._execute_query(
+            select(self.GRANTS).where(self.GRANTS.columns.cbsdId == cbsdId)
+        )
+        if rows:
+            raise Exception("Associated Grants could not be removed")
+
     def cancel_grant_for_cbsd(self, cbsdId, grantId, force=False):
         rows = self._execute_query(
             select([self.GRANTS]).where(and_(

@@ -281,6 +281,12 @@ class DatabaseController:
         return self.cbsd_controller.register_cbsds(sid, payload)
 
     def deregister_nodes(self, nodes):
+        for item in nodes["deregistrationRequest"]:
+            if 'cbsdId' not in item or not item['cbsdId']:
+                raise Exception(str('CBSD-ID not provided'))
+
+            self.grants_controller.cancel_grants_for_cbsd(item['cbsdId'])
+
         return self.cbsd_controller.deregister_cbsds(nodes)
 
     def update_nodes(self, payload):
