@@ -74,6 +74,9 @@ class GrantController:
         else:
             return Utilities.loadGrantFromJSON(rows[0])
 
+    def get_grant_requests_for_cbsd(self, cbsd_id):
+        pass
+
     def delete_grant_with_id(self, grantId):
         query = delete([self.GRANTS]).where(self.GRANTS.columns.grantId == grantId)
         rows = self._execute_query(query)
@@ -251,7 +254,7 @@ class GrantController:
 
         return {
             "status": 1,
-            "message": "Grants have been created",
+            "message": "Grants have been processed",
             "grantResponse": responseArr
         }
 
