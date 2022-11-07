@@ -45,12 +45,13 @@ def test_false_admin_login(client):
         "username": "admin", "password": "IDONTKNOWTHEPASSWORD"
     })
     response = res.get_json()
-    LOGGER.info(response)
+    LOGGER.debug(response)
 
     assert res.status_code == 200
     assert "status" in response
     assert "message" in response
     assert response["message"] == "User could not be found"
+    assert response["status"] == 1
 
 
 # -------------------------------------------------------------------
@@ -59,6 +60,9 @@ def test_false_admin_login(client):
 
 @pytest.mark.skip(reason="User not created")
 def test_su_login(client):
+    """
+    Check if secondary user can log in
+    """
     res = client.post('/suLogin', json={
         "username": "abc@abc.com",
         "password": "password"

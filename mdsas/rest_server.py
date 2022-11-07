@@ -58,6 +58,12 @@ def root():
 # In[ --- User Management ---]
 @socket.route('/suLogin', methods=['POST'])
 def suLogin():
+    """
+    Login API for secondary users
+    Returns User Information upon successful inquiry
+    -------
+
+    """
     try:
         response = db.authenticate_user(request.get_json(), False)
         return response
