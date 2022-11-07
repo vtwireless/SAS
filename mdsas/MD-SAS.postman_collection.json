@@ -123,7 +123,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"spectrumInquiryRequest\": [\r\n        {\r\n            \"cbsdId\": 1,\r\n            \"inquiredSpectrum\": [\r\n                {\r\n                    \"lowFrequency\": 3550000000,\r\n                    \"highFrequency\": 3560000000\r\n                },\r\n                {\r\n                    \"lowFrequency\": 3550,\r\n                    \"highFrequency\": 3560\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"spectrumInquiryRequest\": [\r\n        {\r\n            \"cbsdId\": 1,\r\n            \"inquiredSpectrum\": [\r\n                {\r\n                    \"lowFrequency\": 3550000000,\r\n                    \"highFrequency\": 3570000000\r\n                },\r\n                {\r\n                    \"lowFrequency\": 3550,\r\n                    \"highFrequency\": 3560\r\n                }\r\n            ]\r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -182,7 +182,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"grantRequest\": [\r\n        {\r\n            \"cbsdId\": 2,\r\n            \"minFrequency\": 3620000000,\r\n            \"maxFrequency\": 3630000000,\r\n            \"preferredFrequency\": 3600000000,\r\n            \"frequencyAbsolute\": true,\r\n            \"minBandwidth\": 10000000,\r\n            \"maxBandwidth\": 10000000,\r\n            \"preferredBandwidth\": 10000000,\r\n            \"startTime\": \"2022-10-26T00:00\",\r\n            \"endTime\": \"2022-10-26T00:30\",\r\n            \"approximateByteSize\": 20,\r\n            \"dataType\": \"AUDIO\",\r\n            \"powerLevel\": 30,\r\n            \"location\": \"20.171,13.242\",\r\n            \"mobility\": true,\r\n            \"maxVelocity\": 20\r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"grantRequest\": [\r\n        {\r\n            \"cbsdId\": 2,\r\n            \"minFrequency\": 3610000000,\r\n            \"maxFrequency\": 3630000000,\r\n            \"preferredFrequency\": 3600000000,\r\n            \"frequencyAbsolute\": true,\r\n            \"minBandwidth\": 10000000,\r\n            \"maxBandwidth\": 10000000,\r\n            \"preferredBandwidth\": 10000000,\r\n            \"startTime\": \"2022-10-26T00:00\",\r\n            \"endTime\": \"2022-10-26T00:30\",\r\n            \"approximateByteSize\": 20,\r\n            \"dataType\": \"AUDIO\",\r\n            \"powerLevel\": 30,\r\n            \"location\": \"20.171,13.242\",\r\n            \"mobility\": true,\r\n            \"maxVelocity\": 20\r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -198,6 +198,62 @@
 					"port": "8000",
 					"path": [
 						"grantRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "relinquishmentRequest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"relinquishmentRequest\": [\r\n        {\r\n            \"cbsdId\": 2,\r\n            \"grantId\": 1\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/relinquishmentRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"relinquishmentRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "deregistrationRequest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"deregistrationRequest\": [\r\n        {\r\n            \"cbsdId\": 2\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/deregistrationRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"deregistrationRequest"
 					]
 				}
 			},
