@@ -156,14 +156,23 @@ def getNodes():
 
 @socket.route('/registrationRequest', methods=['POST'])
 def register():
-    response, assignmentArr = db.register_nodes(1, request.get_json())
+    # response, assignmentArr = db.register_nodes(1, request.get_json())
 
     # TODO: Does dev server need a socket?
     # if the radio does not get the assignment out of the meas config
     # for radio in assignmentArr:
     #     sendAssignmentToRadio(radio)
 
-    return response
+    # return response
+
+    try:
+        response, assignmentArr = db.register_nodes(1, request.get_json())
+        return response
+    except Exception as err:
+        print(traceback.format_exc())
+        return {
+            'status': 0, 'message': str(err)
+        }
 
 
 @socket.route('/deregistrationRequest', methods=['POST'])

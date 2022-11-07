@@ -55,6 +55,7 @@ export class CreateNodeComponent {
 		this.submitted = true;
 		console.log(this.model);
 		const user = JSON.parse(localStorage.getItem('currentUser'));
+		this.model["userId"] = user.id
 		this.httpRequests.createNode(this.model).subscribe(
 			(data) => {
 				if (data['status'] == '1') {

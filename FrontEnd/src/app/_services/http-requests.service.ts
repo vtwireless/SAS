@@ -183,7 +183,8 @@ export class HttpRequestsService {
 				nodeType: model.nodeType,
 				mobility: model.mobility.toString(),
 				status: model.status,
-				comment: model.comment.toString()
+				comment: model.comment.toString(),
+				userId: model.userId.toString()
 			}]
 		};
 

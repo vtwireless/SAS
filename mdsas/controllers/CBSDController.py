@@ -96,7 +96,7 @@ class CBSDController:
                     "message": f"Node '{payload['fccID']}' could not be added."
                 }
 
-            radio = CBSD.CBSD(cbsdID, item[''], item['fccId'])
+            radio = CBSD.CBSD(cbsdID, item.get("trustLevel", 1), item['fccId'])
             # Flatten Structure
             location = item['location'].split(',')
             radio.latitude = location[0]
@@ -142,7 +142,7 @@ class CBSDController:
             ))
             rows = self._execute_query(query)
 
-            if len(rows) > 0:
+            if len(rows) == 0:
                 response.response = self.algorithms.generateResponse(0)
             else:
                 response.response = self.algorithms.generateResponse(103)

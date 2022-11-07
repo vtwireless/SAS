@@ -238,7 +238,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"deregistrationRequest\": [\r\n        {\r\n            \"cbsdId\": 2\r\n        }\r\n    ]\r\n}",
+					"raw": "{\r\n    \"deregistrationRequest\": [\r\n        {\r\n            \"cbsdId\": 4\r\n        }\r\n    ]\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -254,6 +254,53 @@
 					"port": "8000",
 					"path": [
 						"deregistrationRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "registrationRequest",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"registrationRequest\": [\r\n        {\r\n            \"nodeName\": \"node1sadf\",\r\n            \"location\": \"12.345678,98.7654321\",\r\n            \"IPAddress\": \"192.162.114.31\",\r\n            \"trustLevel\": \"5\",\r\n            \"minFrequency\": \"1\",\r\n            \"maxFrequency\": \"2\",\r\n            \"minSampleRate\": \"1\",\r\n            \"maxSampleRate\": \"2\",\r\n            \"nodeType\": \"VT-Wireless-Registered Radar\",\r\n            \"mobility\": \"true\",\r\n            \"status\": \"INACTIVE\",\r\n            \"comment\": \"\",\r\n            \"userId\": \"admin\"\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/registrationRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"registrationRequest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetNodes",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/getNodesRequest",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"getNodesRequest"
 					]
 				}
 			},
