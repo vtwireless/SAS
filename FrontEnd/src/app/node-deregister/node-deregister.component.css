@@ -1,0 +1,9 @@
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.node-deregister-form{
+    margin-top: 10rem;
+}

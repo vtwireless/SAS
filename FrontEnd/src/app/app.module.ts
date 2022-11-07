@@ -39,7 +39,8 @@ import { ErrorInterceptor } from './_helpers/error.interceptor';;
 import { NotFoundComponent } from './not-found/not-found.component'
 import { AppRoutingModule } from './app-routing.module';;
 import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
-import { FormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';;
+import { NodeDeregisterComponent } from './node-deregister/node-deregister.component'
 
 
 @NgModule({
@@ -66,7 +67,8 @@ import { FormsModule } from '@angular/forms';
     CreateRequestComponent,
     NotFoundComponent
 ,
-    SepctrumInquiryRequestComponent    // SocketComponent
+    SepctrumInquiryRequestComponent ,
+    NodeDeregisterComponent   // SocketComponent
   ],
 
   imports: [
