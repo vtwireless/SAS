@@ -12,6 +12,7 @@
     justify-content: space-between;
     align-items: center;
     margin-top: 2rem;
+    margin-left: 5rem;
 }
 
 .form-group > label {
@@ -27,4 +28,12 @@
 
 .node-buttons {
     margin: 5rem 0 0 20rem;
+}
+
+.response-table{
+    margin-top: 5rem;
+}
+
+.response-table > td{
+    font-size: 0.5rem;
 }

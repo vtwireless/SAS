@@ -46,20 +46,76 @@
                     <button type="button" (click)="addRange();" style="margin-left: 2rem;margin-top: 4.5rem" class="btn btn-success" [disabled]="!spectrumInquiryForm.form.valid">Add</button>
                 </div>
                 </div>
+                <div>
+                    <div  class="selected-freq" *ngFor="let divData of chosenFreqRanges">{{divData.lowFrequency}}MHz - {{divData.highFrequency}}MHz</div>
+                </div>
 
 
-                <div class="node-buttons" style="display: flex;flex-direction: row; justify-content: space-between; width: 20vw; margin-left: 5rem">
+                <div class="node-buttons" style="display: flex;flex-direction: row; justify-content: space-between; width: 25vw; margin-left: 5rem">
                     <button type="submit" class="btn btn-success" [disabled]="!spectrumInquiryForm.form.valid">Submit</button>
                     <button type="button" class="btn btn-default"
                             (click)="newRequest(); spectrumInquiryForm.reset()">Clear Form</button>
+                    <button type="button" class="btn btn-default"
+                            (click)="clearResponse();">Clear Response</button>
                 </div>
 
             </form>
 
-            {{response}}
+<!--            {{response}}-->
 
-            <div  class="selected-freq" *ngFor="let divData of chosenFreqRanges">{{divData.lowFrequency}}MHz - {{divData.highFrequency}}MHz</div>
+<!--            <div  class="selected-freq" *ngFor="let divData of chosenFreqRanges">{{divData.lowFrequency}}MHz - {{divData.highFrequency}}MHz</div>-->
 
+
+            <div class="mat-elevation-z8 response-table">
+                <table mat-table [dataSource] = "dataSource">
+
+                    <ng-container matColumnDef="cbsdId">
+                        <th mat-header-cell *matHeaderCellDef> CBSD ID &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element"> {{element.cbsdId}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="responseCode">
+                        <th mat-header-cell *matHeaderCellDef> Response Code &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element"> {{element.response.responseCode}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="responseMessage">
+                        <th mat-header-cell *matHeaderCellDef> Response Message &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element"> {{element.response.responseMessage}} </td>
+                    </ng-container>
+
+                    <ng-container  matColumnDef="channelType">
+                        <th mat-header-cell *matHeaderCellDef> Channel Type &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element" > {{element.availableChannel !== null ? element.availableChannel[0].channelType : '' }} </td>
+                    </ng-container>
+
+                    <ng-container  matColumnDef="maxEirp">
+                        <th mat-header-cell *matHeaderCellDef> Max Eirp &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element" > {{element.availableChannel !== null ? element.availableChannel[0].maxEirp : '' }} </td>
+                    </ng-container>
+
+                    <ng-container  matColumnDef="ruleApplied">
+                        <th mat-header-cell *matHeaderCellDef> Rule Applied &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element" > {{element.availableChannel !== null ? element.availableChannel[0].ruleApplied : '' }} </td>
+                    </ng-container>
+
+                    <ng-container  matColumnDef="grantRequest">
+                        <th mat-header-cell *matHeaderCellDef> Grant Request &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element" > {{element.availableChannel !== null ? element.availableChannel[0].grantRequest : '' }} </td>
+                    </ng-container>
+
+                    <ng-container  matColumnDef="frequencyRange">
+                        <th mat-header-cell *matHeaderCellDef> Frequency Range &nbsp;&nbsp;&nbsp;&nbsp;</th>
+                        <td mat-cell *matCellDef="let element" > {{element.availableChannel !== null ? element.availableChannel[0].frequencyRange.lowFrequency : '' }} - {{element.availableChannel !== null ? element.availableChannel[0].frequencyRange.highFrequency : '' }}</td>
+                    </ng-container>
+
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+                <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons aria-label="Select page of periodic elements">
+                </mat-paginator>
+            </div>
         </div>
     </div>
 </div>
