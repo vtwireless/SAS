@@ -59,9 +59,9 @@ def suLogin():
 
 
 @socket.route('/adminLogin', methods=['POST'])
-def adminLogin(data):
+def adminLogin():
     try:
-        response = db.authenticate_user(data, True)
+        response = db.authenticate_user(request.get_json(), True)
         return response
 
     except Exception as err:
@@ -71,9 +71,9 @@ def adminLogin(data):
 
 
 @socket.route('/createSU', methods=['POST'])
-def createSecondaryUser(data):
+def createSecondaryUser():
     try:
-        response = db.create_user(data, False)
+        response = db.create_user(request.get_json(), False)
         return response
 
     except Exception as err:
@@ -83,10 +83,9 @@ def createSecondaryUser(data):
 
 
 @socket.route('/createAdminUserINsas', methods=['POST'])
-def createAdminUser(data):
-
+def createAdminUser():
     try:
-        response = db.create_user(data, True)
+        response = db.create_user(request.get_json(), True)
         return response
 
     except Exception as err:
@@ -231,8 +230,15 @@ def heartbeat():
 
 @socket.route('/relinquishmentRequest', methods=['POST'])
 def relinquishment():
-    response, radiosToCommunicate = db.relinquishment_request(request.get_json())
-    return response
+    try:
+        response = db.relinquishment_request(request.get_json())
+        return response
+
+    except Exception as err:
+        print(traceback.format_exc())
+        return {
+            'status': 0, 'message': str(err)
+        }
 
 
 @socket.route('/deleteGrantRequest', methods=['POST'])

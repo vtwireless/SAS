@@ -2,6 +2,7 @@ import random
 import uuid
 
 import sqlalchemy as db
+import sqlalchemy.exc
 from sqlalchemy import select, and_, insert, delete, update
 from sqlalchemy.engine import CursorResult
 
@@ -26,10 +27,15 @@ class CBSDController:
 
     def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
-        queryResult = resultProxy.fetchall()
-        rows = [row._asdict() for row in queryResult]
 
-        return rows
+        try:
+            queryResult = resultProxy.fetchall()
+            rows = [row._asdict() for row in queryResult]
+
+            return rows
+
+        except sqlalchemy.exc.ResourceClosedError:
+            return None
 
     def _set_cbsds_table(self):
         self.CBSD = db.Table(
@@ -123,8 +129,8 @@ class CBSDController:
             if 'cbsdId' not in item or not item['cbsdId']:
                 raise Exception(str('CBSD-ID not provided'))
 
-            query = delete([self.CBSD]).where(
-                self.CBSD.columns.cbsdId == item['cbsdId']
+            query = delete(self.CBSD).where(
+                self.CBSD.columns.cbsdID == item['cbsdId']
             )
             rows = self._execute_query(query)
 
@@ -132,7 +138,7 @@ class CBSDController:
             response.cbsdId = item['cbsdId']
 
             query = select([self.CBSD]).where(and_(
-                self.CBSD.columns.cbsdId == item['cbsdId']
+                self.CBSD.columns.cbsdID == item['cbsdId']
             ))
             rows = self._execute_query(query)
 

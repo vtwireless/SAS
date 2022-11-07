@@ -1,78 +1,72 @@
 // tslint:disable: indent
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import 'rxjs/add/observable/throw';
 import 'rxjs/add/operator/catch';
-import {
-	User,
-	AppConstants,
-	Director,
-	PrimaryUser,
-	SecondaryUser,
-	GrantRequest,
-} from '../_models/models';
+
+import { User, AppConstants, GrantRequest, RequestMethod, RequestProtocol } from '../_models/models';
 import { SocketService } from './socket.service';
+
 
 @Injectable({
 	providedIn: 'root',
 })
+
 export class HttpRequestsService {
 	public currentUser: Observable<User>;
-	POSTAPI = AppConstants.POSTURL;
-	GETAPI = AppConstants.GETURL;
+	private defaultProtocol = RequestProtocol.HTTP;
+	private NotImplementedError = throwError("Method not implemented");
 
-	SERVER = AppConstants.BACKEND;
-	HEEADERS = new HttpHeaders({
-		'Content-Type':'application/json',
+	HEADERS = new HttpHeaders({
+		'Content-Type': 'application/json',
 		'Access-Control-Allow-Origin': '*'
 	});
-	HOSTNAME = 'http://localhost'
-	PORT = '8000'
-	RESTURL = this.HOSTNAME + ":" + this.PORT + "/"
+	RESTURL = AppConstants.SERVER_HOSTNAME + ":" + AppConstants.SERVER_PORT + "/"
 
 	constructor(
-		private httpClient: HttpClient, 
+		private httpClient: HttpClient,
 		private socketClient: SocketService
 	) {
-		this.socketClient.configure(this.HOSTNAME, this.PORT);
+		this.socketClient.configure(AppConstants.SERVER_HOSTNAME, AppConstants.SERVER_PORT);
 	}
 
-	// Common Method for http or socket request
-	private sendReq(typeOfRequest:string, requestCode: string, requestBody: any, responseCode: string, typeOfRESTReq: string, params: any): Observable<any>{
 
-		let URL = this.RESTURL + requestCode;
-		if(typeOfRequest === 'SOCKET'){
-			return this.sendRequest(requestCode, requestBody, responseCode);
-		}else if(typeOfRequest === 'REST'){
-			if(typeOfRESTReq === 'GET'){
-				return this.httpClient.get(URL, params).catch(this.handleError);
-			}else if(typeOfRESTReq === 'POST'){
-				return this.httpClient.post(URL, requestBody, params).catch(this.handleError);
+	private sendRequests(
+		reqProtocol: RequestProtocol, reqMethod: RequestMethod, reqCode: string, reqBody: any, resCode: string
+	): Observable<any> {
+		/**
+		 * Common Method for sending requests to backend server. Returns an observable
+		 */
+
+		if (reqProtocol == RequestProtocol.SOCKET) {
+			this.socketClient.emit(reqCode, reqBody);
+
+			return this.socketClient.listen(resCode);
+		}
+
+		else if (reqProtocol == RequestProtocol.HTTP) {
+			let url = `${this.RESTURL}${reqCode}`;
+
+			if (reqMethod == RequestMethod.GET) {
+				return this.httpClient.get(url, { headers: this.HEADERS });
+			} else if (reqMethod == RequestMethod.POST) {
+				return this.httpClient.post(url, reqBody, { headers: this.HEADERS })
 			}
 		}
 	}
 
-	private sendRequest(requestCode: string, requestBody: any, responseCode: string): Observable<any> {
-		console.log(requestCode, requestBody)
-		this.socketClient.emit(requestCode, requestBody);
-		
-		return this.socketClient.listen(responseCode);
-	}
-
 	// ------------------------------ User Requests ------------------------------------
-	
+
 	public suLogin(model: any): Observable<any> {
 		var body = {
 			password: model.password,
 			username: model.username
 		};
 
-		return this.sendReq('SOCKET', 'suLogin', body, 'suLoginResponse',
-			'NONE', {});
-
-		// return this.sendReq('REST', 'suLogin', body, 'suLoginResponse',
-		// 'POST', {});
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'suLogin', body, 'suLoginResponse'
+		);
 	}
 
 	public adminLogin(model: any): Observable<any> {
@@ -80,15 +74,10 @@ export class HttpRequestsService {
 			password: model.password,
 			username: model.username
 		};
-
-		let params = new HttpParams();
-		params = params.set('password', model.password);
-		params = params.set('username', model.username);
-		return this.sendReq('SOCKET', 'adminLogin', body, 'adminLoginResponse',
-			'NONE', {});
-
-		// return this.sendReq('REST', 'adminLogin', body, 'adminLoginResponse',
-		// 	'POST', params);
+		
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'adminLogin', body, 'adminLoginResponse'
+		);
 	}
 
 	public createSecondaryAccount(model: any): Observable<any> {
@@ -101,20 +90,66 @@ export class HttpRequestsService {
 			location: model.location,
 		};
 
-		return this.sendReq('SOCKET', 'createSU', body, 'createSUResponse',
-			'NONE', {});
-
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'createSU', body, 'createSUResponse'
+		);
 	}
 
 	public getSecondaryUsers(): Observable<any> {
-
-		return this.sendReq('SOCKET', 'getUsers', {}, 'getUsersResponse','NONE', {});
-
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.GET, 'getUsers', {}, 'getUsersResponse'
+		);
 	}
 
 	public getPrimaryUsers(): Observable<any> {
-		return this.sendReq('SOCKET', 'getUsers', {}, 'getUsersResponse','NONE', {});
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.GET, 'getUsers', {}, 'getUsersResponse'
+		);
+	}
+	
+	public checkEmail(model: any): Observable<any> {
+		var body = JSON.stringify({
+			email: model.secondaryUserEmail
+		});
 
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, "checkEmailAvail", body, "checkEmailAvailResponse"
+		);
+	}
+
+	// ------------------------------ User Tier Class Requests -----------------------------------
+
+	public createTierClass(
+		model: any,
+		GIGA: number,
+		MEGA: number
+	): Observable<any> {
+		var scale = model.range == 'MHz' ? MEGA : GIGA;
+		var body = {
+			tierClassName: model.tierClassName,
+			tierPriorityLevel: model.tierPriorityLevel,
+			tierClassDescription: model.tierClassDescription,
+			maxTierNumber: model.maxTierNumber,
+			tierUpperBand: model.tierUpperBand * scale,
+			tierLowerBand: model.tierLowerBand * scale
+		};
+
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, "createTierClass", body, 'createTierClassResponse'
+		);
+	}
+
+	public getTierClassID(tierID: any): Observable<any> {
+		let body = { 'tierClassID': tierID };
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'getTierClassById', body, 'getTierClassByIdResponse'
+		);
+	}
+
+	public getTierClass(): Observable<any> {
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.GET, 'getTierClass', {}, 'getTierClassResponse'
+		);
 	}
 
 	// ------------------------------ Spectrum Inquiry Requests -----------------------------------
@@ -127,11 +162,10 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendReq('REST', 'spectrumInquiryRequest', body, 'spectrumInquiryResponse','POST', {});
-
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'spectrumInquiryRequest', body, 'spectrumInquiryResponse'
+		);
 	}
-
-
 
 	// ------------------------------ Node Requests ------------------------------------
 
@@ -153,32 +187,29 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendReq('SOCKET', 'registrationRequest', body, 'registrationResponse','NONE', {});
-
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'registrationRequest', body, 'registrationResponse'
+		);
 	}
 
 	public getAllNodes(): Observable<any> {
-
-		return this.sendReq('REST', 'getNodesRequest', {}, 'getNodesResponse','GET', {});
-
-		// return this.sendRequest('getNodesRequest', {}, 'getNodesResponse');
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.GET, 'getNodesRequest', {}, 'getNodesResponse'
+		);
 	}
 
 
 	// ------------------------------ Grant Requests -----------------------------------
 
 	public createRequest(model: GrantRequest, isAdmin: boolean): Observable<any> {
-		// let MHz = 10000000;
-		let MHz = 1; // Done to keep freq always in MHz
-		
 		var body = {
 			grantRequest: [{
 				secondaryUserID: model.secondaryUserID,
 				secondaryUserName: model.secondaryUserName,
 				location: model.location,
-				minFrequency: (MHz * model.minFrequency),
-				maxFrequency: (MHz * model.maxFrequency),
-				preferredFrequency: (MHz * model.preferredFrequency),
+				minFrequency: model.minFrequency,
+				maxFrequency: model.maxFrequency,
+				preferredFrequency: model.preferredFrequency,
 				frequencyAbsolute: model.frequencyAbsolute,
 				minBandwidth: model.minBandwidth,
 				preferredBandwidth: model.preferredBandwidth,
@@ -194,13 +225,15 @@ export class HttpRequestsService {
 			}]
 		};
 
-		return this.sendReq('SOCKET', 'grantRequest', body, 'grantResponse','NONE', {});
-
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'grantRequest', body, 'grantResponse'
+		);
 	}
 
 	public getSpectrumGrants(): Observable<any> {
-
-		return this.sendReq('SOCKET', 'getGrantsRequest', {}, 'getGrantsResponse','NONE', {});
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.GET, 'getGrantsRequest', {}, 'getGrantsResponse'
+		);
 
 	}
 
@@ -212,10 +245,11 @@ export class HttpRequestsService {
 		params = params.set('action', 'getAllNodes');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
 
 	public logGrant(grantID: any): Observable<any> {
@@ -224,9 +258,11 @@ export class HttpRequestsService {
 		params = params.set('grantID', grantID.toString());
 		params = params.set('status', 'DELETED');
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public createJudge(model: any): Observable<any> {
@@ -239,9 +275,11 @@ export class HttpRequestsService {
 		params = params.set('phone', model.phone);
 		params = params.set('password', model.password);
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public createSpectrumInquiryRequest(model: any): Observable<any> {
@@ -250,9 +288,11 @@ export class HttpRequestsService {
 		params = params.set('cbsdId', model.cbsdId.toString());
 		params = params.set('selectedFrequencyRanges', model.selectedFrequencyRanges);
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public createNodeRequest(model: any): Observable<any> {
@@ -286,17 +326,11 @@ export class HttpRequestsService {
 		params = params.set('mobility', model.mobility.toString());
 		params = params.set('maxVelocity', model.maxVelocity.toString());
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
-	}
-
-	public checkEmail(model: any): Observable<any> {
-		var body = JSON.stringify({
-			email: model.secondaryUserEmail
-		});
-
-		return this.httpClient.post(this.SERVER + "checkEmailAvail", body, {headers: this.HEEADERS});
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public getGrantByID(grantID: string) {
@@ -305,19 +339,23 @@ export class HttpRequestsService {
 		params = params.set('grantID', grantID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
-	
+
 	public getGrantLogs(): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getGrantLogs');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
 
 	public getGrantLogByID(grantID: any): Observable<any> {
@@ -326,10 +364,11 @@ export class HttpRequestsService {
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 		params = params.set('grantID', grantID.toString());
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
 
 	public getRegionSchedules(): Observable<any> {
@@ -337,19 +376,23 @@ export class HttpRequestsService {
 		params = params.set('action', 'getRegionSchedules');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
-	
+
 	public getGrantRequests(): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getGrantRequests');
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
 
 	public getNodeByID(nodeID: any): Observable<any> {
@@ -358,9 +401,11 @@ export class HttpRequestsService {
 		params = params.set('nodeID', nodeID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.GET, "", {}, ""
+		// );
 	}
 
 	public createRegionSchedule(model: any): Observable<any> {
@@ -380,10 +425,11 @@ export class HttpRequestsService {
 		params = params.set('isDefault', model.isDefault.toString());
 		params = params.set('isActive', model.isActive.toString());
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public updateTierClass(model: any): Observable<any> {
@@ -400,10 +446,11 @@ export class HttpRequestsService {
 		params = params.set('tierUpperBand', model.tierUpperBand.toString());
 		params = params.set('tierLowerBand', model.tierLowerBand.toString());
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public updateRegionSchedule(model: any): Observable<any> {
@@ -424,10 +471,11 @@ export class HttpRequestsService {
 		params = params.set('isDefault', model.isDefault.toString());
 		params = params.set('isActive', model.isActive.toString());
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public updateNode(model: any): Observable<any> {
@@ -447,9 +495,11 @@ export class HttpRequestsService {
 		params = params.set('status', model.status);
 		params = params.set('comment', model.comment.toString());
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public getPrimaryUserByID(userID: any): Observable<any> {
@@ -458,20 +508,24 @@ export class HttpRequestsService {
 		params = params.set('primaryUserID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
-	
+
 	public getPrimaryUserActivityByID(userID: any): Observable<any> {
 		let params = new HttpParams();
 		params = params.set('action', 'getPrimaryUserActivitiesByPUID');
 		params = params.set('primaryUserID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public getSecondaryUserByID(userID: any): Observable<any> {
@@ -480,41 +534,10 @@ export class HttpRequestsService {
 		params = params.set('secondaryUserID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
-	}
-
-	public createTierClass(
-		model: any,
-		GIGA: number,
-		MEGA: number
-	): Observable<any> {
-		var scale = model.range == 'MHz' ? MEGA : GIGA;
-		var body = {
-			tierClassName: model.tierClassName,
-			tierPriorityLevel: model.tierPriorityLevel,
-			tierClassDescription: model.tierClassDescription,
-			maxTierNumber: model.maxTierNumber,
-			tierUpperBand: model.tierUpperBand * scale,
-			tierLowerBand: model.tierLowerBand * scale
-		};
-
-		return this.sendReq('SOCKET', 'createTierClass', body, 'createTierClassResponse','NONE', {});
-
-
-		// return this.sendRequest('createTierClass', body, 'createTierClassResponse');
-	}
-
-	public getTierClassID(tierID: any): Observable<any> {
-
-		return this.sendReq('SOCKET', 'getTierClassById', {'tierClassID': tierID}, 'getTierClassByIdResponse','NONE', {});
-
-		// return this.sendRequest(
-		// 	'getTierClassById',
-		// 	{'tierClassID': tierID},
-		// 	'getTierClassByIdResponse'
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
 		// );
 	}
 
@@ -524,39 +547,38 @@ export class HttpRequestsService {
 		params = params.set('tierClassID', tierID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public deleteTierClassAssignmentsByID(secondaryUser: any): Observable<any> {
 		let params = new HttpParams();
-        params = params.set('action',  'deleteTierClassAssignment');
-        params = params.set('assignmentID',  secondaryUser.tierAssignmentID);
+		params = params.set('action', 'deleteTierClassAssignment');
+		params = params.set('assignmentID', secondaryUser.tierAssignmentID);
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
-	}
-
-	public getTierClass(): Observable<any> {
-
-		return this.sendReq('SOCKET', 'getTierClass', {}, 'getTierClassResponse','NONE', {});
-
-		// return this.sendRequest('getTierClass', {}, 'getTierClassResponse');
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public alterTierClassAssignmentByID(tierID: any, model: any): Observable<any> {
 		let params = new HttpParams();
-		params = params.set('action',  'alterTierClassAssignment');
-		params = params.set('secondaryUserID',  model.secondaryUserID);
+		params = params.set('action', 'alterTierClassAssignment');
+		params = params.set('secondaryUserID', model.secondaryUserID);
 		params = params.set('tierClassID', tierID);
 		params = params.set('innerTierLevel', model.innerTierLevel.toString());
 		params = params.set('isNewTA', true.toString());
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public getAllGrantsBySUID(userID: any): Observable<any> {
@@ -565,9 +587,11 @@ export class HttpRequestsService {
 		params = params.set('SUID', userID);
 		params = params.set('SAS_KEY', AppConstants.SAS_KEY);
 
-		return this.sendReq('REST', '', {}, '','GET', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.GETAPI, params).catch(this.handleError);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 
 	public deleteGrantRequest(grantRequest: any): Observable<any> {
@@ -575,12 +599,10 @@ export class HttpRequestsService {
 		params = params.set('action', 'deleteGrantRequest');
 		params = params.set('grantRequestID', grantRequest.requestID);
 
-		return this.sendReq('REST', '', {}, '','POST', params);
+		return this.NotImplementedError;
 
-		// return this.httpClient.post(this.POSTAPI, params);
-	}
-
-	private handleError(error: Response) {
-		return Observable.throw(error);
+		// return this.sendRequests(
+		// 	this.defaultProtocol, RequestMethod.POST, "", {}, ""
+		// );
 	}
 }

@@ -15,6 +15,7 @@ class SASAlgorithms:
     MINCBRSFREQ = 3550000000
     MAXCBRSFREQ = 3700000000
     TENMHZ = 10000000
+    DEFAULT_TIME_FORMAT = "%Y-%m-%dT%H:%M"
 
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
@@ -149,10 +150,10 @@ class SASAlgorithms:
 
             if self.frequencyOverlap(freqa, freqb, rangea, rangeb):
                 if request.vtGrantParams and request.vtGrantParams.startTime and request.vtGrantParams.endTime:
-                    cbsd_grant_start_time = datetime.strptime(request.vtGrantParams.startTime, "%Y-%m-%dT%H:%M")
-                    cbsd_grant_end_time = datetime.strptime(request.vtGrantParams.endTime, "%Y-%m-%dT%H:%M")
-                    conflict_grant_start_time = datetime.strptime(grant["startTime"], "%Y-%m-%dT%H:%M:%S")
-                    conflict_grant_end_time = datetime.strptime(grant["endTime"], "%Y-%m-%dT%H:%M:%S")
+                    cbsd_grant_start_time = datetime.strptime(request.vtGrantParams.startTime, self.DEFAULT_TIME_FORMAT)
+                    cbsd_grant_end_time = datetime.strptime(request.vtGrantParams.endTime, self.DEFAULT_TIME_FORMAT)
+                    conflict_grant_start_time = datetime.strptime(grant["startTime"], self.DEFAULT_TIME_FORMAT)
+                    conflict_grant_end_time = datetime.strptime(grant["endTime"], self.DEFAULT_TIME_FORMAT)
 
                     if (cbsd_grant_start_time > conflict_grant_end_time) or (cbsd_grant_end_time <
                                                                              conflict_grant_start_time):
@@ -235,10 +236,10 @@ class SASAlgorithms:
         t = datetime.now(timezone.utc) if not request else datetime.fromisoformat(request.vtGrantParams.startTime)
         if grantCount <= 1:
             t = t + timedelta(seconds=self.maxGrantTime)
-            return t.strftime("%Y%m%dT%H:%M:%S%Z")
+            return t.strftime(self.DEFAULT_TIME_FORMAT)
         else:
             t = t + timedelta(seconds=(self.defaultHeartbeatInterval * 2))
-            return t.strftime("%Y%m%dT%H:%M:%S%Z")
+            return t.strftime(self.DEFAULT_TIME_FORMAT)
 
     def getHighFreqFromOP(self, params):
         return params.operationFrequencyRange.highFrequency

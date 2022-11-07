@@ -1,4 +1,14 @@
 {
+    "suLogin": {
+        "username": "abc@abc.com",
+        "password": "password"
+    },
+
+    "adminLogin": {
+        "username": "admin",
+        "password": "admin"
+    },
+
     "getUser": {
         "username": "abc@abc.com",
         "password": "password"
@@ -11,7 +21,7 @@
                 "inquiredSpectrum": [
                     {
                         "lowFrequency": 3550000000,
-                        "highFrequency": 3560000000
+                        "highFrequency": 3570000000
                     },
                     {
                         "lowFrequency": 3550,
