@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatPaginator } from '@angular/material/paginator';
 import { HttpRequestsService } from '../_services/http-requests.service';
-import { Node, SpectrumInquiryRequest, User, freqRange } from '../_models/models';
+import { Node, SpectrumInquiryRequest, User,ResponseObj, AvailableChannel, freqRange, SpectrumInquiryResponse } from '../_models/models';
+import { MatTableDataSource } from '@angular/material/table';
+
 
 @Component({
   selector: 'app-sepctrum-inquiry-request',
@@ -20,7 +23,13 @@ export class SepctrumInquiryRequestComponent implements OnInit {
   creatorID = '';
   submitted = false;
   response = '';
+  spectrumResponse: SpectrumInquiryResponse[] = [];
+  dataSource = new MatTableDataSource<SpectrumInquiryResponse>(this.spectrumResponse);
+  @ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
 
+  displayedColumns: string[] = [
+    'cbsdId', 'responseCode', 'responseMessage', 'channelType', 'maxEirp', 'ruleApplied', 'grantRequest', 'frequencyRange'
+  ];
 
 
   constructor(
@@ -65,11 +74,11 @@ export class SepctrumInquiryRequestComponent implements OnInit {
     this.currSubList.push(this.currLowFreq);
     this.currSubList.push(this.currHighFreq);
     this.currList.push(this.currSubList);
-    this.chosenFreqRanges.push(new freqRange(this.lowFreq, this.highFreq));
-    console.log(this.chosenFreqRanges);
-    console.log(this.chosenFreqRanges[0].lowFrequency);
+    this.chosenFreqRanges.push(new freqRange(this.lowFreq * 1000000, this.highFreq * 1000000));
+    // console.log(this.chosenFreqRanges);
+    // console.log(this.chosenFreqRanges[0].lowFrequency);
 
-    console.log(this.lowFreq + " - " + this.highFreq);
+    // console.log(this.lowFreq + " - " + this.highFreq);
     this.lowFreq = 0;
     this.highFreq = 0;
 
@@ -81,11 +90,16 @@ export class SepctrumInquiryRequestComponent implements OnInit {
     );
 
     this.chosenFreqRanges = []
+
   }
+
+    clearResponse(){
+        this.dataSource.data = [];
+    }
 
   onSubmit(){
     this.submitted = true;
-    this.chosenFreqRanges.push(new freqRange(this.lowFreq, this.highFreq));
+    this.chosenFreqRanges.push(new freqRange(this.lowFreq * 1000000, this.highFreq * 1000000));
     this.lowFreq = 0;
     this.highFreq = 0;
     // console.log(this.chosenFreqRanges[0]);
@@ -96,9 +110,37 @@ export class SepctrumInquiryRequestComponent implements OnInit {
     const user = JSON.parse(localStorage.getItem('currentUser'));
     this.httpRequests.spectrumInqRequest(this.modelSpectrumInquiryRequest).subscribe(
         (data) => {
-          let val = data['spectrumInquiryResponse'];
-          this.response = val[0]['response']['responseMessage'];
-          console.log(data);
+          let resp = data['spectrumInquiryResponse'];
+          // console.log(resp);
+
+          for(let i=0;i<resp.length;i++){
+            let currentResponse = new SpectrumInquiryResponse(null,0,null);
+            currentResponse.cbsdId  = resp[i]['cbsdId'];
+            currentResponse.response = new ResponseObj(null,null);
+            currentResponse.response.responseCode = resp[i]['response']['responseCode'];
+            currentResponse.response.responseMessage = resp[i]['response']['responseMessage'];
+
+
+            if(currentResponse.response.responseCode==="0"){
+                let currChannel = new AvailableChannel("", null,null,0,"");
+                currChannel.channelType = resp[i]['availableChannel'][0]['channelType'];
+                currChannel.frequencyRange = new freqRange(null,null);
+                currChannel.frequencyRange.lowFrequency = resp[i]['availableChannel'][0]['frequencyRange']['lowFrequency'];
+                currChannel.frequencyRange.highFrequency = resp[i]['availableChannel'][0]['frequencyRange']['highFrequency'];
+                currChannel.grantRequest = resp[i]['availableChannel'][0]['grantRequest'];
+                currChannel.maxEirp = resp[i]['availableChannel'][0]['maxEirp'];
+                currChannel.ruleApplied = resp[i]['availableChannel'][0]['ruleApplied'];
+                currentResponse.availableChannel = [];
+                currentResponse.availableChannel.push(currChannel);
+            }
+            this.spectrumResponse.push(currentResponse);
+
+          }
+          this.dataSource.data = this.spectrumResponse;
+          console.log(this.dataSource.data);
+          // console.log(this.spectrumResponse);
+          this.response = resp[0]['response']['responseMessage'];
+          // console.log(data);
           if (data['status'] == '1') {
 
           }

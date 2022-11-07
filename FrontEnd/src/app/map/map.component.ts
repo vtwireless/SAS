@@ -389,10 +389,12 @@ private infoWindow: google.maps.InfoWindow = new google.maps.InfoWindow;
 // By default, Virginia Tech's coordinates are used
 private coordinates = new google.maps.LatLng(37.2296, -80.4179);
 
+// private coordinates = new google.maps.LatLng(37.2314, -80.4221);
 // Specifies certain map features, such as center, zoom, map type, etc.
 private mapOptions: google.maps.MapOptions = {
     center: this.coordinates,
     zoom: 13,
+    // zoom: 19.5,
     mapTypeId: 'terrain'
 };
 

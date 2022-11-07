@@ -4,8 +4,8 @@ function initMap() {
 
     const mapOptions = {
         center: center,
-        zoom: 20.2,
-        heading: 45,
+        zoom: 20,
+        heading: 50,
         tilt: 0,
         mapId: "90f87356969d889c",
         // zoomControl: false,
@@ -39,7 +39,7 @@ function initMap() {
               [814583, 814583],
           ]
           if (
-              zoom != 20 ||
+              zoom < 17 || zoom > 20 ||
               bounds[zoom][0][0] > coord.x ||
               coord.x > bounds[zoom][0][1] ||
               bounds[zoom][1][0] > coord.y ||
@@ -64,9 +64,8 @@ function initMap() {
       },
       tileSize: new google.maps.Size(128, 128),
     });
-  
+
     map.overlayMapTypes.push(imageMapType);
   }
-  
+
   window.initMap = initMap;
-  

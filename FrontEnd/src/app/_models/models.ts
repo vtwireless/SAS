@@ -145,6 +145,35 @@ export class freqRange {
     }
 }
 
+
+
+export class AvailableChannel {
+    constructor(
+        public channelType: string,
+        public frequencyRange: freqRange,
+        public grantRequest: [],
+        public maxEirp: number,
+        public ruleApplied: string,
+    ){
+    }
+}
+
+export class ResponseObj {
+    constructor(
+      public responseCode:string,
+      public responseMessage:string
+    ){}
+}
+
+export class SpectrumInquiryResponse {
+    constructor(
+        public availableChannel: AvailableChannel[],
+        public cbsdId: number,
+        public response: ResponseObj
+    ) {
+    }
+}
+
 export class Node {
 
     constructor(
