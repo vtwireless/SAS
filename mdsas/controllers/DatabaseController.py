@@ -59,9 +59,10 @@ class DatabaseController:
 
     # In[ --- Private Helper Functions --- ]
     def load_seed_data(self):
-        self.users_controller.load_seed_data()
-        self.tierclass_controller.load_seed_data()
-        self.cbsd_controller.load_seed_data()
+        # self.users_controller.load_seed_data()
+        # self.tierclass_controller.load_seed_data()
+        # self.cbsd_controller.load_seed_data()
+        pass
 
     def _connect_to_dev_db(self):
         self.ENGINE = db.create_engine(settings.DEVELOPMENT_DATABASE_URI)

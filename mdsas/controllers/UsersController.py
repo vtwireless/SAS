@@ -64,8 +64,8 @@ class UsersController:
         }
 
     def authenticate_user(self, payload: any, isAdmin: bool):
-        email = payload['username']
-        password = payload['password']
+        email = payload.get('username', None)
+        password = payload.get('password', None)
 
         if not email or not password:
             raise Exception("Username or password not provided")
@@ -79,7 +79,8 @@ class UsersController:
 
         if len(rows) < 1:
             return {
-                "status": 0
+                "status": 0,
+                'message': "User could not be found"
             }
 
         return {
