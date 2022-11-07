@@ -1,6 +1,7 @@
 import threading
 import math
 from datetime import datetime, timezone, timedelta
+import logging
 
 import pytz
 import sqlalchemy as db
@@ -18,6 +19,7 @@ from controllers.CBSDController import CBSDController
 
 class GrantController:
     GRANTS = None
+    log = logging.getLogger(settings.APP_NAME + ".GrantController")
 
     def __init__(self, metadata, engine, connection, algorithms: SASAlgorithms, nodeCtrl):
         self.METADATA = metadata
@@ -48,6 +50,7 @@ class GrantController:
 
     def get_grants(self):
         query = select([self.GRANTS])
+        self.log.debug("Getting grants...")
         try:
             rows = self._execute_query(query)
 

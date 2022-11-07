@@ -9,6 +9,8 @@ For Wireless@VT
 import threading
 from flask import Flask, request
 import traceback
+import logging
+import sys
 
 from algorithms import SASAlgorithms
 from algorithms import SASREM
@@ -36,8 +38,16 @@ else:
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
 
-socket = Flask(__name__)
+socket = Flask(settings.APP_NAME)
 cors = CORS(socket, resources={r"/*": {"origins": "*"}})
+
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter(
+    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+handler.setLevel(logging.DEBUG)
+socket.logger.handlers.clear()
+socket.logger.addHandler(handler)
+socket.logger.setLevel(logging.DEBUG)
 
 
 @socket.route('/', methods=['GET', 'POST'])

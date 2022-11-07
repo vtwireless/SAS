@@ -28,3 +28,5 @@ REGIONSCHEDULE = 'regionSchedule'
 GRANTLOG = 'grantlog'
 GRANTREQUEST = 'grantrequest'
 
+# App Settings
+APP_NAME = 'swift_ascent'
