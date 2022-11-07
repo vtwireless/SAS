@@ -144,7 +144,12 @@ export class freqRange {
     }
 }
 
-
+export class DeregistrationRequest {
+    constructor(
+        public cbsdId: number
+    ) {
+    }
+}
 
 export class AvailableChannel {
     constructor(

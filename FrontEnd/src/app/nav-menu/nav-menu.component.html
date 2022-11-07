@@ -50,6 +50,11 @@
             <span class="icon-name"> TIER CLASSES</span>
         </button>
 
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/node-deregister">
+            <mat-icon>note_add</mat-icon>
+            <span class="icon-name"> Node De-Register</span>
+        </button>
+
         <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/schedules">
             <mat-icon>room</mat-icon>
             <span class="icon-name"> REGION SCHEDULES</span>

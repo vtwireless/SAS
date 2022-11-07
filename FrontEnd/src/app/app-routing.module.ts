@@ -20,6 +20,8 @@ import { TierComponent } from './tier/tier.component';
 import { TiersComponent } from './tiers/tiers.component';
 import { NotFoundComponent } from './not-found/not-found.component'
 import {SepctrumInquiryRequestComponent} from './sepctrum-inquiry-request/sepctrum-inquiry-request.component';
+import {NodeDeregisterComponent} from './node-deregister/node-deregister.component';
+
 const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
   { path: 'contact', component: ContactComponent },
@@ -40,6 +42,7 @@ const routes: Routes = [
   { path: 'create-request', component: CreateRequestComponent },
   { path: 'admin-login', component: AdminLoginComponent },
   { path: 'spectrum-inquiry-request', component: SepctrumInquiryRequestComponent },
+  { path: 'node-deregister', component: NodeDeregisterComponent },
 
   {path: '**', component: NotFoundComponent}
 ];
