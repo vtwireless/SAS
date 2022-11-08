@@ -62,6 +62,14 @@ def check_standard_success(message, response, status=1):
     check_standard_failure(message, response, status)
 
 
+def check_winnforum_success(body):
+    assert "response" in body
+    assert "responseCode" in body["response"]
+    assert "responseMessage" in body["response"]
+    assert body["response"]["responseCode"] == '0'
+    assert body["response"]["responseMessage"] == 'SUCCESS'
+
+
 def not_implemented():
     return "NOT IMPLEMENTED"
 

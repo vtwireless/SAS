@@ -1,6 +1,6 @@
 gh issue create \
---title "Test Case Issue: Check Email Availability when user exists" \
---body "Response indicates that email is available which should not be the case" \
+--title "Test Case Issue: Create Nodes Without Data Error Message" \
+--body "Fix Error Message. Currently entire db stack trace is thrown" \
 --label "bug" \
 --assignee "@me" \
 --project "CCI-MDSAS"
