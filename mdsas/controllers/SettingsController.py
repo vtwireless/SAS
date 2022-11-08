@@ -2,6 +2,7 @@ import sqlalchemy as db
 from sqlalchemy import select, update
 from sqlalchemy.engine import CursorResult
 
+from algorithms.SASAlgorithms import SASAlgorithms
 from settings import settings
 
 
@@ -12,7 +13,7 @@ class SettingsController:
         self.METADATA = metadata
         self.ENGINE = engine
         self.CONNECTION = connection
-        self.algorithms = algorithms
+        self.algorithms: SASAlgorithms = algorithms
 
         self._set_settings_table()
 
@@ -59,7 +60,7 @@ class SettingsController:
         if not data:
             data = {
                 'algorithm': 'DEFAULT',
-                'heartbeatInterval': 5,
+                'heartbeatInterval': self.algorithms.defaultHeartbeatInterval,
                 'REMAlgorithm': 'DEFAULT'
             }
 

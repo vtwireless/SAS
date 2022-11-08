@@ -1,8 +1,23 @@
-﻿<h1>Make a SAS Grant Request</h1>
+﻿
+<div class="page-wrapper">
+<h1 class="header-text">Make a SAS Grant Request</h1>
 
 <div class="container">
     <div [hidden]="submitted">
-        <form (ngSubmit)="onSubmit()" #createRequestForm="ngForm" style="max-width:500px;">
+        <form class="page-form" (ngSubmit)="onSubmit()" #createRequestForm="ngForm" style="max-width:500px;">
+
+            <div class="form-group">
+                <label for="cbsdId">CBSD ID</label>
+                <select class="form-control" id="dataType"
+                        required
+                        [(ngModel)]="model.cbsdId" name="cbsdId"
+                        #cbsdId="ngModel">
+                    <option *ngFor="let cbsdId of nodes" [value]="cbsdId">{{cbsdId}}</option>
+                </select>
+                <div [hidden]="cbsdId.valid || cbsdId.pristine" class="alert alert-danger">
+                    Choose a cbsdId.
+                </div>
+            </div>
 
             <div class="form-group">
                 <label for="location">Location ex: 12.345678,98.7654321</label>
@@ -22,8 +37,8 @@
                 </div>
             </div>
 
-            <div class="form-group">
-              <label for="status">Check the box if users in the request are mobile</label>
+            <div class="form-group check-box">
+              <label class="checkBox-label" for="status">Check the box if users in the request are mobile</label>
               <input type="checkbox" class="form-control" id="mobility"
                        [(ngModel)]="model.mobility" name="mobility"
                        #mobility="ngModel">
@@ -44,14 +59,61 @@
               </div>
           </div>
 
-          <div class="form-group">
-              <label for="status">Check the box if the allocation has to be the preferred frequency</label>
+          <div class="form-group check-box">
+              <label class="checkBox-label" for="status">Check the box if the allocation has to be the preferred frequency</label>
               <input type="checkbox" class="form-control" id="frequencyAbsolute"
                        [(ngModel)]="model.frequencyAbsolute" name="frequencyAbsolute"
                        #frequencyAbsolute="ngModel"
                        (change)="frequencyBeAbsolute();">
           </div>
 
+            <div class="form-group">
+                <label for="approximateByteSize">Approximate Byte Size</label>
+                <input type="number" class="form-control" id="approximateByteSize"
+                       required
+                       [(ngModel)]="model.approximateByteSize" name="approximateByteSize"
+                       #approximateByteSize="ngModel" min="1" max="999999">
+                <div [hidden]="approximateByteSize.valid || approximateByteSize.pristine" class="alert alert-danger">
+                    Enter an approximate byte size
+                </div>
+                <div *ngIf="model.approximateByteSize" [hidden]="model.approximateByteSize > 0" class="alert alert-danger">
+                    Byte size must be at least 1 byte
+                </div>
+                <div *ngIf="model.approximateByteSize" [hidden]="model.approximateByteSize <= 999999" class="alert alert-danger">
+                    Byte size must be at most 999999 bytes
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="dataType">Data Type</label>
+                <select class="form-control" id="dataType"
+                        required
+                        [(ngModel)]="model.dataType" name="dataType"
+                        #dataType="ngModel">
+                    <option *ngFor="let dataType of dataTypes" [value]="dataType">{{dataType}}</option>
+                </select>
+                <div [hidden]="dataType.valid || dataType.pristine" class="alert alert-danger">
+                    Choose a data type, if the type isn't present, select OTHER.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="powerLevel">Power Level (dB)</label>
+                <input type="number" class="form-control" id="powerLevel"
+                       required
+                       [(ngModel)]="model.powerLevel" name="powerLevel"
+                       #powerLevel="ngModel" min="1" max="9999">
+                <div [hidden]="powerLevel.valid || powerLevel.pristine" class="alert alert-danger">
+                    Enter an power level
+                </div>
+                <div *ngIf="model.powerLevel" [hidden]="model.powerLevel > -50" class="alert alert-danger">
+                    Power level must be at least -50 dB
+                </div>
+                <div *ngIf="model.powerLevel" [hidden]="model.powerLevel <= 30" class="alert alert-danger">
+                    ower level must be at most 30 dB
+                </div>
+            </div>
+
+        <div>
           <div class="form-group" style="float:left;padding-right:20px;width:220px;">
               <label for="minFrequency">Minimum Frequency (MHz)</label>
               <input type="number" class="form-control" id="minFrequency"
@@ -69,6 +131,7 @@
                   Frequency must be at most 3700MMHz
               </div>
           </div>
+
           <div class="form-group" style="float:left;width:200px;">
               <label for="maxFrequency">Maximum Frequency (MHz)</label>
               <input type="number" class="form-control" id="maxFrequency"
@@ -86,6 +149,11 @@
                   Frequency must be at most 3700MHz
               </div>
           </div>
+
+        </div>
+
+        <div style="display: flex; flex-direction: row">
+
           <div class="form-group" style="width:200px;">
               <label for="preferredFrequency">Preferred Frequency (MHz)</label>
               <input type="number" class="form-control" id="preferredFrequency"
@@ -100,7 +168,7 @@
               </div>
           </div>
 
-                    <div class="form-group" style="float:left;padding-right:20px;width:230px;">
+            <div class="form-group" style="float:left;padding-right:20px;width:230px;margin-left: 18px">
               <label for="minBandwidth">Minimum Bandwidth (MHz)</label>
               <input type="number" class="form-control" id="minBandwidth"
                        required
@@ -117,6 +185,10 @@
                   Minimum Bandwidth rate must be at most 150MHz
               </div>
           </div>
+
+            </div>
+
+
           <div class="form-group" style="float:left;width:230px;">
               <label for="preferredBandwidth">Preferred Bandwidth (MHz)</label>
               <input type="number" class="form-control" id="preferredBandwidth"
@@ -138,53 +210,11 @@
               </div>
           </div>
 
-          <div class="form-group">
-              <label for="approximateByteSize">Approximate Byte Size</label>
-              <input type="number" class="form-control" id="approximateByteSize"
-                       required
-                       [(ngModel)]="model.approximateByteSize" name="approximateByteSize"
-                       #approximateByteSize="ngModel" min="1" max="999999">
-              <div [hidden]="approximateByteSize.valid || approximateByteSize.pristine" class="alert alert-danger">
-                  Enter an approximate byte size
-              </div>
-              <div *ngIf="model.approximateByteSize" [hidden]="model.approximateByteSize > 0" class="alert alert-danger">
-                  Byte size must be at least 1 byte
-              </div>
-              <div *ngIf="model.approximateByteSize" [hidden]="model.approximateByteSize <= 999999" class="alert alert-danger">
-                 Byte size must be at most 999999 bytes
-              </div>
-          </div>
 
 
-          <div class="form-group">
-              <label for="dataType">Data Type</label>
-              <select class="form-control" id="dataType"
-                      required
-                      [(ngModel)]="model.dataType" name="dataType"
-                      #dataType="ngModel">
-                  <option *ngFor="let dataType of dataTypes" [value]="dataType">{{dataType}}</option>
-              </select>
-              <div [hidden]="dataType.valid || dataType.pristine" class="alert alert-danger">
-                  Choose a data type, if the type isn't present, select OTHER.
-              </div>
-          </div>
 
-          <div class="form-group">
-              <label for="powerLevel">Power Level (dB)</label>
-              <input type="number" class="form-control" id="powerLevel"
-                       required
-                       [(ngModel)]="model.powerLevel" name="powerLevel"
-                       #powerLevel="ngModel" min="1" max="9999">
-              <div [hidden]="powerLevel.valid || powerLevel.pristine" class="alert alert-danger">
-                  Enter an power level
-              </div>
-              <div *ngIf="model.powerLevel" [hidden]="model.powerLevel > -50" class="alert alert-danger">
-                  Power level must be at least -50 dB
-              </div>
-              <div *ngIf="model.powerLevel" [hidden]="model.powerLevel <= 30" class="alert alert-danger">
-                 ower level must be at most 30 dB
-              </div>
-          </div>
+        <div>
+
           <div class="form-group" style="float:left;width:230px;">
               <label for="startTime">Start Time</label>
               <input type="datetime-local" class="form-control" id="startTime" step="300"
@@ -197,7 +227,7 @@
                   Select a Start Time
               </div>
           </div>
-          <div class="form-group" style="float:left;width:230px;">
+          <div class="form-group" style="float:left;width:230px;margin-left: 2rem">
               <label for="endTime">End Time</label>
               <input type="datetime-local" class="form-control" id="endTime"
                         step="300"
@@ -214,11 +244,14 @@
                   Select a time after start
               </div>
           </div>
+
+        </div>
           <br>
-
-            <button type="submit" class="btn btn-success" [disabled]="!createRequestForm.form.valid">Submit</button>
-            <button type="button" class="btn btn-default" (click)="newRequest(); createRequestForm.reset()">Clear Form</button>
-
+            <div class="btn-group">
+                <button type="submit" class="btn btn-success" [disabled]="!createRequestForm.form.valid">Submit</button>
+                <button type="button" style="margin-left: 10rem" class="btn btn-default" (click)="newRequest(); createRequestForm.reset()">Clear Form</button>
+            </div>
         </form>
     </div>
     </div>
+</div>

@@ -22,23 +22,13 @@ from controllers.UsersController import UsersController
 from algorithms.SASAlgorithms import SASAlgorithms
 from algorithms import Server_WinnForum as WinnForum
 
-# sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-# from settings import settings
-# from models.Schemas import Schemas
-# from algorithms import SASREM
-# from algorithms.SASAlgorithms import SASAlgorithms
-# from Utilities import Utilities
-# from algorithms import CBSD
-# from algorithms import Server_WinnForum as WinnForum
-
 
 class DatabaseController:
     ENGINE = None
     CONNECTION = None
     METADATA = None
 
-    algorithms = SASAlgorithms()
+    algorithms: SASAlgorithms = SASAlgorithms()
     rem = SASREM.SASREM()
 
     USERS = None
@@ -69,9 +59,10 @@ class DatabaseController:
 
     # In[ --- Private Helper Functions --- ]
     def load_seed_data(self):
-        self.users_controller.load_seed_data()
-        self.tierclass_controller.load_seed_data()
-        self.cbsd_controller.load_seed_data()
+        # self.users_controller.load_seed_data()
+        # self.tierclass_controller.load_seed_data()
+        # self.cbsd_controller.load_seed_data()
+        pass
 
     def _connect_to_dev_db(self):
         self.ENGINE = db.create_engine(settings.DEVELOPMENT_DATABASE_URI)
@@ -291,6 +282,12 @@ class DatabaseController:
         return self.cbsd_controller.register_cbsds(sid, payload)
 
     def deregister_nodes(self, nodes):
+        for item in nodes["deregistrationRequest"]:
+            if 'cbsdId' not in item or not item['cbsdId']:
+                raise Exception(str('CBSD-ID not provided'))
+
+            self.grants_controller.cancel_grants_for_cbsd(item['cbsdId'])
+
         return self.cbsd_controller.deregister_cbsds(nodes)
 
     def update_nodes(self, payload):

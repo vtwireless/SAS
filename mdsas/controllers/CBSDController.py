@@ -2,6 +2,7 @@ import random
 import uuid
 
 import sqlalchemy as db
+import sqlalchemy.exc
 from sqlalchemy import select, and_, insert, delete, update
 from sqlalchemy.engine import CursorResult
 
@@ -26,10 +27,15 @@ class CBSDController:
 
     def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
-        queryResult = resultProxy.fetchall()
-        rows = [row._asdict() for row in queryResult]
 
-        return rows
+        try:
+            queryResult = resultProxy.fetchall()
+            rows = [row._asdict() for row in queryResult]
+
+            return rows
+
+        except sqlalchemy.exc.ResourceClosedError:
+            return None
 
     def _set_cbsds_table(self):
         self.CBSD = db.Table(
@@ -90,7 +96,7 @@ class CBSDController:
                     "message": f"Node '{payload['fccID']}' could not be added."
                 }
 
-            radio = CBSD.CBSD(cbsdID, item[''], item['fccId'])
+            radio = CBSD.CBSD(cbsdID, item.get("trustLevel", 1), item['fccId'])
             # Flatten Structure
             location = item['location'].split(',')
             radio.latitude = location[0]
@@ -123,8 +129,8 @@ class CBSDController:
             if 'cbsdId' not in item or not item['cbsdId']:
                 raise Exception(str('CBSD-ID not provided'))
 
-            query = delete([self.CBSD]).where(
-                self.CBSD.columns.cbsdId == item['cbsdId']
+            query = delete(self.CBSD).where(
+                self.CBSD.columns.cbsdID == item['cbsdId']
             )
             rows = self._execute_query(query)
 
@@ -132,11 +138,11 @@ class CBSDController:
             response.cbsdId = item['cbsdId']
 
             query = select([self.CBSD]).where(and_(
-                self.CBSD.columns.cbsdId == item['cbsdId']
+                self.CBSD.columns.cbsdID == item['cbsdId']
             ))
             rows = self._execute_query(query)
 
-            if len(rows) > 0:
+            if len(rows) == 0:
                 response.response = self.algorithms.generateResponse(0)
             else:
                 response.response = self.algorithms.generateResponse(103)
@@ -177,15 +183,15 @@ class CBSDController:
 
     def load_seed_data(self):
         self.create_cbsd(self.generate_seed_payload(
-            'node1', '30.2234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
+            'node1', '30.2234,-80.7756', '1.1.1.1', 1200, 1300, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
             'abc@abc.com', 1, 1
         ))
         self.create_cbsd(self.generate_seed_payload(
-            'node2', '30.3234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
+            'node2', '30.3234,-80.7756', '1.1.1.1', 1200, 1300, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
             'bbc@abc.com', 1, 1
         ))
         self.create_cbsd(self.generate_seed_payload(
-            'node3', '30.4234,-80.7756', '1.1.1.1', 1200000000, 1300000000, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
+            'node3', '30.4234,-80.7756', '1.1.1.1', 1200, 1300, 1000, 2000, 'VT-CRTS-Node', 0, 'ACTIVE',
             'cbc@abc.com', 1, 1
         ))
 

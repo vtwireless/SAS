@@ -24,7 +24,6 @@
     "@angular/platform-browser-dynamic": "^8.2.0",
     "@angular/platform-server": "^8.2.0",
     "@angular/router": "^8.2.0",
-    "@nguniversal/module-map-ngfactory-loader": "^5.0.0-beta.5",
     "@types/googlemaps": "^3.39.3",
     "angular7-csv": "^0.2.12",
     "aspnet-prerendering": "^3.0.1",

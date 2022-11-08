@@ -13,19 +13,27 @@ testuser = {
     'location': '38.2296,-81.4139'
 }
 
+spectrumInquiry = {
+    "spectrumInquiryRequest": [
+        {
+            "cbsdId": 1,
+            "inquiredSpectrum": [{"lowFrequency": 3550e6, "highFrequency": 3560e6}]
+        }
+    ]
+}
 
-@client.on('createSUResponse')
+
+@client.on('spectrumInquiryResponse')
 def createSUResponse(data):
     print(data)
 
 
-print("Emit event")
-client.emit('createSU', testuser)
-print("Emitted event")
+if __name__ == '__main__':
+    # client.emit('createSU', testuser)
+    client.emit('spectrumInquiryRequest', spectrumInquiry)
+    time.sleep(4)
 
-time.sleep(4)
-client.disconnect()
-
+    client.disconnect()
 
 """
 3 -> SU user creation, Node Registration and Grant Request

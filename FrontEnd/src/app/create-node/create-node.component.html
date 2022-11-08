@@ -43,7 +43,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="minFrequency">Minimum Frequency (Hz)</label>
+                    <label for="minFrequency">Minimum Frequency (MHz)</label>
                     <input type="number" class="form-control" id="minFrequency" required (change)="updateFrequencies();"
                         [(ngModel)]="model.minFrequency" name="minFrequency" #minFrequency="ngModel" min="1"
                         max="999999">
@@ -51,15 +51,15 @@
                         Select a minimum frequency
                     </div>
                     <div *ngIf="model.minFrequency" [hidden]="model.minFrequency > 0" class="alert alert-danger">
-                        Frequency must be at least 1Hz
+                        Frequency must be at least 1MHz
                     </div>
                     <div *ngIf="model.minFrequency" [hidden]="model.minFrequency <= 999999" class="alert alert-danger">
-                        Frequency must be at most 999999Hz
+                        Frequency must be at most 999999MHz
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="maxFrequency">Maximum Frequency (Hz)</label>
+                    <label for="maxFrequency">Maximum Frequency (MHz)</label>
                     <input type="number" class="form-control" id="maxFrequency" required (change)="updateFrequencies();"
                         [(ngModel)]="model.maxFrequency" name="maxFrequency" #maxFrequency="ngModel" min="1"
                         max="999999">
@@ -68,15 +68,15 @@
                         Select a maximum frequency
                     </div>
                     <div *ngIf="model.maxFrequency" [hidden]="model.maxFrequency > 0" class="alert alert-danger">
-                        Frequency must be at least 1Hz
+                        Frequency must be at least 1MHz
                     </div>
                     <div *ngIf="model.maxFrequency" [hidden]="model.maxFrequency <= 999999" class="alert alert-danger">
-                        Frequency must be at most 999999Hz
+                        Frequency must be at most 999999MHz
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="minSampleRate">Minimum Sample Rate (Hz)</label>
+                    <label for="minSampleRate">Minimum Sample Rate (MHz)</label>
                     <input type="number" class="form-control" id="minSampleRate" required (change)="updateSampleRate();"
                         [(ngModel)]="model.minSampleRate" name="minSampleRate" #minSampleRate="ngModel" min="1"
                         max="9999">
@@ -84,15 +84,15 @@
                         Select a minimum sample rate
                     </div>
                     <div *ngIf="model.minSampleRate" [hidden]="model.minSampleRate > 0" class="alert alert-danger">
-                        Sample rate must be at least 1Hz
+                        Sample rate must be at least 1MHz
                     </div>
                     <div *ngIf="model.minSampleRate" [hidden]="model.minSampleRate <= 9999" class="alert alert-danger">
-                        Sample rate must be at most 9999Hz
+                        Sample rate must be at most 9999MHz
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="maxSampleRate">Maximum Sample Rate (Hz)</label>
+                    <label for="maxSampleRate">Maximum Sample Rate (MHz)</label>
                     <input type="number" class="form-control" id="maxSampleRate" required (change)="updateSampleRate();"
                         [(ngModel)]="model.maxSampleRate" name="maxSampleRate" #maxSampleRate="ngModel" min="1"
                         max="9999">
@@ -101,10 +101,10 @@
                         Select a maximum sample rate
                     </div>
                     <div *ngIf="model.maxSampleRate" [hidden]="model.maxSampleRate > 0" class="alert alert-danger">
-                        Sample rate must be at last 1Hz
+                        Sample rate must be at last 1MHz
                     </div>
                     <div *ngIf="model.maxSampleRate" [hidden]="model.maxSampleRate <= 9999" class="alert alert-danger">
-                        Sample rate must be at most 9999Hz
+                        Sample rate must be at most 9999MHz
                     </div>
                 </div>
 

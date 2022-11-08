@@ -15,11 +15,18 @@ class SASAlgorithms:
     MINCBRSFREQ = 3550000000
     MAXCBRSFREQ = 3700000000
     TENMHZ = 10000000
+    DEFAULT_TIME_FORMAT = "%Y-%m-%dT%H:%M"
 
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT'  # DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
-        self.defaultHeartbeatInterval = 5
+        self.defaultHeartbeatInterval = 60
+        self.retryInterval = 30
+        self.transmitExpireTime = 240
+        self.minimumGrantSize = self.TENMHZ / 2
+        self.maximumGrantSize = 15 * self.TENMHZ
+        self.defaultChannelSize = self.TENMHZ
+
         self.threshold = 30.0  # POWER THRESHOLD
         self.longitude = -80.4  # Blacksburg location
         self.latitude = 37.2
@@ -57,12 +64,20 @@ class SASAlgorithms:
 
     def runGrantAlgorithm(self, grants, REM, request):
         grantResponse = WinnForum.GrantResponse()
-        if not self.acceptableRange(self.getLowFreqFromOP(request.operationParam),
-                                    self.getHighFreqFromOP(request.operationParam)):
+        lowFreq, highFreq = self.getLowFreqFromOP(request.operationParam), self.getHighFreqFromOP(
+            request.operationParam)
+
+        if not self.acceptableRange(lowFreq, highFreq):
             grantResponse.response = self.generateResponse(103)
             grantResponse.response.responseData = "Frequency range outside of license"
             return grantResponse
-        elif self.grantAlgorithm == 'DEFAULT':
+
+        elif not self.acceptableBandwidth(lowFreq, highFreq):
+            grantResponse.response = self.generateResponse(103)
+            grantResponse.response.responseData = "Max Channel Size is " + str(self.defaultChannelSize)
+            return grantResponse
+
+        if self.grantAlgorithm == 'DEFAULT':
             grantResponse = self.defaultGrantAlg(grants, REM, request)
         elif self.grantAlgorithm == 'TIER':
             grantResponse = self.tierGrantAlg(grants, REM, request)
@@ -119,22 +134,36 @@ class SASAlgorithms:
         # return "SUSPENDED_GRANT"
         return "SUCCESS"
 
-    def defaultGrantAlg(self, grants, REM, request):
+    def defaultGrantAlg(self, grants, REM, request: WinnForum.GrantRequest):
         gr = WinnForum.GrantResponse()
         gr.grantId = None
         gr.cbsdId = request.cbsdId
-        gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None, True)
+        gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None, True, request)
         gr.heartbeatInterval = self.getHeartbeatIntervalForGrantId(gr.grantId)
         gr.measReportConfig = ["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"]
         conflict = False
         for grant in grants:
-            rangea = self.getHighFreqFromOP(grant.operationParam)
-            rangeb = self.getLowFreqFromOP(grant.operationParam)
+            rangea = grant["maxFrequency"]
+            rangeb = grant["minFrequency"]
             freqa = self.getHighFreqFromOP(request.operationParam)
             freqb = self.getLowFreqFromOP(request.operationParam)
+
             if self.frequencyOverlap(freqa, freqb, rangea, rangeb):
+                if request.vtGrantParams and request.vtGrantParams.startTime and request.vtGrantParams.endTime:
+                    cbsd_grant_start_time = datetime.strptime(request.vtGrantParams.startTime, self.DEFAULT_TIME_FORMAT)
+                    cbsd_grant_end_time = datetime.strptime(request.vtGrantParams.endTime, self.DEFAULT_TIME_FORMAT)
+                    conflict_grant_start_time = datetime.strptime(grant["startTime"], self.DEFAULT_TIME_FORMAT)
+                    conflict_grant_end_time = datetime.strptime(grant["endTime"], self.DEFAULT_TIME_FORMAT)
+
+                    if (cbsd_grant_start_time > conflict_grant_end_time) or (cbsd_grant_end_time <
+                                                                             conflict_grant_start_time):
+                        conflict = False
+                        continue
+
                 conflict = True
-        if conflict == True:
+                break
+
+        if conflict:
             gr.response = self.generateResponse(401)
         else:
             gr.response = self.generateResponse(0)
@@ -162,7 +191,8 @@ class SASAlgorithms:
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)  # GET ALL  REM DATA
         if not remData:
             # print("Currently no spectrum data") # TODO: remove comment
-            return 2
+            # return 2
+            self.setREMAlgorithm('DEFAULT')
         if self.getREMAlgorithm() == 'DEFAULT':
             if self.defaultREMAlgorithm(remData):
                 return 1
@@ -189,7 +219,7 @@ class SASAlgorithms:
             else:
                 return 0
         elif self.getREMAlgorithm() == 'NOFK':
-            if self.nofKREMAlgorithm(remData):
+            if self.nofkREMAlgorithm(remData):
                 return 1
             else:
                 return 0
@@ -201,15 +231,15 @@ class SASAlgorithms:
         else:
             return 3
 
-    def calculateGrantExpireTime(self, grants, REM, grant, renew):
+    def calculateGrantExpireTime(self, grants, REM, grant, renew, request=None):
         grantCount = len(grants)
-        t = datetime.now(timezone.utc)
+        t = datetime.now(timezone.utc) if not request else datetime.fromisoformat(request.vtGrantParams.startTime)
         if grantCount <= 1:
             t = t + timedelta(seconds=self.maxGrantTime)
-            return t.strftime("%Y%m%dT%H:%M:%S%Z")
+            return t.strftime(self.DEFAULT_TIME_FORMAT)
         else:
             t = t + timedelta(seconds=(self.defaultHeartbeatInterval * 2))
-            return t.strftime("%Y%m%dT%H:%M:%S%Z")
+            return t.strftime(self.DEFAULT_TIME_FORMAT)
 
     def getHighFreqFromOP(self, params):
         return params.operationFrequencyRange.highFrequency
@@ -232,14 +262,14 @@ class SASAlgorithms:
     def defaultREMAlgorithm(self, remData):
         total = 0.0
         # Equal weight with threshold parameter, no location, all parameters
-        for data_point in remData:
-            total = total + float(data_point.powerLevel)
-        if (total * 1.0 / len(remData)) > self.threshold:
-            return True
-        else:
-            return False
+        if remData:
+            for data_point in remData:
+                total = total + float(data_point.powerLevel)
+            if (total * 1.0 / len(remData)) > self.threshold:
+                return True
+        return False
 
-    def nofKREMAlgorith(self, remData):
+    def nofkREMAlgorithm(self, remData):
         yes = 0
         no = 0
         # Equal weight with threshold parameter, no location, all parameters
@@ -411,7 +441,8 @@ class SASAlgorithms:
             return False
 
     def acceptableRange(self, lowFreq, highFreq):
-        if ((lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ)):
-            return True
-        else:
-            return False
+        return (lowFreq < highFreq) and (lowFreq >= self.MINCBRSFREQ) and (highFreq <= self.MAXCBRSFREQ)
+
+    def acceptableBandwidth(self, lowFreq, highFreq):
+        return self.minimumGrantSize <= highFreq - lowFreq <= self.maximumGrantSize and lowFreq % 5 == 0 and \
+               highFreq % 5 == 0

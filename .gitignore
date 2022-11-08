@@ -7,4 +7,12 @@ FrontEnd/node_modules/
 # Database files
 core/*.db
 mdsas/*.db
-swift/out/*.csv
+
+# API Key
+mdsas/weatherapi.key
+
+# Test Logs
+mdsas/tests/*.log
+mdsas/tests/*.xml
+mdsas/tests/mdsas.db
+mdsas/tests/reports/archive/*

@@ -6,7 +6,8 @@ import { HttpRequestsService } from '../_services/http-requests.service';
 
 @Component({
     selector: 'app-map',
-    templateUrl: './map.component.html'
+    templateUrl: './map.component.html',
+    styleUrls: ['./map.component.css']
 })
 export class MapComponent implements AfterViewInit{
 
@@ -74,7 +75,7 @@ export class MapComponent implements AfterViewInit{
                             this.nodes[i].marker = null;
                             var coordinateArray = this.nodes[i].node.location.split(',');
                             var coor = new google.maps.LatLng(Number(coordinateArray[0]), Number(coordinateArray[1]));
-                            var markerLabel = 'Node: ' + this.nodes[i].node.nodeName;
+                            var markerLabel = this.nodes[i].node.nodeName;
                             var marker = new google.maps.Marker({
                                 position: coor,
                                 map: this.map,
@@ -388,10 +389,12 @@ private infoWindow: google.maps.InfoWindow = new google.maps.InfoWindow;
 // By default, Virginia Tech's coordinates are used
 private coordinates = new google.maps.LatLng(37.2296, -80.4179);
 
+// private coordinates = new google.maps.LatLng(37.2314, -80.4221);
 // Specifies certain map features, such as center, zoom, map type, etc.
 private mapOptions: google.maps.MapOptions = {
     center: this.coordinates,
     zoom: 13,
+    // zoom: 19.5,
     mapTypeId: 'terrain'
 };
 

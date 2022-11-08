@@ -1,0 +1,39 @@
+.page-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-group{
+    display: flex;
+    flex-direction: row;
+    width: 500px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    margin-left: 5rem;
+}
+
+.form-group > label {
+    width: 20rem;
+}
+
+
+.freqRangeClass {
+    width: 30vw;
+    margin-top: 2rem;
+
+}
+
+.node-buttons {
+    margin: 5rem 0 0 20rem;
+}
+
+.response-table{
+    margin-top: 5rem;
+}
+
+.response-table > td{
+    font-size: 0.5rem;
+}

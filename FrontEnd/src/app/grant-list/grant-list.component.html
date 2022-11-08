@@ -4,14 +4,15 @@
 
 <p *ngIf="!SpectrumGrants"><em>Loading...</em></p>
 
-<table class='table' *ngIf="SpectrumGrants">
+<!-- <table class='table' *ngIf="SpectrumGrants">
     <thead>
         <tr>
             <th>Tier</th>
             <th>Grant ID</th>
-            <th>Secondary User Name</th>
+            <th>SU ID</th>
             <th>Frequency</th>
-            <th>Bandwidth</th>
+            <th>Minimum BW</th>
+            <th>Preferred BW</th>
             <th>Start Time</th>
             <th>End Time</th>
             <th>Status</th>
@@ -21,15 +22,72 @@
     <tbody>
         <tr *ngFor="let SG of SpectrumGrants">
             <td>{{ SG.tier }}</td>
-            <td *ngIf="active"><a routerLink="/grant-details/active/{{SG.grantID}}">{{ SG.grantID }}</a></td>
-            <td *ngIf="logged"><a routerLink="/grant-details/logged/{{SG.grantID}}">{{ SG.grantID }}</a></td>
-            <td>{{ SG.secondaryUserName }}</td>
-            <td>{{ SG.frequency }}</td>
-            <td>{{ SG.bandwidth }}</td>
+            <td *ngIf="active"><a routerLink="/grant-details/active/{{SG.grantID}}">{{ SG.grantId }}</a></td>
+            <td *ngIf="logged"><a routerLink="/grant-details/logged/{{SG.grantID}}">{{ SG.grantId }}</a></td>
+            <td>{{ SG.secondaryUserID }}</td>
+            <td>{{ SG.minFrequency }} - {{ SG.maxFrequency }}</td>
+            <td>{{ SG.minBandwidth }}</td>
+            <td>{{ SG.preferredBandwidth }}</td>
             <td>{{ SG.startTime }}</td>
             <td>{{ SG.endTime }}</td>
             <td>{{ SG.status }}</td>
-            <td>{{ SG.requestLocation }}</td>
+            <td>{{ SG.location }}</td>
         </tr>
     </tbody>
-</table>
+</table> -->
+
+<div class="mat-elevation-z8">
+    <table mat-table [dataSource]="dataSource">
+
+        <ng-container matColumnDef="grantId">
+            <th mat-header-cell *matHeaderCellDef> Grant ID </th>
+            <td mat-cell *matCellDef="let element"> {{element.grantId}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="secondaryUserID">
+            <th mat-header-cell *matHeaderCellDef> User ID </th>
+            <td mat-cell *matCellDef="let element"> {{element.secondaryUserID}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="frequency">
+            <th mat-header-cell *matHeaderCellDef> Frequency [MHz]</th>
+            <td mat-cell *matCellDef="let element"> {{element.frequency}}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="minBandwidth">
+            <th mat-header-cell *matHeaderCellDef> Minimum BW [MHz]</th>
+            <td mat-cell *matCellDef="let element"> {{element.minBandwidth}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="preferredBandwidth">
+            <th mat-header-cell *matHeaderCellDef> Preferred BW [MHz]</th>
+            <td mat-cell *matCellDef="let element"> {{element.preferredBandwidth}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="startTime">
+            <th mat-header-cell *matHeaderCellDef> Start Time</th>
+            <td mat-cell *matCellDef="let element"> {{element.startTime}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="endTime">
+            <th mat-header-cell *matHeaderCellDef> End Time</th>
+            <td mat-cell *matCellDef="let element"> {{element.endTime}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef> Status </th>
+            <td mat-cell *matCellDef="let element"> {{element.status}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="location">
+            <th mat-header-cell *matHeaderCellDef> Location </th>
+            <td mat-cell *matCellDef="let element"> {{element.location}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons aria-label="Select page of periodic elements">
+    </mat-paginator>
+</div>
