@@ -22,17 +22,17 @@
 
         <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-request">
             <mat-icon>edit</mat-icon>
-            <span class="icon-name"> SAS REQUEST</span>
+            <span class="icon-name"> GRANT REQUEST</span>
         </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/requests">
-            <mat-icon>note_add</mat-icon>
-            <span class="icon-name"> GRANT REQUESTS</span>
-        </button>
+<!--        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/requests">-->
+<!--            <mat-icon>note_add</mat-icon>-->
+<!--            <span class="icon-name"> GRANT REQUESTS</span>-->
+<!--        </button>-->
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/active">
+        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list">
             <mat-icon>hourglass_empty</mat-icon>
-            <span class="icon-name"> ACTIVE GRANTS</span>
+            <span class="icon-name"> GRANT LIST </span>
         </button>
 
         <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/spectrum-inquiry-request">

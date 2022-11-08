@@ -30,7 +30,7 @@ const routes: Routes = [
   { path: 'SU-details/:id', component: SUDetailsComponent },
   { path: 'node-details/:id', component: NodeDetailsComponent },
   { path: 'node-list', component: NodeListComponent },
-  { path: 'grant-list/:type', component: GrantListComponent },
+  { path: 'grant-list', component: GrantListComponent },
   { path: 'create-node', component: CreateNodeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'tiers/:id', component: TiersComponent },

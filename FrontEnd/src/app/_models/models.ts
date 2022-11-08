@@ -101,6 +101,7 @@ export class GrantRequest {
     public preferredFrequency: number;
     public frequencyAbsolute: boolean;
     public minBandwidth: number;
+    public maxBandwidth: number;
     public preferredBandwidth: number;
     public startTime: string;
     public endTime: string;

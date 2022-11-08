@@ -87,10 +87,17 @@ export class CreateRequestComponent {
 	onSubmit() {
 		this.submitted = true;
 		console.log("Grant Request:", JSON.stringify(this.model));
+		this.model.minFrequency *= 1000000;
+		this.model.maxFrequency *= 1000000;
+		this.model.preferredFrequency *= 1000000;
+		// this.model.minBandwidth *= 1000000;
+		// this.model.maxBandwidth *= 1000000;
+		// this.model.preferredBandwidth *= 1000000;
+		console.log(this.model);
 		this.httpRequests.createRequest(this.model, this.isAdmin).subscribe(
 			(data) => {
 				if (data['status'] == '1') {
-					this.router.navigate(['/grant-list/active']);
+					this.router.navigate(['/grant-list']);
 				}
 			},
 			(error) => console.error(error)
@@ -104,10 +111,10 @@ export class CreateRequestComponent {
 
 	newRequest() {
 		this.model = new GrantRequest();
-		this.model.minFrequency = 3550;
+		this.model.minFrequency = 3550*1000000;
 		this.model.maxVelocity = 0;
-		this.model.maxFrequency = 3550;
-		this.model.preferredFrequency = 3550;
+		this.model.maxFrequency = 3550*1000000;
+		this.model.preferredFrequency = 3550*1000000;
 		this.model.mobility = false;
 		this.model.frequencyAbsolute = false;
 		this.setStartTime();

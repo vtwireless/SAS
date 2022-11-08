@@ -61,7 +61,7 @@ export class GrantListComponent implements AfterViewInit {
 					} else if (this.type == 'requests') {
 						this.requests = true;
 					}
-					if (this.active) {
+					// if (this.active) {
 						this.httpRequests.getSpectrumGrants().subscribe(
 							(data) => {
 								if (data['status'] == '1') {
@@ -80,117 +80,71 @@ export class GrantListComponent implements AfterViewInit {
 
 										this.SpectrumGrants.push(grant_obj); 
 									}
-									// this.SpectrumGrants = data['spectrumGrants'];
-									// this.dataSource.data = this.SpectrumGrants;
-									// for (
-									// 	var i = 0;
-									// 	i < this.SpectrumGrants.length;
-									// 	i++
-									// ) {
-									// 	if (
-									// 		this.SpectrumGrants[i].frequency /
-									// 		this.MEGA >
-									// 		1000
-									// 	) {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.GIGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'GHz';
-									// 	} else {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.MEGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'MHz';
-									// 	}
-									// }
 								}
 								this.dataSource.data = this.SpectrumGrants;
 							},
 							(error) => console.error(error)
 						);
-					} else if (this.logged) {
-						this.httpRequests.getGrantLogs().subscribe(
-							(data) => {
-								if (data['status'] == '1') {
-									this.SpectrumGrants = data['grantLogs'];
-									// for (
-									// 	var i = 0;
-									// 	i < this.SpectrumGrants.length;
-									// 	i++
-									// ) {
-									// 	if (
-									// 		this.SpectrumGrants[i].frequency /
-									// 		this.MEGA >
-									// 		1000
-									// 	) {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.GIGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'GHz';
-									// 	} else {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.MEGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'MHz';
-									// 	}
-									// }
-								}
-							},
-							(error) => console.error(error)
-						);
-					} else if (this.requests) {
-						this.httpRequests.getGrantRequests().subscribe(
-							(data) => {
-								if (data['status'] == '1') {
-									this.GrantRequests = data['grantRequests'];
-									for (
-										var i = 0;
-										i < this.GrantRequests.length;
-										i++
-									) {
-										if (
-											this.GrantRequests[i].maxFrequency /
-											this.MEGA >
-											1000
-										) {
-											this.GrantRequests[i].maxFrequency =
-												this.GrantRequests[i]
-													.maxFrequency / this.GIGA;
-											this.GrantRequests[i].minFrequency =
-												this.GrantRequests[i]
-													.minFrequency / this.GIGA;
-											this.GrantRequests[
-												i
-											].preferredFrequency =
-												this.GrantRequests[i]
-													.preferredFrequency /
-												this.GIGA;
-											this.GrantRequests[i].range = 'GHz';
-										} else {
-											this.GrantRequests[i].maxFrequency =
-												this.GrantRequests[i]
-													.maxFrequency / this.MEGA;
-											this.GrantRequests[i].minFrequency =
-												this.GrantRequests[i]
-													.minFrequency / this.MEGA;
-											this.GrantRequests[
-												i
-											].preferredFrequency =
-												this.GrantRequests[i]
-													.preferredFrequency /
-												this.MEGA;
-											this.GrantRequests[i].range = 'MHz';
-										}
-									}
-								}
-							},
-							(error) => console.error(error)
-						);
-					}
+					// }
+					// else if (this.logged) {
+					// 	this.httpRequests.getGrantLogs().subscribe(
+					// 		(data) => {
+					// 			if (data['status'] == '1') {
+					// 				this.SpectrumGrants = data['grantLogs'];
+					// 			}
+					// 		},
+					// 		(error) => console.error(error)
+					// 	);
+					// }
+					// else if (this.requests) {
+					// 	this.httpRequests.getGrantRequests().subscribe(
+					// 		(data) => {
+					// 			if (data['status'] == '1') {
+					// 				this.GrantRequests = data['grantRequests'];
+					// 				for (
+					// 					var i = 0;
+					// 					i < this.GrantRequests.length;
+					// 					i++
+					// 				) {
+					// 					if (
+					// 						this.GrantRequests[i].maxFrequency /
+					// 						this.MEGA >
+					// 						1000
+					// 					) {
+					// 						this.GrantRequests[i].maxFrequency =
+					// 							this.GrantRequests[i]
+					// 								.maxFrequency / this.GIGA;
+					// 						this.GrantRequests[i].minFrequency =
+					// 							this.GrantRequests[i]
+					// 								.minFrequency / this.GIGA;
+					// 						this.GrantRequests[
+					// 							i
+					// 						].preferredFrequency =
+					// 							this.GrantRequests[i]
+					// 								.preferredFrequency /
+					// 							this.GIGA;
+					// 						this.GrantRequests[i].range = 'GHz';
+					// 					} else {
+					// 						this.GrantRequests[i].maxFrequency =
+					// 							this.GrantRequests[i]
+					// 								.maxFrequency / this.MEGA;
+					// 						this.GrantRequests[i].minFrequency =
+					// 							this.GrantRequests[i]
+					// 								.minFrequency / this.MEGA;
+					// 						this.GrantRequests[
+					// 							i
+					// 						].preferredFrequency =
+					// 							this.GrantRequests[i]
+					// 								.preferredFrequency /
+					// 							this.MEGA;
+					// 						this.GrantRequests[i].range = 'MHz';
+					// 					}
+					// 				}
+					// 			}
+					// 		},
+					// 		(error) => console.error(error)
+					// 	);
+					// }
 				});
 			}
 		}

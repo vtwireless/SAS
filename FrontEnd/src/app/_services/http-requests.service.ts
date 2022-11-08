@@ -224,6 +224,7 @@ export class HttpRequestsService {
 				preferredFrequency: model.preferredFrequency,
 				frequencyAbsolute: model.frequencyAbsolute,
 				minBandwidth: model.minBandwidth,
+				maxBandwidth: model.maxBandwidth,
 				preferredBandwidth: model.preferredBandwidth,
 				startTime: model.startTime.toString(),
 				endTime: model.endTime.toString(),
