@@ -45,5 +45,27 @@
                 }
             }
         ]
-    }
+    },
+
+    "createSU" : {
+        "secondaryUserName": "abc@abc.com",
+        "secondaryUserEmail": "abc@abc.com",
+        "secondaryUserPassword": "password",
+        "deviceID": "",
+        "location": ""
+    },
+
+    "createSUs" : [{
+        "secondaryUserName": "bbc@bbc.com",
+        "secondaryUserEmail": "bbc@bbc.com",
+        "secondaryUserPassword": "password",
+        "deviceID": "",
+        "location": ""
+    }, {
+        "secondaryUserName": "cbc@cbc.com",
+        "secondaryUserEmail": "cbc@cbc.com",
+        "secondaryUserPassword": "password",
+        "deviceID": "",
+        "location": ""
+    }]
 }
