@@ -42,3 +42,20 @@ class TestUserLoginMethods:
         assert res.status_code == 200
         conftest.check_standard_failure("User could not be found", response)
 
+    def test_su_login(self, client):
+        """
+        Check if secondary user can log in
+        """
+        res = client.post('/suLogin', json={
+            "username": "abc@abc.com",
+            "password": "password"
+        })
+        response = res.get_json()
+        self.LOGGER.debug(response)
+
+        assert res.status_code == 200
+        for key in ['id', 'name', 'status', 'userType']:
+            assert key in response
+
+        assert response["status"] == 1
+        assert response["userType"] == 'SU'

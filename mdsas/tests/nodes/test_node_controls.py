@@ -8,8 +8,11 @@ class TestNodeCreation:
 
     def test_get_all_nodes(self, client):
         """ Get All Nodes """
-        pytest.skip(conftest.not_implemented())
         res = client.get("/getNodesRequest")
         response = res.get_json()
+        self.LOGGER.debug(response)
 
-        self.LOGGER.info(response)
+        assert "status" in response
+        assert "nodes" in response
+        assert response["status"] == 1
+        assert len(response["nodes"]) == 0

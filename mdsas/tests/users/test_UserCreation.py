@@ -59,11 +59,11 @@ class TestUserCreation:
 
         self.LOGGER.debug(response)
 
+    @pytest.mark.skip(conftest.fix_needed())
     def test_check_email_availability_when_user_exists(self, client, data):
         """
         Check if an email is available for use by a secondary user when another user already uses it.
         """
-        pytest.skip(conftest.fix_needed())
         payload = data["createSU"]
         self.LOGGER.debug(payload)
 
@@ -119,22 +119,15 @@ class TestUserCreation:
 
     def test_get_all_users(self, client):
         """ Get All Users """
-        pytest.skip(conftest.not_implemented())
         res = client.get("/getUsers")
         response = res.get_json()
 
-        self.LOGGER.info(response)
-
-    def test_su_login(self, client):
-        """
-        Check if secondary user can log in
-        """
-        pytest.skip(conftest.not_implemented())
-        res = client.post('/suLogin', json={
-            "username": "abc@abc.com",
-            "password": "password"
-        })
-        response = res.get_json()
-        self.LOGGER.debug(response)
-
         assert res.status_code == 200
+        assert "status" in response
+        assert response["status"] == 1
+
+        assert "secondaryUsers" in response
+        assert isinstance(response["secondaryUsers"], list)
+        assert len(response["secondaryUsers"]) == 4
+
+        self.LOGGER.debug(response)

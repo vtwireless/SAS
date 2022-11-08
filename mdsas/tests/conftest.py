@@ -1,4 +1,6 @@
 import json
+import os
+import glob
 
 import pytest
 from rest_server import socket as flask_app
@@ -38,6 +40,14 @@ def data():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Cleanup archive directory once we are finished."""
+    files = glob.glob('tests/reports/archive/*.json')
+
+    for f in files:
+        os.remove(f)
 
 
 def check_standard_failure(message, response, status=0):

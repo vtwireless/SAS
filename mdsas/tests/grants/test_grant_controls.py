@@ -8,8 +8,11 @@ class TestGrantCreation:
 
     def test_get_all_grants(self, client):
         """ Get All Grants """
-        pytest.skip(conftest.not_implemented())
         res = client.get("/getGrantsRequest")
         response = res.get_json()
+        self.LOGGER.debug(response)
 
-        self.LOGGER.info(response)
+        assert "status" in response
+        assert "spectrumGrants" in response
+        assert response["status"] == 1
+        assert len(response["spectrumGrants"]) == 0
