@@ -22,6 +22,8 @@
             </div>
         </form>
 
+        <div *ngIf="this.responseMessage!==''">{{this.responseMessage}} for node {{deregistrationRequest.cbsdId}}</div>
+
 
     </div>
 
