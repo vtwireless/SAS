@@ -16,6 +16,7 @@ export class NodeDeregisterComponent implements OnInit {
       null
   );
   submitted = false;
+  responseMessage = '';
 
 
   constructor(
@@ -52,6 +53,7 @@ export class NodeDeregisterComponent implements OnInit {
     this.deregistrationRequest = new DeregistrationRequest(
         null
     );
+    this.responseMessage = '';
   }
 
   onSubmit(){
@@ -59,6 +61,12 @@ export class NodeDeregisterComponent implements OnInit {
     console.log(this.deregistrationRequest);
     const user = JSON.parse(localStorage.getItem('currentUser'));
 
+    this.httpRequests.nodeDeregistrationRequest(this.deregistrationRequest).subscribe(
+        (data)=> {
+          console.log(data);
+          this.responseMessage = data['message'];
+        }
+    )
   }
 
 }

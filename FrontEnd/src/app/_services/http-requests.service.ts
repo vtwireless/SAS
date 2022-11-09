@@ -166,6 +166,17 @@ export class HttpRequestsService {
 			this.defaultProtocol, RequestMethod.POST, 'spectrumInquiryRequest', body, 'spectrumInquiryResponse'
 		);
 	}
+	public nodeDeregistrationRequest(model:any){
+		var body = {
+			deregistrationRequest: [{
+				cbsdId: parseInt(model.cbsdId)
+			}]
+		};
+
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'deregistrationRequest', body, 'deregistrationResponse'
+		);
+	}
 
 	// ------------------------------ Node Requests ------------------------------------
 
