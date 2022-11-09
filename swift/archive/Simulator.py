@@ -1,7 +1,7 @@
 import random
 
 
-class DataGenerator:
+class Simulator:
     # Config keys
     PARTIAL_BAND_SUPPORT = False
 
