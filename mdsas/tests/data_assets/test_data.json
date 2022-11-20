@@ -14,6 +14,83 @@
         "password": "password"
     },
 
+    "createSU" : {
+        "secondaryUserName": "abc@abc.com",
+        "secondaryUserEmail": "abc@abc.com",
+        "secondaryUserPassword": "password",
+        "deviceID": "",
+        "location": ""
+    },
+
+    "createSUs" : [{
+        "secondaryUserName": "bbc@bbc.com",
+        "secondaryUserEmail": "bbc@bbc.com",
+        "secondaryUserPassword": "password",
+        "deviceID": "",
+        "location": ""
+    }, {
+        "secondaryUserName": "cbc@cbc.com",
+        "secondaryUserEmail": "cbc@cbc.com",
+        "secondaryUserPassword": "password",
+        "deviceID": "",
+        "location": ""
+    }],
+
+    "registrationRequest" : {
+        "registrationRequest" : [
+            {
+                "nodeName": "node1",
+                "location": "30.2234,-80.7756",
+                "IPAddress": "1.1.1.1",
+                "trustLevel": "1",
+                "minFrequency": "1200",
+                "maxFrequency": "1300",
+                "minSampleRate": "1000",
+                "maxSampleRate": "2000",
+                "nodeType": "VT-CRTS-Node",
+                "mobility": "0",
+                "status": "ACTIVE",
+                "comment": "",
+                "userId": "abc@abc.com"
+            }
+        ]
+    },
+
+    "registrationRequests" : {
+        "registrationRequest": [
+            {
+                "nodeName": "node2",
+                "location": "30.3234,-80.7756",
+                "IPAddress": "1.1.1.2",
+                "trustLevel": 2,
+                "minFrequency": 1200,
+                "maxFrequency": 1300,
+                "minSampleRate": 1000,
+                "maxSampleRate": 2000,
+                "nodeType": "VT-CRTS-Node",
+                "mobility": 0,
+                "status": "ACTIVE",
+                "comment": "",
+                "userId": "bbc@abc.com"
+            },
+            {
+                "nodeName": "node3",
+                "location": "30.4234,-80.7756",
+                "IPAddress": "1.1.1.3",
+                "trustLevel": 3,
+                "minFrequency": 1200,
+                "maxFrequency": 1300,
+                "minSampleRate": 1000,
+                "maxSampleRate": 2000,
+                "nodeType": "VT-CRTS-Node",
+                "mobility": 0,
+                "status": "ACTIVE",
+                "comment": "",
+                "userId": "cbc@abc.com"
+            }
+        ]
+    },
+
     "spectrumInquiryRequest": {
         "spectrumInquiryRequest": [
             {

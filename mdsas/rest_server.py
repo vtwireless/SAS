@@ -44,7 +44,7 @@ cors = CORS(socket, resources={r"/*": {"origins": "*"}})
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-handler.setLevel(logging.DEBUG)
+handler.setLevel(logging.INFO)
 socket.logger.handlers.clear()
 socket.logger.addHandler(handler)
 socket.logger.setLevel(logging.DEBUG)
@@ -93,8 +93,10 @@ def createSecondaryUser():
         return response
 
     except Exception as err:
+        socket.logger.debug(traceback.format_exc())
         return {
-            'status': 0, 'message': str(err)
+            'status': 0,
+            'message': f"ErrorType: {err.__class__.__name__}, Message: {str(err)}"
         }
 
 
