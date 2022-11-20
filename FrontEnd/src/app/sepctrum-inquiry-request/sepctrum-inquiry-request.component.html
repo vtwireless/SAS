@@ -47,7 +47,8 @@
                 </div>
                 </div>
                 <div>
-                    <div  class="selected-freq" *ngFor="let divData of chosenFreqRanges">{{divData.lowFrequency}}MHz - {{divData.highFrequency}}MHz</div>
+                    &nbsp;
+                    <div  class="selected-freq" *ngFor="let divData of chosenFreqRanges">{{divData.lowFrequency/1000000}}MHz - {{divData.highFrequency/1000000}}MHz</div>
                 </div>
 
 

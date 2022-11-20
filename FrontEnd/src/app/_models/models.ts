@@ -152,6 +152,14 @@ export class DeregistrationRequest {
     }
 }
 
+export class RelinquishmentRequest {
+    constructor(
+        public cbsdId: number,
+        public grantId: number,
+    ) {
+    }
+}
+
 export class AvailableChannel {
     constructor(
         public channelType: string,

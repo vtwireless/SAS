@@ -35,6 +35,11 @@
             <span class="icon-name"> GRANT LIST </span>
         </button>
 
+    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-relinquishment">
+        <mat-icon>delete</mat-icon>
+        <span class="icon-name"> Grant Relinquishment</span>
+    </button>
+
         <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/spectrum-inquiry-request">
             <mat-icon>edit</mat-icon>
             <span class="icon-name">Spectrum Inquiry Request</span>

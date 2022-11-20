@@ -41,7 +41,8 @@ import { AppRoutingModule } from './app-routing.module';;
 import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
 import { FormsModule } from '@angular/forms';;
 import { NodeDeregisterComponent } from './node-deregister/node-deregister.component'
-
+;
+import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relinquishment.component'
 
 @NgModule({
   declarations: [
@@ -68,7 +69,8 @@ import { NodeDeregisterComponent } from './node-deregister/node-deregister.compo
     NotFoundComponent
 ,
     SepctrumInquiryRequestComponent ,
-    NodeDeregisterComponent   // SocketComponent
+    NodeDeregisterComponent ,
+    GrantRelinquishmentComponent  // SocketComponent
   ],
 
   imports: [

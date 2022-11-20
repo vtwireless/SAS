@@ -21,6 +21,7 @@ import { TiersComponent } from './tiers/tiers.component';
 import { NotFoundComponent } from './not-found/not-found.component'
 import {SepctrumInquiryRequestComponent} from './sepctrum-inquiry-request/sepctrum-inquiry-request.component';
 import {NodeDeregisterComponent} from './node-deregister/node-deregister.component';
+import {GrantRelinquishmentComponent} from './grant-relinquishment/grant-relinquishment.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -43,6 +44,7 @@ const routes: Routes = [
   { path: 'admin-login', component: AdminLoginComponent },
   { path: 'spectrum-inquiry-request', component: SepctrumInquiryRequestComponent },
   { path: 'node-deregister', component: NodeDeregisterComponent },
+  { path: 'grant-relinquishment', component: GrantRelinquishmentComponent },
 
   {path: '**', component: NotFoundComponent}
 ];
