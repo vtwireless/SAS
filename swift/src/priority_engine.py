@@ -1,4 +1,5 @@
 from src import policies
+from src.policies import RULE
 
 
 class PriorityEngine:
@@ -7,7 +8,7 @@ class PriorityEngine:
 
     @staticmethod
     def load_rule(band) -> policies.RULE:
-        rule = policies.BANDS[band]['rule']
+        rule: RULE = policies.BANDS[band]['rule']
 
         if rule:
             return policies.RULES[rule]
@@ -15,7 +16,7 @@ class PriorityEngine:
             return policies.RULES['default']
 
     @staticmethod
-    def calculate_score(row, rule):
+    def calculate_score(row, rule: RULE):
         score = 0
 
         score += rule.user.index(row["type"]) + 1

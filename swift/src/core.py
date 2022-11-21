@@ -2,7 +2,6 @@
 @author: Saurav Kumar [sauravk3@vt.edu]
 @copyright: Wireless@VT
 """
-import json
 import os
 import traceback
 import pandas
@@ -28,6 +27,7 @@ class Core:
 
     def __clear_memory(self):
         try:
+            print("Removing existing files")
             os.remove(self.priority_file_name)
             os.remove(self.rejected_file_name)
 
@@ -116,6 +116,7 @@ class Core:
     def generate_results(self):
         self.context = self.context.sort_values(by=['band'])
         self.context.to_csv("out/experiment_results.csv", index=False)
+        print("Results Available at: out/experiment_results.csv")
 
 
 class _Context:
@@ -128,6 +129,3 @@ class _Context:
         self.weather = weather
         self.density = density
         self.traffic = traffic
-
-
-
