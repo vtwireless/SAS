@@ -43,7 +43,8 @@ import { FormsModule } from '@angular/forms';;
 import { NodeDeregisterComponent } from './node-deregister/node-deregister.component'
 ;
 import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relinquishment.component'
-
+;
+import { GrantMessageComponent } from './grant-message/grant-message.component'
 @NgModule({
   declarations: [
     AppComponent,
@@ -70,7 +71,8 @@ import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relin
 ,
     SepctrumInquiryRequestComponent ,
     NodeDeregisterComponent ,
-    GrantRelinquishmentComponent  // SocketComponent
+    GrantRelinquishmentComponent ,
+    GrantMessageComponent // SocketComponent
   ],
 
   imports: [

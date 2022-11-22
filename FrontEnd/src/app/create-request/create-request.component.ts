@@ -32,7 +32,7 @@ export class CreateRequestComponent {
 	trustLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 	dataTypes = ['AUDIO', 'IMAGE-VIDEO', 'DRONE', 'RADAR', 'RADIO', 'OTHER'];
 	nodes: Array<Node> = []
-
+	failResponseMessage = '';
 	submitted = false;
 
 	constructor(
@@ -96,8 +96,11 @@ export class CreateRequestComponent {
 		console.log(this.model);
 		this.httpRequests.createRequest(this.model, this.isAdmin).subscribe(
 			(data) => {
-				if (data['status'] == '1') {
+				if (data['grantResponse'][0]['response']['responseMessage'] == 'SUCCESS') {
 					this.router.navigate(['/grant-list']);
+				}else{
+					this.router.navigate(['/grant-message'])
+					this.failResponseMessage = data['grantResponse'][0]['response']['responseMessage'];
 				}
 			},
 			(error) => console.error(error)

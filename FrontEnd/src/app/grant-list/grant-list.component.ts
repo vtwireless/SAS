@@ -69,7 +69,7 @@ export class GrantListComponent implements AfterViewInit {
 										var grant_obj: GrantList = {
 											grantId: grant.grantId,
 											secondaryUserID: grant.secondaryUserID,
-											frequency: (grant.maxFrequency/1000000).toString() + " - " + (grant.minFrequency/1000000).toString(),
+											frequency: (grant.minFrequency/1000000).toString() + " - " + (grant.maxFrequency/1000000).toString(),
 											minBandwidth: grant.minBandwidth,
 											preferredBandwidth: grant.preferredBandwidth,
 											startTime: grant.startTime,
