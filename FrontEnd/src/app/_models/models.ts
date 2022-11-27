@@ -101,6 +101,7 @@ export class GrantRequest {
     public preferredFrequency: number;
     public frequencyAbsolute: boolean;
     public minBandwidth: number;
+    public maxBandwidth: number;
     public preferredBandwidth: number;
     public startTime: string;
     public endTime: string;
@@ -147,6 +148,14 @@ export class freqRange {
 export class DeregistrationRequest {
     constructor(
         public cbsdId: number
+    ) {
+    }
+}
+
+export class RelinquishmentRequest {
+    constructor(
+        public cbsdId: number,
+        public grantId: number,
     ) {
     }
 }

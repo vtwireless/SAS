@@ -21,6 +21,8 @@ import { TiersComponent } from './tiers/tiers.component';
 import { NotFoundComponent } from './not-found/not-found.component'
 import {SepctrumInquiryRequestComponent} from './sepctrum-inquiry-request/sepctrum-inquiry-request.component';
 import {NodeDeregisterComponent} from './node-deregister/node-deregister.component';
+import {GrantRelinquishmentComponent} from './grant-relinquishment/grant-relinquishment.component';
+import {GrantMessageComponent} from './grant-message/grant-message.component';
 
 const routes: Routes = [
   { path: '', component: HomeComponent, pathMatch: 'full' },
@@ -30,7 +32,7 @@ const routes: Routes = [
   { path: 'SU-details/:id', component: SUDetailsComponent },
   { path: 'node-details/:id', component: NodeDetailsComponent },
   { path: 'node-list', component: NodeListComponent },
-  { path: 'grant-list/:type', component: GrantListComponent },
+  { path: 'grant-list', component: GrantListComponent },
   { path: 'create-node', component: CreateNodeComponent },
   { path: 'login', component: LoginComponent },
   { path: 'tiers/:id', component: TiersComponent },
@@ -43,6 +45,9 @@ const routes: Routes = [
   { path: 'admin-login', component: AdminLoginComponent },
   { path: 'spectrum-inquiry-request', component: SepctrumInquiryRequestComponent },
   { path: 'node-deregister', component: NodeDeregisterComponent },
+  { path: 'grant-relinquishment', component: GrantRelinquishmentComponent },
+  { path: 'grant-message', component: GrantMessageComponent },
+
 
   {path: '**', component: NotFoundComponent}
 ];

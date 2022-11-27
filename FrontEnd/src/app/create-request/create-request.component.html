@@ -189,6 +189,25 @@
             </div>
 
 
+            <div class="form-group" style="float:left;padding-right:20px;width:230px;margin-left: 18px">
+                <label for="maxBandwidth">Maximum Bandwidth (MHz)</label>
+                <input type="number" class="form-control" id="maxBandwidth"
+                       required
+                       (change)="updatePreferredBandwidth();"
+                       [(ngModel)]="model.maxBandwidth" name="maxBandwidth"
+                       #maxBandwidth="ngModel" min="1" max="150">
+                <div [hidden]="maxBandwidth.valid || maxBandwidth.pristine" class="alert alert-danger">
+                    Select a maximum bandwidth
+                </div>
+                <div *ngIf="model.maxBandwidth" [hidden]="model.maxBandwidth > 0" class="alert alert-danger">
+                    Maximum Bandwidth must be at least 1MHz
+                </div>
+                <div *ngIf="model.minBandwidth" [hidden]="model.maxBandwidth <= 150" class="alert alert-danger">
+                    Maximum Bandwidth rate must be at most 150MHz
+                </div>
+            </div>
+
+
           <div class="form-group" style="float:left;width:230px;">
               <label for="preferredBandwidth">Preferred Bandwidth (MHz)</label>
               <input type="number" class="form-control" id="preferredBandwidth"

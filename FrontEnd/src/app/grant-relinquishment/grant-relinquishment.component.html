@@ -1,0 +1,39 @@
+<div class="page-wrapper" style="margin-left: 30rem; margin-top: 5rem">
+    <h1>Grant Relinquishment Request</h1>
+
+    <div class="grant-relinquishment-form" style="margin-top: 5rem">
+        <form (ngSubmit) = "onSubmit()" #grantRelinquishmentForm="ngForm" style="max-width:600px;padding: 2px 2px 10px 5px">
+
+            <div class="form-group">
+                <label for="cbsdId">Select CBSDId</label>
+                <select class="form-control" id="cbsdId" required [(ngModel)]="relinquishmentRequest.cbsdId"
+                        name="cbsdId" #cbsdId="ngModel">
+                    <option *ngFor="let cbsdId of cbsdIDList" [value]="cbsdId">{{cbsdId}}</option>
+                </select>
+                <div [hidden]="cbsdId.valid || cbsdId.pristine" class="alert alert-danger">
+                    Please select a CBSD ID.
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 5rem">
+                <label for="grantId">Select GrantId</label>
+                <select class="form-control" id="grantId" required [(ngModel)]="relinquishmentRequest.grantId"
+                        name="grantId" #grantId="ngModel">
+                    <option *ngFor="let grantId of grantIDList" [value]="grantId">{{grantId}}</option>
+                </select>
+                <div [hidden]="grantId.valid || grantId.pristine" class="alert alert-danger">
+                    Please select a Grant ID.
+                </div>
+            </div>
+
+            <div class="node-buttons" style="display: flex;flex-direction: row; justify-content: space-between; width: 25vw; margin-left: 5rem; margin-top: 5rem" >
+                <button type="submit" class="btn btn-success" [disabled]="!grantRelinquishmentForm.form.valid">Submit</button>
+                <button type="button" class="btn btn-default"
+                        (click)="newRequest(); grantRelinquishmentForm.reset()">Clear Form</button>
+            </div>
+        </form>
+
+        <div *ngIf="this.responseMessage!==''">Grant Relinquishment was successful!</div>
+
+    </div>
+</div>

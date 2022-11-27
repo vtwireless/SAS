@@ -12,6 +12,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatPaginatorModule  } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
 //import { MatSliderModule } from '@angular/material';
 
 import { AppComponent } from './app.component';
@@ -41,8 +42,11 @@ import { AppRoutingModule } from './app-routing.module';;
 import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
 import { FormsModule } from '@angular/forms';;
 import { NodeDeregisterComponent } from './node-deregister/node-deregister.component'
-
-
+;
+import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relinquishment.component'
+;
+import { GrantMessageComponent } from './grant-message/grant-message.component'
+;
 @NgModule({
   declarations: [
     AppComponent,
@@ -68,7 +72,9 @@ import { NodeDeregisterComponent } from './node-deregister/node-deregister.compo
     NotFoundComponent
 ,
     SepctrumInquiryRequestComponent ,
-    NodeDeregisterComponent   // SocketComponent
+    NodeDeregisterComponent ,
+    GrantRelinquishmentComponent ,
+    GrantMessageComponent ,
   ],
 
   imports: [

@@ -11,6 +11,8 @@ import {
 } from '../_models/models';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpRequestsService } from '../_services/http-requests.service';
+import { MdbModalRef, MdbModalService } from 'mdb-angular-ui-kit/modal';
+
 
 @Component({
 	selector: 'app-grant-list',
@@ -19,7 +21,10 @@ import { HttpRequestsService } from '../_services/http-requests.service';
 })
 export class GrantListComponent implements AfterViewInit {
 	SpectrumGrants: GrantList[] = [];
+	displayStyle = "none";
 	GrantRequests: Array<GrantRequest> = [];
+	currentGrantRequest: GrantList;
+
 	API = AppConstants.GETURL;
 	public logged = false;
 	public active = false;
@@ -61,136 +66,101 @@ export class GrantListComponent implements AfterViewInit {
 					} else if (this.type == 'requests') {
 						this.requests = true;
 					}
-					if (this.active) {
+					// if (this.active) {
 						this.httpRequests.getSpectrumGrants().subscribe(
 							(data) => {
 								if (data['status'] == '1') {
 									for (const grant of data['spectrumGrants']) {
 										var grant_obj: GrantList = {
 											grantId: grant.grantId,
+											cbsdId:grant.cbsdId,
+											approximateByteSize:grant.approximateByteSize,
 											secondaryUserID: grant.secondaryUserID,
-											frequency: grant.maxFrequency.toString() + " - " + grant.minFrequency.toString(),
+											dataType:grant.dataType,
+											frequency: (grant.minFrequency/1000000).toString() + " - " + (grant.maxFrequency/1000000).toString(),
 											minBandwidth: grant.minBandwidth,
 											preferredBandwidth: grant.preferredBandwidth,
 											startTime: grant.startTime,
 											endTime: grant.endTime,
+											frequencyAbsolute:grant.frequencyAbsolute,
 											status: grant.status,
-											location: grant.location
+											location: grant.location,
+											maxVelocity:grant.maxVelocity,
+											mobility:grant.mobility,
+											powerLevel:grant.powerLevel,
+											preferredFrequency:grant.preferredFrequency,
+											range:grant.range,
+											tier:grant.tier,
+											secondaryUserName:grant.secondaryUserName
 										}
 
 										this.SpectrumGrants.push(grant_obj); 
 									}
-									// this.SpectrumGrants = data['spectrumGrants'];
-									// this.dataSource.data = this.SpectrumGrants;
-									// for (
-									// 	var i = 0;
-									// 	i < this.SpectrumGrants.length;
-									// 	i++
-									// ) {
-									// 	if (
-									// 		this.SpectrumGrants[i].frequency /
-									// 		this.MEGA >
-									// 		1000
-									// 	) {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.GIGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'GHz';
-									// 	} else {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.MEGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'MHz';
-									// 	}
-									// }
 								}
 								this.dataSource.data = this.SpectrumGrants;
 							},
 							(error) => console.error(error)
 						);
-					} else if (this.logged) {
-						this.httpRequests.getGrantLogs().subscribe(
-							(data) => {
-								if (data['status'] == '1') {
-									this.SpectrumGrants = data['grantLogs'];
-									// for (
-									// 	var i = 0;
-									// 	i < this.SpectrumGrants.length;
-									// 	i++
-									// ) {
-									// 	if (
-									// 		this.SpectrumGrants[i].frequency /
-									// 		this.MEGA >
-									// 		1000
-									// 	) {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.GIGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'GHz';
-									// 	} else {
-									// 		this.SpectrumGrants[i].frequency =
-									// 			this.SpectrumGrants[i]
-									// 				.frequency / this.MEGA;
-									// 		this.SpectrumGrants[i].range =
-									// 			'MHz';
-									// 	}
-									// }
-								}
-							},
-							(error) => console.error(error)
-						);
-					} else if (this.requests) {
-						this.httpRequests.getGrantRequests().subscribe(
-							(data) => {
-								if (data['status'] == '1') {
-									this.GrantRequests = data['grantRequests'];
-									for (
-										var i = 0;
-										i < this.GrantRequests.length;
-										i++
-									) {
-										if (
-											this.GrantRequests[i].maxFrequency /
-											this.MEGA >
-											1000
-										) {
-											this.GrantRequests[i].maxFrequency =
-												this.GrantRequests[i]
-													.maxFrequency / this.GIGA;
-											this.GrantRequests[i].minFrequency =
-												this.GrantRequests[i]
-													.minFrequency / this.GIGA;
-											this.GrantRequests[
-												i
-											].preferredFrequency =
-												this.GrantRequests[i]
-													.preferredFrequency /
-												this.GIGA;
-											this.GrantRequests[i].range = 'GHz';
-										} else {
-											this.GrantRequests[i].maxFrequency =
-												this.GrantRequests[i]
-													.maxFrequency / this.MEGA;
-											this.GrantRequests[i].minFrequency =
-												this.GrantRequests[i]
-													.minFrequency / this.MEGA;
-											this.GrantRequests[
-												i
-											].preferredFrequency =
-												this.GrantRequests[i]
-													.preferredFrequency /
-												this.MEGA;
-											this.GrantRequests[i].range = 'MHz';
-										}
-									}
-								}
-							},
-							(error) => console.error(error)
-						);
-					}
+					// }
+					// else if (this.logged) {
+					// 	this.httpRequests.getGrantLogs().subscribe(
+					// 		(data) => {
+					// 			if (data['status'] == '1') {
+					// 				this.SpectrumGrants = data['grantLogs'];
+					// 			}
+					// 		},
+					// 		(error) => console.error(error)
+					// 	);
+					// }
+					// else if (this.requests) {
+					// 	this.httpRequests.getGrantRequests().subscribe(
+					// 		(data) => {
+					// 			if (data['status'] == '1') {
+					// 				this.GrantRequests = data['grantRequests'];
+					// 				for (
+					// 					var i = 0;
+					// 					i < this.GrantRequests.length;
+					// 					i++
+					// 				) {
+					// 					if (
+					// 						this.GrantRequests[i].maxFrequency /
+					// 						this.MEGA >
+					// 						1000
+					// 					) {
+					// 						this.GrantRequests[i].maxFrequency =
+					// 							this.GrantRequests[i]
+					// 								.maxFrequency / this.GIGA;
+					// 						this.GrantRequests[i].minFrequency =
+					// 							this.GrantRequests[i]
+					// 								.minFrequency / this.GIGA;
+					// 						this.GrantRequests[
+					// 							i
+					// 						].preferredFrequency =
+					// 							this.GrantRequests[i]
+					// 								.preferredFrequency /
+					// 							this.GIGA;
+					// 						this.GrantRequests[i].range = 'GHz';
+					// 					} else {
+					// 						this.GrantRequests[i].maxFrequency =
+					// 							this.GrantRequests[i]
+					// 								.maxFrequency / this.MEGA;
+					// 						this.GrantRequests[i].minFrequency =
+					// 							this.GrantRequests[i]
+					// 								.minFrequency / this.MEGA;
+					// 						this.GrantRequests[
+					// 							i
+					// 						].preferredFrequency =
+					// 							this.GrantRequests[i]
+					// 								.preferredFrequency /
+					// 							this.MEGA;
+					// 						this.GrantRequests[i].range = 'MHz';
+					// 					}
+					// 				}
+					// 			}
+					// 		},
+					// 		(error) => console.error(error)
+					// 	);
+					// }
 				});
 			}
 		}
@@ -200,16 +170,48 @@ export class GrantListComponent implements AfterViewInit {
 		this.dataSource.paginator = this.paginator;
 		console.log(this.dataSource);
 	}
+
+
+	openPopup(grantId) {
+		this.displayStyle = "block";
+
+		for(let i=0;i<this.SpectrumGrants.length;i++){
+			if(this.SpectrumGrants[i]['grantId']===grantId){
+				console.log("here");
+				this.currentGrantRequest = this.SpectrumGrants[i];
+			}
+		}
+
+		console.log(this.currentGrantRequest);
+
+	}
+	closePopup() {
+		this.displayStyle = "none";
+	}
+
+
 }
+
 
 export interface GrantList {
 	grantId: any;
+	approximateByteSize:any;
 	secondaryUserID: any;
 	frequency: any;
+	cbsdId:any;
+	dataType:any;
 	minBandwidth: any;
 	preferredBandwidth: any;
 	startTime: any;
 	endTime: any;
+	powerLevel:any;
+	mobility:any;
+	frequencyAbsolute:any;
 	status: any;
 	location: any;
+	tier:any;
+	secondaryUserName:any;
+	range:any;
+	preferredFrequency:any;
+	maxVelocity:any;
 }

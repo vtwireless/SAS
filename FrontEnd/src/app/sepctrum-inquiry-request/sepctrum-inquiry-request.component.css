@@ -26,6 +26,10 @@
 
 }
 
+.spec-inq-form{
+    margin-top: 5rem;
+}
+
 .node-buttons {
     margin: 5rem 0 0 20rem;
 }
@@ -36,4 +40,13 @@
 
 .response-table > td{
     font-size: 0.5rem;
+}
+
+.added-freq{
+    background-color: white;
+    min-height: 200px;
+    min-width: 220px;
+    margin-left:10rem;
+    -webkit-box-shadow: 0 0 6px rgb(0,0,0);
+
 }

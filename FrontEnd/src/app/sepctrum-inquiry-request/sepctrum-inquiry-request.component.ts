@@ -129,29 +129,33 @@ export class SepctrumInquiryRequestComponent implements OnInit {
             else{
 
                 for(let j=0;j<resp[i].availableChannel.length;j++){
+                    let currentResponse = new SpectrumInquiryResponse(null,0,null);
                     currentResponse.cbsdId  = resp[i]['cbsdId'];
                     currentResponse.response = new ResponseObj(null,null);
                     currentResponse.response.responseCode = resp[i]['response']['responseCode'];
                     currentResponse.response.responseMessage = resp[i]['response']['responseMessage'];
                     let currChannel = new AvailableChannel("", null,null,0,"");
-                    currChannel.channelType = resp[i]['availableChannel'][0]['channelType'];
+                    currChannel.channelType = resp[i]['availableChannel'][j]['channelType'];
                     currChannel.frequencyRange = new freqRange(null,null);
-                    currChannel.frequencyRange.lowFrequency = resp[i]['availableChannel'][0]['frequencyRange']['lowFrequency'];
-                    currChannel.frequencyRange.highFrequency = resp[i]['availableChannel'][0]['frequencyRange']['highFrequency'];
-                    currChannel.grantRequest = resp[i]['availableChannel'][0]['grantRequest'];
-                    currChannel.maxEirp = resp[i]['availableChannel'][0]['maxEirp'];
-                    currChannel.ruleApplied = resp[i]['availableChannel'][0]['ruleApplied'];
+                    currChannel.frequencyRange.lowFrequency = resp[i]['availableChannel'][j]['frequencyRange']['lowFrequency'];
+                    currChannel.frequencyRange.highFrequency = resp[i]['availableChannel'][j]['frequencyRange']['highFrequency'];
+                    currChannel.grantRequest = resp[i]['availableChannel'][j]['grantRequest'];
+                    currChannel.maxEirp = resp[i]['availableChannel'][j]['maxEirp'];
+                    currChannel.ruleApplied = resp[i]['availableChannel'][j]['ruleApplied'];
                     currentResponse.availableChannel = [];
                     currentResponse.availableChannel.push(currChannel);
                     this.spectrumResponse.push(currentResponse);
+                    console.log(currentResponse);
+
                 }
+                console.log(this.spectrumResponse);
 
             }
 
 
           }
           this.dataSource.data = this.spectrumResponse;
-          console.log(this.dataSource.data);
+          // console.log(this.dataSource.data);
           // console.log(this.spectrumResponse);
           this.response = resp[0]['response']['responseMessage'];
           // console.log(data);

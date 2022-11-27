@@ -178,6 +178,20 @@ export class HttpRequestsService {
 		);
 	}
 
+	public grantRelinquishmentRequest(model:any){
+		var body = {
+			relinquishmentRequest: [{
+				cbsdId: parseInt(model.cbsdId),
+				grantId: parseInt(model.grantId)
+			}]
+		}
+
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.POST, 'relinquishmentRequest', body, 'relinquishmentResponse'
+		);
+
+	}
+
 	// ------------------------------ Node Requests ------------------------------------
 
 	public createNode(model: any) {
@@ -224,6 +238,7 @@ export class HttpRequestsService {
 				preferredFrequency: model.preferredFrequency,
 				frequencyAbsolute: model.frequencyAbsolute,
 				minBandwidth: model.minBandwidth,
+				maxBandwidth: model.maxBandwidth,
 				preferredBandwidth: model.preferredBandwidth,
 				startTime: model.startTime.toString(),
 				endTime: model.endTime.toString(),
