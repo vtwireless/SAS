@@ -367,7 +367,7 @@ export class SchedulesComponent implements AfterViewInit{
 
      }
 
-     private latLongToShapePoints(latLong: Coordinates): String {
+     private latLongToShapePoints(latLong): String {
        var latLongString = "";
        latLongString = latLong.toString();
        latLongString = latLongString.replace(' ', '');

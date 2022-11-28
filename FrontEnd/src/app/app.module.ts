@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginatorModule  } from '@angular/material';
+import { MatPaginatorModule  } from '@angular/material/paginator';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 //import { MatSliderModule } from '@angular/material';

@@ -2,8 +2,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import 'rxjs/add/observable/throw';
-import 'rxjs/add/operator/catch';
+// import 'rxjs/add/observable/throw';
+// import 'rxjs/add/operator/catch';
 
 import { User, AppConstants, GrantRequest, RequestMethod, RequestProtocol } from '../_models/models';
 import { SocketService } from './socket.service';
