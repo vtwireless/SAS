@@ -20,7 +20,7 @@ import socketio
 import threading
 from argparse import ArgumentParser
 from datetime import datetime, timedelta
-from gnuradio import uhd
+# from gnuradio import uhd
 from usrps import Node
 from Client_WinnForum import *  # File containing object definitions used
 from cmd_prompts import *  # User defined module for cmd prompts
@@ -975,7 +975,7 @@ def simGrantReq(requests):
             )
         )
 
-        # Update the USRP with the proposed Operation Parameters in anticiaption of a sucessful grant request
+        # Update the USRP with the proposed Operation Parameters in anticipation of a successful grant request
         bandwidth = int(highFreq) - int(lowFreq)
         cFreq = int(lowFreq) + (bandwidth / 2)
         # TODO: Update output power
