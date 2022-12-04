@@ -11,9 +11,7 @@ import {
 } from '../_models/models';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpRequestsService } from '../_services/http-requests.service';
-import { MdbModalRef, MdbModalService } from 'mdb-angular-ui-kit/modal';
 import {MatSort} from '@angular/material/sort';
-
 
 
 @Component({

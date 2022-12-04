@@ -56,7 +56,7 @@ class TestCBSDCreation:
     def test_create_cbsds(self, client, data):
         res = client.post("/registrationRequest", json=data["registrationRequests"])
         response = res.get_json()
-        self.LOGGER.info(response)
+        self.LOGGER.debug(response)
 
         conftest.check_standard_success(
             "Nodes have been added.", response
@@ -75,3 +75,4 @@ class TestCBSDCreation:
         self.LOGGER.debug(response)
 
         assert len(response["nodes"]) == 3
+        assert response["status"] == 1

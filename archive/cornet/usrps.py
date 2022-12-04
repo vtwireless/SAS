@@ -55,17 +55,19 @@ class Grant:
     setGrantExpireTime(expireTime)
         assigns grantExpireTime to passed parameter expireTime
     """
-    def __init__(self, grantId=None, grantStatus="IDLE", grantExpireTime=None, heartbeatInterval=None, channelType=None):
+
+    def __init__(self, grantId=None, grantStatus="IDLE", grantExpireTime=None, heartbeatInterval=None,
+                 channelType=None):
         """
         Constructor for a Grant Object. Grants are created once a node registers on the SAS.
         Nodes are automatically sent to IDLE since they have yet to send a sucessfull Grant request.
         """
-        self.__grantId           = grantId
-        self.__grantStatus       = grantStatus
-        self.__grantExpireTime   = grantExpireTime
+        self.__grantId = grantId
+        self.__grantStatus = grantStatus
+        self.__grantExpireTime = grantExpireTime
         self.__heartbeatInterval = heartbeatInterval
-        self.__channelType       = channelType
-    
+        self.__channelType = channelType
+
     def getGrantId(self):
         """
         Returns grantId for the Grant the node is assigned to
@@ -74,7 +76,7 @@ class Grant:
         -------
         grantId : string
             ID of grant the Node is assigned to 
-        """ 
+        """
         return self.__grantId
 
     def setGrantId(self, id):
@@ -82,7 +84,7 @@ class Grant:
         Assigns grantId to passed parameter id
         """
         self.__grantId = id
-    
+
     def getGrantStatus(self):
         """
         Returns grantStatus for the Grant the node is assigned to
@@ -106,13 +108,13 @@ class Grant:
         Assigns grantExpireTime to passed parameter status
         """
         self.__grantExpireTime = expireTime
-    
+
     def getHeartbeatInterval(self):
         """
         Returns heartbeatInterval for the Grant the node is assigned to
         """
         return self.__heartbeatInterval
-    
+
     def setHeartbeatInterval(self, hbInt):
         """
         Assigns heartbeatInterval to passed parameter status
@@ -124,6 +126,7 @@ class Grant:
 
     def setChannelType(self, ctype):
         self.__channelType = ctype
+
 
 class TX_USRP(gr.top_block):
     """
@@ -172,13 +175,12 @@ class TX_USRP(gr.top_block):
         ##################################################
         # Variables
         ##################################################
-        self.__SDR_Address = deviceAddr   # Required
-        self.__freq        = centerFreq   # Required 
-        self.__gain        = gain         # Required 
-        self.__bandwidth   = bandwidth    # Required
-        self.__signal_amp  = signalAmp    # Required
-        self.__waveform    = waveform     # Required
-
+        self.__SDR_Address = deviceAddr  # Required
+        self.__freq = centerFreq  # Required
+        self.__gain = gain  # Required
+        self.__bandwidth = bandwidth  # Required
+        self.__signal_amp = signalAmp  # Required
+        self.__waveform = waveform  # Required
 
         # NOTE: If GNURadio were to change how is generates TX Usrps that are fed by a singal source...
         # ...then that code can be pasted in here to simply update to this system
@@ -188,23 +190,23 @@ class TX_USRP(gr.top_block):
         ##################################################
         self.interest_signal = analog.sig_source_c(self.__bandwidth, self.__waveform, 0, self.__signal_amp, 0, 0)
         self.TX_SDR = uhd.usrp_sink(
-            ",".join(("addr="+self.__SDR_Address, '')),
+            ",".join(("addr=" + self.__SDR_Address, '')),
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',
-                channels=list(range(0,1)),
+                channels=list(range(0, 1)),
             ),
             '',
         )
         self.TX_SDR.set_center_freq(self.__freq, 0)
         self.TX_SDR.set_gain(self.__gain, 0)
-        self.TX_SDR.set_antenna('TX/RX', 0) # May need to add controls to this param
+        self.TX_SDR.set_antenna('TX/RX', 0)  # May need to add controls to this param
         self.TX_SDR.set_samp_rate(self.__bandwidth)
 
         # This is used to coordinate changes across mulitple devices it seems like
         # It looks as though an external LO is used to get this nanosecond timing correct
         # Can look into this feature at a later time when mulitple devices are working for the SAS
-        self.TX_SDR.set_time_unknown_pps(uhd.time_spec()) # TODO: Learn more about this ^
+        self.TX_SDR.set_time_unknown_pps(uhd.time_spec())  # TODO: Learn more about this ^
 
         ##################################################
         # Connections
@@ -252,12 +254,13 @@ class TX_USRP(gr.top_block):
 
     def set_waveform(self, waveform):
         self.__waveform = self._convert_waveform(waveform)
-    
+
     def disableTx(self):
         self.interest_signal.set_amplitude(0)
-    
+
     def enableTx(self):
         self.interest_signal.set_amplitude(self.__signal_amp)
+
 
 class RX_USRP():
     """
@@ -266,6 +269,7 @@ class RX_USRP():
     Create a GNU Radio Flowgraph for a RX USRP and paste the generated Python code for the class in here.
     """
     pass
+
 
 class TXRX_USRP(gr.top_block):
     """
@@ -296,21 +300,22 @@ class TXRX_USRP(gr.top_block):
         Number of data points that should be probed from the FFT (Should be a power of 2 e.g. 1024, 2048, ...). Default: 1024.
     """
 
-    def __init__(self, device_addr, tx_fc=0, tx_bw=0, tx_gain=0, tx_src_amp=0, rx_fc=3555000000, rx_bw=10000000, rx_gain=0, rx_bins=1024):
+    def __init__(self, device_addr, tx_fc=0, tx_bw=0, tx_gain=0, tx_src_amp=0, rx_fc=3555000000, rx_bw=10000000,
+                 rx_gain=0, rx_bins=1024):
         gr.top_block.__init__(self)
 
         ##################################################
         # Variables
         ##################################################
         self.__device_addr = device_addr
-        self.__tx_fc       = tx_fc
-        self.__tx_bw       = tx_bw
-        self.__tx_gain     = tx_gain
-        self.__tx_src_amp  = tx_src_amp 
-        self.__rx_fc       = rx_fc
-        self.__rx_bw       = rx_bw
-        self.__rx_gain     = rx_gain
-        self.__rx_bins     = rx_bins
+        self.__tx_fc = tx_fc
+        self.__tx_bw = tx_bw
+        self.__tx_gain = tx_gain
+        self.__tx_src_amp = tx_src_amp
+        self.__rx_fc = rx_fc
+        self.__rx_bw = rx_bw
+        self.__rx_gain = rx_gain
+        self.__rx_bins = rx_bins
 
         ##################################################
         # Blocks
@@ -318,11 +323,11 @@ class TXRX_USRP(gr.top_block):
 
         # Create TX Portion
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
-            ",".join(("addr="+device_addr, "A:")),
+            ",".join(("addr=" + device_addr, "A:")),
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',
-                channels=list(range(0,1)),
+                channels=list(range(0, 1)),
             ),
             '',
         )
@@ -337,11 +342,11 @@ class TXRX_USRP(gr.top_block):
 
         # Create RX Portion
         self.uhd_usrp_source_1 = uhd.usrp_source(
-            ",".join(("addr="+device_addr, "B:")),
+            ",".join(("addr=" + device_addr, "B:")),
             uhd.stream_args(
                 cpu_format="fc32",
                 args='',
-                channels=list(range(0,1)),
+                channels=list(range(0, 1)),
             ),
         )
         self.uhd_usrp_source_1.set_center_freq(rx_fc, 0)
@@ -352,7 +357,7 @@ class TXRX_USRP(gr.top_block):
         self.uhd_usrp_source_1.set_time_unknown_pps(uhd.time_spec())
         self.blocks_complex_to_mag_squared_0 = blocks.complex_to_mag_squared(rx_bins)
         self.fft_vxx_0 = fft.fft_vcc(rx_bins, True, window.blackmanharris(rx_bins), True, 1)
-        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex*1, rx_bins)
+        self.blocks_stream_to_vector_0 = blocks.stream_to_vector(gr.sizeof_gr_complex * 1, rx_bins)
         self.blocks_nlog10_ff_0 = blocks.nlog10_ff(10, rx_bins, 0)
         self.rx_probe = blocks.probe_signal_vf(rx_bins)
 
@@ -365,7 +370,6 @@ class TXRX_USRP(gr.top_block):
         self.connect((self.fft_vxx_0, 0), (self.blocks_complex_to_mag_squared_0, 0))
         self.connect((self.blocks_complex_to_mag_squared_0, 0), (self.blocks_nlog10_ff_0, 0))
         self.connect((self.blocks_nlog10_ff_0, 0), (self.rx_probe, 0))
-
 
     def get_device_addr(self):
         return self.__device_addr
@@ -388,7 +392,7 @@ class TXRX_USRP(gr.top_block):
         # self.uhd_usrp_sink_0.set_samp_rate(tx_bw)
         self.stop()
         self.wait()
-        print("BW: "+str(tx_bw)+"\nSRC AMP: " +str(self.__tx_src_amp))
+        print("BW: " + str(tx_bw) + "\nSRC AMP: " + str(self.__tx_src_amp))
         time.sleep(0.1)
         self.uhd_usrp_sink_0.set_samp_rate(self.__tx_bw)
         time.sleep(0.2)
@@ -411,8 +415,8 @@ class TXRX_USRP(gr.top_block):
 
     def disableTx(self):
         self.analog_noise_source_x_0.set_amplitude(0)
-    
-    def enableTx(self):     
+
+    def enableTx(self):
         self.analog_noise_source_x_0.set_amplitude(self.__tx_src_amp)
 
     def get_rx_fc(self):
@@ -454,9 +458,10 @@ class TXRX_USRP(gr.top_block):
         """
         return list(self.rx_probe.level())
 
+
 class Node:
     """
-    An instance of a Node has a 1-to-1 relationship with a USRP. I.e.,  Node object corresponds exclusivly with 1 USRP.
+    An instance of a Node has a 1-to-1 relationship with a USRP. I.e.,  Node object corresponds exclusively with 1 USRP.
     A Node object wraps a GNURadio Flowgraph script with SAS relevant data and operations to enhance functionality.
 
     Instance Attributes
@@ -470,7 +475,8 @@ class Node:
     operationMode : string
         String representing one of three operation modes for a Node. These are "TX", "RX", "TXRX".
     usrp : 1 of 3 USRP objects
-        This holds the GNURadio Flowgraph for the USRP the Node represents. This can be 1 of 3 objects: TX_USRP, RX_USRP, or TXRX_USRP.
+        This holds the GNURadio Flowgraph for the USRP the Node represents. This can be 1 of 3 objects: TX_USRP,
+        RX_USRP, or TXRX_USRP.
     isSasRegistered : boolean
         'True' if Node is officially registered with the SAS, otherwise 'False'.
     grant : Grant object
@@ -541,25 +547,27 @@ class Node:
     info()
         Returns information about the Node 
     """
+
     def __init__(self, ipAddress):
         """
         Constructor for a Node object
         """
 
-        #TODO do not duplicate with create_nodes that are inactive
-        __available_radios = list(uhd.find_devices()) # Pull list of nodes available once, for use when creating usrp obj
+        # TODO do not duplicate with create_nodes that are inactive
+        __available_radios = list(
+            uhd.find_devices())  # Pull list of nodes available once, for use when creating usrp obj
 
-        self.__ipAddress                = ipAddress
-        self.__serialNum, self.__model  = self._ipToSerialAndModel(ipAddress, __available_radios)
-        self.__operationMode            = None
-        self.__usrp                     = None
-        self.__isSasRegistered          = False
-        self.__grant                    = Grant()
-        self.__cbsdId                   = None
-        self.__measReportConfig         = []
-        self.__heartbeatTimer           = None # This timer waiting for a Heartbeat Response after a Request is made
+        self.__ipAddress = ipAddress
+        self.__serialNum, self.__model = self._ipToSerialAndModel(ipAddress, __available_radios)
+        self.__operationMode = None
+        self.__usrp = None
+        self.__isSasRegistered = False
+        self.__grant = Grant()
+        self.__cbsdId = None
+        self.__measReportConfig = []
+        self.__heartbeatTimer = None  # This timer waiting for a Heartbeat Response after a Request is made
         # TODO: heartbeatTimer should go into the Grant object since they are specfic to a Grant, not a Node
-    
+
     def getIpAddress(self):
         return self.__ipAddress
 
@@ -569,12 +577,12 @@ class Node:
     def getSerialNumber(self):
         return self.__serialNum
 
-    def setSerialNumber(self, num): 
+    def setSerialNumber(self, num):
         self.__serialNum = num
-    
+
     def getModel(self):
         return self.__model
-    
+
     def setModel(self, model):
         self.__model = model
 
@@ -582,7 +590,7 @@ class Node:
         return self.__operationMode
 
     def setOperationMode(self, mode):
-        self.__operationMode = mode 
+        self.__operationMode = mode
 
     def createTxUsrp(self, centerFreq, gain, bandwidth, signalAmp, waveform):
         """
@@ -595,11 +603,13 @@ class Node:
         node : TX_USRP Object
             True if USRP can handle the demanded parameters, False otherwise
         """
-        if((centerFreq > 0) and (gain >= 0) and (bandwidth > 0) and (signalAmp >= 0) and (self._convert_waveform(waveform))):
-            self.__usrp = TX_USRP(self.__ipAddress, centerFreq, gain, bandwidth, signalAmp, self._convert_waveform(waveform))
+        if ((centerFreq > 0) and (gain >= 0) and (bandwidth > 0) and (signalAmp >= 0) and (
+        self._convert_waveform(waveform))):
+            self.__usrp = TX_USRP(self.__ipAddress, centerFreq, gain, bandwidth, signalAmp,
+                                  self._convert_waveform(waveform))
         else:
             return None
-        
+
     def createRxUsrp(self, centerFreq, gain, bandwidth):
         """
         TODO
@@ -608,7 +618,7 @@ class Node:
         then this would be a good place to add a RX only Node.
         """
         self.__usrp = None
-    
+
     def createTxRxUsrp(self, tx_fc, tx_bw, tx_src_amp, tx_gain, rx_fc, rx_bw, rx_gain, rx_bins=1024):
         """
         Creates a TX/RX Node with given TX & RX parameters.
@@ -635,19 +645,21 @@ class Node:
         """
 
         # TODO: Should not have to validate these at this point
-        
-        if(tx_gain > 31.5):
+
+        if (tx_gain > 31.5):
             print("TX Gain of '" + str(tx_gain) + "' exceeds limit of 31.5. Setting TX Gain to maximum of 31.5")
             tx_gain = 31.5
-        elif(tx_gain < 0):
+        elif (tx_gain < 0):
             print("TX Gain of '" + str(tx_gain) + "' is below minimum of 0. Setting TX Gain to 0 (off)")
             tx_gain = 0
-        if(tx_src_amp > 1):
-            print("TX Signal Source Amplitude of '" + str(tx_src_amp) + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1.")
+        if (tx_src_amp > 1):
+            print("TX Signal Source Amplitude of '" + str(
+                tx_src_amp) + "' exceeds limit of 1. Setting TX Signal Source Amplitude to 1.")
             tx_src_amp = 1
-        elif(tx_src_amp < 0):
-            print("TX Signal Source Amplitude of '" + str(tx_src_amp) + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
-            tx_src_amp = 0 # TX OFF
+        elif (tx_src_amp < 0):
+            print("TX Signal Source Amplitude of '" + str(
+                tx_src_amp) + "' is below minimum of 0. Setting TX Signal Source Amplitude to 0 (OFF)")
+            tx_src_amp = 0  # TX OFF
 
         self.__usrp = TXRX_USRP(self.__ipAddress, tx_fc, tx_bw, tx_gain, tx_src_amp, rx_fc, rx_bw, rx_gain, rx_bins)
 
@@ -676,14 +688,14 @@ class Node:
         self.__grant = Grant(grantId, grantStatus, grantExpireTime, heartbeatInterval, channelType)
 
     def getCbsdId(self):
-        return self.__cbsdId 
+        return self.__cbsdId
 
     def setCbsdId(self, id):
         self.__cbsdId = id
-    
+
     def getMeasReportConfig(self):
         return self.__measReportConfig
-    
+
     def setMeasReportConfig(self, config):
         self.__measReportConfig = config
 
@@ -699,19 +711,19 @@ class Node:
             Grant status
         """
         self.getGrant().setGrantStatus(status)
-        if(status == "AUTHORIZED"):
+        if (status == "AUTHORIZED"):
             self.enableTx()
         else:
-            self.disableTx() # Ensure Node isnt TX if it is not "AUTH"
-        if(status == "IDLE"):
-            self.__grant = Grant() # TODO: Is this the best way of resetting an object?
+            self.disableTx()  # Ensure Node isnt TX if it is not "AUTH"
+        if (status == "IDLE"):
+            self.__grant = Grant()  # TODO: Is this the best way of resetting an object?
 
     def disableTx(self):
         """
         This makes the TX Signal Amplitude 0 which effectivly turns off Transmission.
         This does not assign the Object instance variable "signal amplitude" to 0 however.
         """
-        if(self.__operationMode == "TX" or self.__operationMode == "TXRX"):
+        if (self.__operationMode == "TX" or self.__operationMode == "TXRX"):
             self.__usrp.disableTx()
         else:
             print("Invalid Node / operationMode for disableTx. No changes made.")
@@ -720,53 +732,54 @@ class Node:
         """
         This reassigns the USRP Signal Amplitude to what it eas before TX was toggled off
         """
-        if(self.__operationMode == "TX" or self.__operationMode == "TXRX"):
+        if (self.__operationMode == "TX" or self.__operationMode == "TXRX"):
             self.__usrp.enableTx()
         else:
             print("Invalid Node/__operationMode for enableTx. No changes made.")
 
     def updateTxParams(self, fc=None, bw=None, gain=None, signalAmp=None, waveform=None):
-        if(self.__operationMode == "TXRX" or self.__operationMode == "TX"):
-            if(fc):
+        if (self.__operationMode == "TXRX" or self.__operationMode == "TX"):
+            if (fc):
                 self.__usrp.set_tx_fc(fc)
-            if(bw):
+            if (bw):
                 self.__usrp.set_tx_bw(bw)
-            if(gain):
-                self.__usrp.set_tx_gain(gain) 
-            if(signalAmp):
+            if (gain):
+                self.__usrp.set_tx_gain(gain)
+            if (signalAmp):
                 self.__usrp.set_tx_src_amp(signalAmp)
-            if(waveform and self.__operationMode == "TX"):
+            if (waveform and self.__operationMode == "TX"):
                 self.__usrp.set_waveform(waveform)
         else:
-            print("Invalid Node operationMode for setRxParams command. No Node updated.")  
+            print("Invalid Node operationMode for setRxParams command. No Node updated.")
 
     def updateRxParams(self, fc=None, bw=None, gain=None):
-        if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
-            if(fc):
+        if (self.__operationMode == "TXRX" or self.__operationMode == "RX"):
+            if (fc):
                 self.__usrp.set_rx_fc(fc)
-            if(bw):
+            if (bw):
                 self.__usrp.set_rx_bw(bw)
-            if(gain):
-                self.__usrp.set_rx_gain(gain) 
+            if (gain):
+                self.__usrp.set_rx_gain(gain)
         else:
-            print("Invalid Node operationMode for setRxParams command. No Node updated.")       
+            print("Invalid Node operationMode for setRxParams command. No Node updated.")
 
     def getSpectrumProbeData(self):
         """
         Uses the probe block to pull spectrum data.
         Checks to see if spectrum data should be sent.
         """
-        if(self.__operationMode == "TXRX" or self.__operationMode == "RX"):
-            if(("RECEIVED_POWER_WITHOUT_GRANT" in self.__measReportConfig)\
-             and (self.__grant.getGrantStatus() == "IDLE")):
+        if (self.__operationMode == "TXRX" or self.__operationMode == "RX"):
+            if (("RECEIVED_POWER_WITHOUT_GRANT" in self.__measReportConfig) \
+                    and (self.__grant.getGrantStatus() == "IDLE")):
                 return self.__usrp.getRxProbeList()
-            elif(("RECEIVED_POWER_WITH_GRANT" in self.__measReportConfig)\
-             and (self.__grant.getGrantStatus() == "GRANTED" or self.__grant.getGrantStatus() == "AUTHORIZED")):
+            elif (("RECEIVED_POWER_WITH_GRANT" in self.__measReportConfig) \
+                  and (self.__grant.getGrantStatus() == "GRANTED" or self.__grant.getGrantStatus() == "AUTHORIZED")):
                 return self.__usrp.getRxProbeList()
             else:
                 return None
         else:
-            print("Invalid function call to getSpectrumProbeData: unsupported current operationMode '" + str(self.__operationMode) + "'.")
+            print("Invalid function call to getSpectrumProbeData: unsupported current operationMode '" + str(
+                self.__operationMode) + "'.")
             return None
 
     def startHbTimer(self, timeTilHearbeatExpires):
@@ -777,9 +790,9 @@ class Node:
         """
         self.__heartbeatTimer = threading.Timer(timeTilHearbeatExpires, self.disableTx)
         self.__heartbeatTimer.start()
-    
+
     def stopHbTimer(self):
-        if(self.__heartbeatTimer):
+        if (self.__heartbeatTimer):
             self.__heartbeatTimer.cancel()
             self.__heartbeatTimer = None
         else:
@@ -791,7 +804,7 @@ class Node:
         """
         return "node data"
 
-# Helper Functions------------------------------
+    # Helper Functions------------------------------
     def _ipToSerialAndModel(self, ip, __available_radios):
         """
         Takes USRP IP Address and returns its serial number and model.
@@ -807,24 +820,24 @@ class Node:
         productOrType = None
         for node in __available_radios:
             try:
-                if(ip == node['addr']):
+                if (ip == node['addr']):
                     try:
                         serial = node['serial']
                     except:
-                        break # If node with the given IP cannot provide Serial#, just quit
+                        break  # If node with the given IP cannot provide Serial#, just quit
                     finally:
                         try:
-                            productOrType = node['product'] # If product does not exist, 'type' should
-                        except: # TODO: Used to use RuntimeError 
+                            productOrType = node['product']  # If product does not exist, 'type' should
+                        except:  # TODO: Used to use RuntimeError
                             try:
                                 productOrType = node['type']
                             except:
                                 pass
             except:
                 pass
-        
+
         return serial, productOrType
-    
+
     def _convert_waveform(self, waveform):
         """
         Converts User Input Wavefore into GNU Radio Waveform
@@ -839,17 +852,17 @@ class Node:
             wf : GNU Radio waveform library value. 
                 If no match is found, defaults to 'None'
         """
-        if(waveform == "CONSTANT"):
+        if (waveform == "CONSTANT"):
             return analog.GR_CONST_WAVE
-        elif(waveform == "COSINE"):
+        elif (waveform == "COSINE"):
             return analog.GR_COS_WAVE
-        elif(waveform == "SQUARE"):
+        elif (waveform == "SQUARE"):
             return analog.GR_SQR_WAVE
-        elif(waveform == "TRIANGLE"):
+        elif (waveform == "TRIANGLE"):
             return analog.GR_TRI_WAVE
-        elif(waveform == "SAWTOOTH"):
+        elif (waveform == "SAWTOOTH"):
             return analog.GR_SAW_WAVE
-        elif(waveform == "SINE"):
+        elif (waveform == "SINE"):
             return analog.GR_SIN_WAVE
         else:
             return None
