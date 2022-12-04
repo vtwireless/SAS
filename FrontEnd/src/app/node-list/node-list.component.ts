@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 
 import { PrimaryUser, SecondaryUser, Node, User, AppConstants } from '../_models/models';
 import { HttpRequestsService } from '../_services/http-requests.service';
+import {MatSort} from '@angular/material/sort';
 
 @Component({
     selector: 'app-node-list',
@@ -16,6 +17,7 @@ export class NodeListComponent implements AfterViewInit {
     Nodes: NodeList[] = [];
     dataSource = new MatTableDataSource<NodeList>(this.Nodes);
     @ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
+    @ViewChild(MatSort, { static: false }  ) sort: MatSort;
 
     displayedColumns: string[] = [
         'nodeID', 'nodeName', 'location', 'trustLevel', 'freqRange', 'sampleRange',
@@ -68,6 +70,8 @@ export class NodeListComponent implements AfterViewInit {
 
     ngAfterViewInit() {
         this.dataSource.paginator = this.paginator;
+        this.dataSource.sort = this.sort;
+
     }
 }
 
