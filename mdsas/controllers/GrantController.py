@@ -1,5 +1,6 @@
 import threading
 import math
+import time
 from datetime import datetime, timezone, timedelta
 import logging
 
@@ -19,6 +20,7 @@ from controllers.CBSDController import CBSDController
 
 class GrantController:
     GRANTS = None
+    INQUIRIES = None
     log = logging.getLogger(settings.APP_NAME + ".GrantController")
 
     def __init__(self, metadata, engine, connection, algorithms: SASAlgorithms, nodeCtrl):
@@ -47,6 +49,9 @@ class GrantController:
         self.GRANTS = db.Table(
             settings.GRANT_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
         )
+        self.INQUIRIES = db.Table(
+            settings.INQUIRYLOG, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
 
     def get_grants(self):
         query = select([self.GRANTS])
@@ -60,6 +65,17 @@ class GrantController:
             }
         except Exception as err:
             raise Exception(str(err))
+
+    def get_inquiries(self):
+        query = select([self.INQUIRIES])
+        self.log.debug("Getting All Spectrum Inquiries")
+
+        rows = self._execute_query(query)
+
+        return {
+            'status': 1,
+            'spectrumInquiries': rows
+        }
 
     def get_grants_by_freq_range(self, lowFrequency, highFrequency):
         query = select([self.GRANTS]).where(and_(
@@ -160,17 +176,42 @@ class GrantController:
 
                 response = WinnForum.SpectrumInquiryResponse(
                     request["cbsdId"], available_channels, self.algorithms.generateResponse(errorCode)
-                )
-                inquiryArr.append(response.asdict())
+                ).asdict()
 
-        threading.Timer(
-            3.0, self.resetRadioStatuses, [radiosToChangeBack]
-        ).start()
+                inquiry_log = {
+                    "timestamp": int(time.time()),
+                    "cbsdId": request["cbsdId"],
+                    "responseCode": response["response"]["responseCode"],
+                    "responseMessage": response["response"]["responseMessage"]
+                }
+
+                if "availableChannel" in response:
+                    for channel in response["availableChannel"]:
+                        inquiry_log.update({
+                            "requestLowFrequency": channel["frequencyRange"]["lowFrequency"],
+                            "requestHighFrequency": channel["frequencyRange"]["highFrequency"],
+                            "availableChannels": len(available_channels),
+                            "ruleApplied": channel["ruleApplied"],
+                            "maxEIRP": channel["maxEirp"]
+                        })
+                else:
+                    inquiry_log.update({
+                        "requestLowFrequency": fr['lowFrequency'],
+                        "requestHighFrequency": fr['highFrequency']
+                    })
+
+                inquiryArr.append(response)
+                self.CONNECTION.execute(self.INQUIRIES.insert(), [inquiry_log])
+
+        if radiosToChangeBack:
+            threading.Timer(
+                3.0, self.resetRadioStatuses, [radiosToChangeBack]
+            ).start()
 
         return {
-                   'status': 1,
-                   "spectrumInquiryResponse": inquiryArr
-               }, radiosToCommunicate
+            'status': 1,
+            "spectrumInquiryResponse": inquiryArr
+        }, radiosToCommunicate
 
     def initiateSensing(self, lowFreq, highFreq):
         count, radioCountLimit = 0, 3

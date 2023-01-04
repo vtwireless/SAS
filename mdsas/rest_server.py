@@ -221,10 +221,22 @@ def spectrumInquiryRequest():
         }
 
 
-@socket.route('/getGrantsRequest', methods=['GET'])
+@socket.route('/getSpectrumInquiryRequest', methods=['GET'])
+def getSpectrumInquiryRequest():
+    try:
+        response = None
+        return response
+
+    except Exception:
+        return {
+            "status": 0, "message": traceback.format_exc()
+        }
+
+
+@socket.route('/getSpectrumInquiries', methods=['GET'])
 def getGrantRequests():
     try:
-        response = db.get_grants()
+        response = db.get_inquiries()
         return response
     except Exception:
         return {

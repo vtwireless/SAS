@@ -13,7 +13,7 @@ import users_schema
 import tierclass_schema
 import tierassignment_schema
 import regionschedule_schema
-import grantlog_schema
+import inquirylog_schema
 
 
 class Schemas:
@@ -29,7 +29,7 @@ class Schemas:
         self.__get_tierclass_table()
         # self.__get_tierassignment_table()
         self.__get_regionschedule_table()
-        self.__get_grantlog_table()
+        self.__get_inquirylog_table()
 
     def __get_settings(self):
         settings_schema.set_schema(self._metadata)
@@ -55,6 +55,6 @@ class Schemas:
     def __get_regionschedule_table(self):
         regionschedule_schema.set_schema(self._metadata)
 
-    def __get_grantlog_table(self):
-        grantlog_schema.set_schema(self._metadata)
+    def __get_inquirylog_table(self):
+        inquirylog_schema.set_schema(self._metadata)
 

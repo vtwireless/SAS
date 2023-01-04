@@ -301,6 +301,9 @@ class DatabaseController:
     def get_grants(self):
         return self.grants_controller.get_grants()
 
+    def get_inquiries(self):
+        return self.grants_controller.get_inquiries()
+
     def get_grant_with_id(self, grantId):
         return self.grants_controller.get_grant_with_id(grantId)
 

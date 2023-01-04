@@ -25,7 +25,7 @@ PUDETECTIONS = 'pudetections'
 TIERCLASS = 'tierclass'
 TIERASSIGNMENT = 'tierassignment'
 REGIONSCHEDULE = 'regionSchedule'
-GRANTLOG = 'grantlog'
+INQUIRYLOG = 'inquirylogs'
 GRANTREQUEST = 'grantrequest'
 
 # App Settings
