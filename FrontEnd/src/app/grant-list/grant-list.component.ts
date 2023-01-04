@@ -11,6 +11,7 @@ import {
 } from '../_models/models';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpRequestsService } from '../_services/http-requests.service';
+import {MatSort} from '@angular/material/sort';
 
 
 @Component({
@@ -33,7 +34,9 @@ export class GrantListComponent implements AfterViewInit {
 	GIGA = 1000000000;
 
 	dataSource = new MatTableDataSource<GrantList>(this.SpectrumGrants);
+	// sortedData: GrantList[];
 	@ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
+	@ViewChild(MatSort, { static: false }  ) sort: MatSort;
 
 	displayedColumns: string[] = [
 		'grantId', 'secondaryUserID', 'frequency', 'minBandwidth', 'preferredBandwidth', 'startTime',
@@ -46,6 +49,7 @@ export class GrantListComponent implements AfterViewInit {
 		@Inject('BASE_URL') baseUrl: string,
 		router: Router
 	) {
+
 		if (localStorage.getItem('currentUser')) {
 			let user = new User('', '', '');
 			user = JSON.parse(localStorage.getItem('currentUser'));
@@ -97,69 +101,11 @@ export class GrantListComponent implements AfterViewInit {
 									}
 								}
 								this.dataSource.data = this.SpectrumGrants;
+								// this.sortedData = this.dataSource.data.slice();
 							},
 							(error) => console.error(error)
 						);
-					// }
-					// else if (this.logged) {
-					// 	this.httpRequests.getGrantLogs().subscribe(
-					// 		(data) => {
-					// 			if (data['status'] == '1') {
-					// 				this.SpectrumGrants = data['grantLogs'];
-					// 			}
-					// 		},
-					// 		(error) => console.error(error)
-					// 	);
-					// }
-					// else if (this.requests) {
-					// 	this.httpRequests.getGrantRequests().subscribe(
-					// 		(data) => {
-					// 			if (data['status'] == '1') {
-					// 				this.GrantRequests = data['grantRequests'];
-					// 				for (
-					// 					var i = 0;
-					// 					i < this.GrantRequests.length;
-					// 					i++
-					// 				) {
-					// 					if (
-					// 						this.GrantRequests[i].maxFrequency /
-					// 						this.MEGA >
-					// 						1000
-					// 					) {
-					// 						this.GrantRequests[i].maxFrequency =
-					// 							this.GrantRequests[i]
-					// 								.maxFrequency / this.GIGA;
-					// 						this.GrantRequests[i].minFrequency =
-					// 							this.GrantRequests[i]
-					// 								.minFrequency / this.GIGA;
-					// 						this.GrantRequests[
-					// 							i
-					// 						].preferredFrequency =
-					// 							this.GrantRequests[i]
-					// 								.preferredFrequency /
-					// 							this.GIGA;
-					// 						this.GrantRequests[i].range = 'GHz';
-					// 					} else {
-					// 						this.GrantRequests[i].maxFrequency =
-					// 							this.GrantRequests[i]
-					// 								.maxFrequency / this.MEGA;
-					// 						this.GrantRequests[i].minFrequency =
-					// 							this.GrantRequests[i]
-					// 								.minFrequency / this.MEGA;
-					// 						this.GrantRequests[
-					// 							i
-					// 						].preferredFrequency =
-					// 							this.GrantRequests[i]
-					// 								.preferredFrequency /
-					// 							this.MEGA;
-					// 						this.GrantRequests[i].range = 'MHz';
-					// 					}
-					// 				}
-					// 			}
-					// 		},
-					// 		(error) => console.error(error)
-					// 	);
-					// }
+
 				});
 			}
 		}
@@ -167,6 +113,7 @@ export class GrantListComponent implements AfterViewInit {
 
 	ngAfterViewInit() {
 		this.dataSource.paginator = this.paginator;
+		this.dataSource.sort = this.sort;
 		console.log(this.dataSource);
 	}
 
@@ -187,6 +134,33 @@ export class GrantListComponent implements AfterViewInit {
 	closePopup() {
 		this.displayStyle = "none";
 	}
+
+
+
+	// sortData(sort:Sort){
+	// 	const data = this.dataSource.data.slice();
+	//
+	// 	if (!sort.active || sort.direction === '') {
+	// 		this.sortedData = data;
+	// 		return;
+	// 	}
+	//
+	// 	this.sortedData = data.sort((a, b) => {
+	// 		const isAsc = sort.direction === 'asc';
+	// 		switch (sort.active) {
+	// 			case 'grantId':
+	// 				return this.compare(a.grantId, b.grantId, isAsc);
+	// 			default:
+	// 				return 0;
+	// 		}
+	// 	});
+	// }
+	//
+	// compare(a: number | string, b: number | string, isAsc: boolean) {
+	// 	return (a < b ? -1 : 1) * (isAsc ? 1 : -1);
+	// }
+
+
 
 
 }

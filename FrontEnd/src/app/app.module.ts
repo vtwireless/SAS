@@ -47,6 +47,8 @@ import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relin
 ;
 import { GrantMessageComponent } from './grant-message/grant-message.component'
 ;
+import {MatSortModule} from '@angular/material/sort';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -91,7 +93,8 @@ import { GrantMessageComponent } from './grant-message/grant-message.component'
     MatDividerModule,
     MatCheckboxModule,
     MatTableModule,
-    MatPaginatorModule 
+    MatPaginatorModule,
+    MatSortModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
