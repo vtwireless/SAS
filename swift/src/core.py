@@ -11,8 +11,7 @@ from src.priority_engine import PriorityEngine
 
 
 class Core:
-    priority_file_name = 'out/experiment_results.csv'
-    rejected_file_name = 'out/experiment_input.csv'
+    context_db = 'out/context_database.csv'
 
     simulation_mode: bool = False
     context: any = None
@@ -28,8 +27,7 @@ class Core:
     def __clear_memory(self):
         try:
             print("Removing existing files")
-            os.remove(self.priority_file_name)
-            os.remove(self.rejected_file_name)
+            os.remove(self.context_db)
 
         except Exception:
             print(traceback.format_exc())
@@ -101,31 +99,17 @@ class Core:
         > Using context, generates priority scores
         > forwards this score
         """
-        for index, row in self.context.iterrows():
-            band = row['band']
-            rule: policies.RULE = self.priority_engine.load_rule(band)
+        # Get priority Score
+        self.priority_engine.load_context_from_core(self.context)
+        self.priority_engine.generate_scores()
 
-            row['min_freq'] = policies.BANDS[band]["min-op-fr"]
-            row['max_freq'] = policies.BANDS[band]["max-op-fr"]
-            row["score"] = self.priority_engine.calculate_score(row, rule)
+        self.context = self.priority_engine.get_context()
 
-            self.context.at[index, 'min_freq'] = row['min_freq']
-            self.context.at[index, 'max_freq'] = row['max_freq']
-            self.context.at[index, 'score'] = row["score"]
+        # Perform other actions if necessary
+        pass
 
     def generate_results(self):
-        self.context = self.context.sort_values(by=['band'])
-        self.context.to_csv("out/experiment_results.csv", index=False)
-        print("Results Available at: out/experiment_results.csv")
+        self.context = self.context.sort_values(by=['location'])
+        self.context.to_csv(self.context_db, index=False)
+        print(f"Results Available at: {self.context_db}")
 
-
-class _Context:
-    def __init__(
-        self, cbsdId, type, band, weather, density, traffic
-    ):
-        self.cbsdId = cbsdId
-        self.type = type
-        self.band = band
-        self.weather = weather
-        self.density = density
-        self.traffic = traffic

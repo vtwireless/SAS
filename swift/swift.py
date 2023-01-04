@@ -7,7 +7,7 @@ def main():
     core = Core()
 
     print("\n# Configuring Internal Simulator...")
-    simulator_output_location, number_of_users = "out/sample_input.csv", 10000
+    simulator_output_location, number_of_users = "out/sample_input.csv", 2000
     simulator = ContextSimulator(simulator_output_location, number_of_users)
 
     print("\n# Configuring SWIFT ASCENT Core according to your specifications...")

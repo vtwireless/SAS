@@ -1,7 +1,7 @@
 class RULE:
     channel_size = 10
     user = ['ordinary', 'scientific', 'educational', 'government', 'emergency']
-    weather = ['sunny', 'cloudy', 'foggy', 'rainy', 'snowy', 'emergency']
+    weather = ['clear', 'cloudy', 'overcast', 'rain', 'snow', 'emergency']
     density = ['rural', 'semi-urban', 'urban']
     traffic = ['video', 'data', 'voice', 'emergency']
 
