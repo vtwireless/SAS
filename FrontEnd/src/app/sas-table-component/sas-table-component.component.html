@@ -1,0 +1,17 @@
+<mat-card *ngIf="tableHeader != null">
+  <mat-card-content>{{ tableHeader }}</mat-card-content>
+</mat-card>
+<div class="mat-elevation-z8 full-width-table">
+  <mat-table [dataSource]="dataSource">
+    <ng-container [matColumnDef]="col.key" *ngFor="let col of columnsSchema">
+      <mat-header-cell *matHeaderCellDef>
+        {{ col.label }}
+      </mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        {{ setType(element[col.key], col.type) }}
+      </mat-cell>
+    </ng-container>
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns"></mat-row>
+  </mat-table>
+</div>
