@@ -10,8 +10,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
-import { MatPaginatorModule  } from '@angular/material';
+import { MatDatepickerModule, MatNativeDateModule, MatPaginatorModule  } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatCardModule } from '@angular/material/card';
 
 //import { MatSliderModule } from '@angular/material';
 
@@ -36,18 +37,19 @@ import { SchedulesComponent } from './schedules/schedules.component';
 import { CreateRequestComponent } from './create-request/create-request.component';
 import { LogoutComponent } from './logout/logout.component';
 import { JwtInterceptor } from './_helpers';
-import { ErrorInterceptor } from './_helpers/error.interceptor';;
-import { NotFoundComponent } from './not-found/not-found.component'
-import { AppRoutingModule } from './app-routing.module';;
-import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component'
-import { FormsModule } from '@angular/forms';;
-import { NodeDeregisterComponent } from './node-deregister/node-deregister.component'
-;
-import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relinquishment.component'
-;
-import { GrantMessageComponent } from './grant-message/grant-message.component'
-;
-import {MatSortModule} from '@angular/material/sort';
+import { ErrorInterceptor } from './_helpers/error.interceptor';
+import { NotFoundComponent } from './not-found/not-found.component';
+import { AppRoutingModule } from './app-routing.module';
+import { SepctrumInquiryRequestComponent } from './sepctrum-inquiry-request/sepctrum-inquiry-request.component';
+import { FormsModule } from '@angular/forms';
+import { NodeDeregisterComponent } from './node-deregister/node-deregister.component';
+import { GrantRelinquishmentComponent } from './grant-relinquishment/grant-relinquishment.component';
+import { GrantMessageComponent } from './grant-message/grant-message.component';
+import { MatSortModule } from '@angular/material/sort';
+import { InquiryLogsComponent } from './inquiry-logs/inquiry-logs.component';
+import { SasTableComponentComponent } from './sas-table-component/sas-table-component.component';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @NgModule({
   declarations: [
@@ -71,12 +73,13 @@ import {MatSortModule} from '@angular/material/sort';
     AdminLoginComponent,
     GrantDetailsComponent,
     CreateRequestComponent,
-    NotFoundComponent
-,
+    NotFoundComponent,
     SepctrumInquiryRequestComponent ,
     NodeDeregisterComponent ,
     GrantRelinquishmentComponent ,
     GrantMessageComponent ,
+    InquiryLogsComponent,
+    SasTableComponentComponent
   ],
 
   imports: [
@@ -94,7 +97,12 @@ import {MatSortModule} from '@angular/material/sort';
     MatCheckboxModule,
     MatTableModule,
     MatPaginatorModule,
-    MatSortModule
+    MatSortModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    MatCardModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
