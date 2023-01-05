@@ -192,6 +192,13 @@ export class HttpRequestsService {
 
 	}
 
+	public getSpectrumInquiries(): Observable<any> {
+		return this.sendRequests(
+			this.defaultProtocol, RequestMethod.GET, 'getSpectrumInquiries', {}, 'getSpectrumInquiries'
+		);
+
+	}
+
 	// ------------------------------ Node Requests ------------------------------------
 
 	public createNode(model: any) {

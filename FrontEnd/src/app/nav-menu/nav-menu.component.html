@@ -1,92 +1,99 @@
 ﻿<div class="sidenav">
     <!-- <ul class='nav navbar-nav'> -->
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/">
-            <mat-icon>home</mat-icon>
-            <span class="icon-name"> HOME</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/">
+        <mat-icon>home</mat-icon>
+        <span class="icon-name"> HOME</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN' || userType == 'SU'" mat-button class="menu-button" routerLink="/map">
-            <mat-icon>map</mat-icon>
-            <span class="icon-name"> SAS/REM Map</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN' || userType == 'SU'" mat-button class="menu-button" routerLink="/map">
+        <mat-icon>map</mat-icon>
+        <span class="icon-name"> SAS/REM Map</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/node-list">
-            <mat-icon>list</mat-icon>
-            <span class="icon-name"> NODES</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/node-list">
+        <mat-icon>list</mat-icon>
+        <span class="icon-name"> NODES</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-node">
-            <mat-icon>add_location</mat-icon>
-            <span class="icon-name"> ADD NODE</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-node">
+        <mat-icon>add_location</mat-icon>
+        <span class="icon-name"> ADD NODE</span>
+    </button>
 
-        <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-request">
-            <mat-icon>edit</mat-icon>
-            <span class="icon-name"> GRANT REQUEST</span>
-        </button>
+    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-request">
+        <mat-icon>edit</mat-icon>
+        <span class="icon-name"> GRANT REQUEST</span>
+    </button>
 
-<!--        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/requests">-->
-<!--            <mat-icon>note_add</mat-icon>-->
-<!--            <span class="icon-name"> GRANT REQUESTS</span>-->
-<!--        </button>-->
+    <!--        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/requests">-->
+    <!--            <mat-icon>note_add</mat-icon>-->
+    <!--            <span class="icon-name"> GRANT REQUESTS</span>-->
+    <!--        </button>-->
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list">
-            <mat-icon>hourglass_empty</mat-icon>
-            <span class="icon-name"> GRANT LIST </span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list">
+        <mat-icon>hourglass_empty</mat-icon>
+        <span class="icon-name"> GRANT LIST </span>
+    </button>
 
-    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-relinquishment">
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/inquiry-logs">
+        <mat-icon>hourglass_empty</mat-icon>
+        <span class="icon-name"> SPECTRUM INQUIRY LOGS </span>
+    </button>
+
+    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button"
+        routerLink="/grant-relinquishment">
         <mat-icon>delete</mat-icon>
         <span class="icon-name"> Grant Relinquishment</span>
     </button>
 
-        <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/spectrum-inquiry-request">
-            <mat-icon>edit</mat-icon>
-            <span class="icon-name">Spectrum Inquiry Request</span>
-        </button>
+    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button"
+        routerLink="/spectrum-inquiry-request">
+        <mat-icon>edit</mat-icon>
+        <span class="icon-name">Spectrum Inquiry Request</span>
+    </button>
 
-        <!-- <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/logged">
+    <!-- <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/logged">
             <mat-icon>hourglass_full</mat-icon>
             <span class="icon-name"> LOGGED GRANTS</span>
         </button> -->
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/tiers/showAll">
-            <mat-icon>equalizer</mat-icon>
-            <span class="icon-name"> TIER CLASSES</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/tiers/showAll">
+        <mat-icon>equalizer</mat-icon>
+        <span class="icon-name"> TIER CLASSES</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/node-deregister">
-            <mat-icon>note_add</mat-icon>
-            <span class="icon-name"> Node De-Register</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/node-deregister">
+        <mat-icon>note_add</mat-icon>
+        <span class="icon-name"> Node De-Register</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/schedules">
-            <mat-icon>room</mat-icon>
-            <span class="icon-name"> REGION SCHEDULES</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/schedules">
+        <mat-icon>room</mat-icon>
+        <span class="icon-name"> REGION SCHEDULES</span>
+    </button>
 
-        <button *ngIf="userType == 'SU'" mat-button class="menu-button" routerLink="/SU-details/0">
-            <mat-icon>book</mat-icon>
-            <span class="icon-name"> INFO/REQUESTS</span>
-        </button>
+    <button *ngIf="userType == 'SU'" mat-button class="menu-button" routerLink="/SU-details/0">
+        <mat-icon>book</mat-icon>
+        <span class="icon-name"> INFO/REQUESTS</span>
+    </button>
 
-        <button *ngIf="loggedIn==false" mat-button class="menu-button" routerLink="/login">
-            <mat-icon>login</mat-icon>
-            <span class="icon-name"> SU LOGIN</span>
-        </button>
+    <button *ngIf="loggedIn==false" mat-button class="menu-button" routerLink="/login">
+        <mat-icon>login</mat-icon>
+        <span class="icon-name"> SU LOGIN</span>
+    </button>
 
-        <button *ngIf="loggedIn==false" mat-button class="menu-button" routerLink="/admin-login">
-            <mat-icon>login</mat-icon>
-            <span class="icon-name"> ADMIN LOGIN</span>
-        </button>
+    <button *ngIf="loggedIn==false" mat-button class="menu-button" routerLink="/admin-login">
+        <mat-icon>login</mat-icon>
+        <span class="icon-name"> ADMIN LOGIN</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/contact">
-            <mat-icon>phone</mat-icon>
-            <span class="icon-name"> CONTACT</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/contact">
+        <mat-icon>phone</mat-icon>
+        <span class="icon-name"> CONTACT</span>
+    </button>
 
-        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/socket">
-            <mat-icon>settings_application</mat-icon>
-            <span class="icon-name"> SOCKET TEST</span>
-        </button>
+    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/socket">
+        <mat-icon>settings_application</mat-icon>
+        <span class="icon-name"> SOCKET TEST</span>
+    </button>
 </div>
