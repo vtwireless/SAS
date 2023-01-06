@@ -1,12 +1,15 @@
 .full-width-table {
   width: 100%;
-  padding: 2% 2%;
+  /* padding: 2% 2%; */
+  height: 87%;
+  overflow: auto;
 }
 
 mat-cell {
   margin: 0.5% 1%;
   overflow: auto;
   font-weight: 12px;
+  border: none;
 }
 
 mat-header-cell {
@@ -19,9 +22,19 @@ mat-header-cell {
 mat-card {
   display: flex;
   justify-content: center;
-  padding: 1% 3%;
-  font-size: 18px;
-  font-weight: 600;
+  align-items: center;
+  /* padding: 0.5% 3%; */
+  height: 10%;
+  margin: 0 0 1% 0;
+}
+
+mat-card-content {
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.mat-row {
+  border: 1px dashed black;
 }
 
 .mat-row:nth-child(even){
@@ -30,4 +43,22 @@ mat-card {
 
 .mat-row:nth-child(even){
   background-color: rgb(212, 212, 212);
+}
+
+mat-table {
+  border-collapse: collapse;
+}
+
+th {
+  border-bottom: 1px solid #ffa600;
+}
+
+td.mat-cell { 
+  padding: 20px 0;
+  border: none;
+}
+
+tr.mat-row {
+  background: #79a1d8;
+  border: 1px solid #ffa600;
 }

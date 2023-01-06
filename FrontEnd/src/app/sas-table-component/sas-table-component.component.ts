@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild, Input } from '@angular/core';
-// import { MatPaginator } from '@angular/material/paginator';
+import { MatPaginator } from '@angular/material/paginator';
+import { MatTableDataSource } from '@angular/material/table';
 // import { MatSort } from '@angular/material/sort';
 // import { MatTable } from '@angular/material/table';
 // import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,12 +13,14 @@ import { AfterViewInit, Component, OnInit, ViewChild, Input } from '@angular/cor
 })
 export class SasTableComponentComponent implements AfterViewInit {
 
+  dataSource = new MatTableDataSource([]);
+  
   TABLE_DATA: [];
   TABLE_SCHEMA: TableSchema[];
   displayedColumns: string[];
-  dataSource: any;
   columnsSchema: any;
   tableHeader: any;
+  @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
 
   setTable (data, schema: TableSchema[]) {
     this.TABLE_DATA = data;
@@ -27,8 +30,9 @@ export class SasTableComponentComponent implements AfterViewInit {
 
   setTableProperties() {
     this.displayedColumns = this.TABLE_SCHEMA.map((col) => col.key);
-    this.dataSource = this.TABLE_DATA;
+    this.dataSource = new MatTableDataSource<any>(this.TABLE_DATA);
     this.columnsSchema = this.TABLE_SCHEMA;
+    this.dataSource.paginator = this.paginator;
   }
 
   setTableHeader(title) {

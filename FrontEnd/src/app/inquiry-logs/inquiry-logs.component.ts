@@ -41,7 +41,6 @@ const SCHEMA = [
     type: "text",
     label: "Response Message",
     minWidth: "200px"
-
   },
   {
     key: "availableChannels",
