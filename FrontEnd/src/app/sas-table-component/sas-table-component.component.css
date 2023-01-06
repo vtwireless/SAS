@@ -34,7 +34,7 @@ mat-card-content {
 }
 
 .mat-row {
-  border: 1px dashed black;
+  border: 1px solid black;
 }
 
 .mat-row:nth-child(even){
@@ -61,4 +61,10 @@ td.mat-cell {
 tr.mat-row {
   background: #79a1d8;
   border: 1px solid #ffa600;
+}
+
+.mat-paginator-sticky {
+  bottom: 0px;
+  position: sticky;
+  z-index: 10;
 }
