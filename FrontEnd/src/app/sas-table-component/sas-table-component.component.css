@@ -6,17 +6,27 @@
 }
 
 mat-cell {
-  margin: 0.5% 1%;
   overflow: auto;
-  font-weight: 12px;
+  font-size: 13px;
   border: none;
 }
 
 mat-header-cell {
-  margin: 0.5% 1%;
   overflow: auto;
   font-size: 14px;
   font-weight: 900;
+}
+
+mat-header-cell, mat-cell {
+  /* color: red; */
+  justify-content: center;
+  border-right: 0.5px solid #004a9f;
+  overflow: hidden;
+}
+
+
+mat-header-row {
+  border-bottom: 4px solid #004a9f;
 }
 
 mat-card {
@@ -34,7 +44,7 @@ mat-card-content {
 }
 
 .mat-row {
-  border: 1px solid black;
+  /* border: 1px solid black; */
 }
 
 .mat-row:nth-child(even){
@@ -67,4 +77,42 @@ tr.mat-row {
   bottom: 0px;
   position: sticky;
   z-index: 10;
+  border-top: 4px solid #004a9f
 }
+
+.mat-mdc-form-field {
+  font-size: 14px;
+  width: 100%;
+}
+
+
+.tableheader {
+    display: flex;
+    flex-direction: row;
+    border-radius: 5px 5px 0 0;
+    background-color: #004a9f;
+    color: white !important;
+}
+
+.tablename {
+    /* text-align: center; */
+    width: 70%;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 1% 1%;
+}
+
+.mat-form-field-label {
+  color: white;
+}
+
+mat-label {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tablefilter {
+  width: 30%;
+  padding-right: 2%;
+};
