@@ -233,8 +233,19 @@ def getSpectrumInquiryRequest():
         }
 
 
-@socket.route('/getSpectrumInquiries', methods=['GET'])
+@socket.route('/getGrantsRequest', methods=['GET'])
 def getGrantRequests():
+    try:
+        response = db.get_grants()
+        return response
+    except Exception:
+        return {
+            'status': 0, 'message': traceback.format_exc()
+        }
+
+
+@socket.route('/getSpectrumInquiries', methods=['GET'])
+def getInquiryRequests():
     try:
         response = db.get_inquiries()
         return response
