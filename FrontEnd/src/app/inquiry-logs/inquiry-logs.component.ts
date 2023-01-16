@@ -87,7 +87,7 @@ export class InquiryLogsComponent implements OnInit {
             if ("spectrumInquiries" in response) {
               this.logs = response["spectrumInquiries"];
               this.table.setTable(this.logs, SCHEMA);
-              this.table.setTableHeader("Spectrum Inquiries Logs")
+              this.table.setTableHeader("Spectrum Inquiries Logs");
             }
           },
           (error) => {
