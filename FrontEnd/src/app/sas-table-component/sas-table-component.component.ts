@@ -10,26 +10,45 @@ import { LiveAnnouncer } from '@angular/cdk/a11y';
 @Component({
   selector: 'sas-table-component',
   templateUrl: './sas-table-component.component.html',
-  styleUrls: ['./sas-table-component.component.css']
+  // styleUrls: ['./sas-table-component.component.css']
+  styleUrls: ['./table-component.scss']
 })
 export class SasTableComponentComponent implements AfterViewInit {
 
   dataSource = new MatTableDataSource([]);
-  
+
   TABLE_DATA: [];
   TABLE_SCHEMA: TableSchema[];
   displayedColumns: string[];
   columnsSchema: any;
   tableHeader: any;
-  @ViewChild(MatPaginator, {static: true}) paginator: MatPaginator;
-  @ViewChild(MatSort, {static: true}) sort: MatSort;
+  @ViewChild(MatPaginator, { static: true }) paginator: MatPaginator;
+  @ViewChild(MatSort, { static: true }) sort: MatSort;
 
-  constructor(private _liveAnnouncer: LiveAnnouncer) {}
+  constructor(private _liveAnnouncer: LiveAnnouncer) { }
 
-  setTable (data, schema: TableSchema[]) {
-    this.TABLE_DATA = data;
-    this.TABLE_SCHEMA = schema;
-    this.setTableProperties();
+  setTable(data, schema: TableSchema[], freeSchema: boolean = false) {
+    if (data.length > 0) {
+      if (!freeSchema) {
+        this.TABLE_DATA = data;
+        this.TABLE_SCHEMA = schema;
+        this.setTableProperties();
+      } else {
+        this.TABLE_DATA = data;
+        console.log(data[0]);
+        let schema = [];
+
+        for (const [key, value] of Object.entries(data[0])) {
+          schema.push({
+            key: key,
+            type: "text",
+            label: key.toUpperCase() 
+          });
+        }
+        this.TABLE_SCHEMA = schema;
+        this.setTableProperties();
+      }
+    }
   }
 
   setTableProperties() {
@@ -41,7 +60,7 @@ export class SasTableComponentComponent implements AfterViewInit {
   }
 
   setTableHeader(title) {
-    this.tableHeader = title; 
+    this.tableHeader = title;
   }
 
   ngAfterViewInit(): void {
@@ -55,10 +74,10 @@ export class SasTableComponentComponent implements AfterViewInit {
     switch (type) {
       case "number":
         return data != null ? parseInt(data) : data;
-        
+
       case "text":
-        return data != null ? String(data): data;
-      
+        return data != null ? String(data) : data;
+
       case "epoch":
         let newDate = new Date(0);
         newDate.setUTCSeconds(parseInt(data));
@@ -66,9 +85,9 @@ export class SasTableComponentComponent implements AfterViewInit {
 
       case "frequency":
         return data != null ? parseFloat(data) / 1e6 : data;
-      
+
       default:
-        return data;          
+        return data;
     }
   }
 

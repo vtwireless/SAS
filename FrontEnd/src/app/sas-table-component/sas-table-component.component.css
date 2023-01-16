@@ -1,39 +1,75 @@
-.full-width-table {
+mat-table {
   width: 100%;
-  /* padding: 2% 2%; */
   height: 87%;
-  overflow: auto;
+}
+
+/* 
+mat-header-cell, mat-cell {
+  justify-content: right;
+  min-width: 130px;
+  padding: 1%;
+  font-size: 12px;
+  width: 100%;
 }
 
 mat-cell {
-  overflow: auto;
-  font-size: 13px;
-  border: none;
+  border: 0.1px solid rgb(196, 196, 196);
+} */
+
+mat-cell.span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 mat-header-cell {
+  position: relative;
+  /* &:not(:last-child) {
+    .resize-holder {
+      cursor: col-resize;
+      width: 20px;
+      height: 100%;
+      position: absolute;
+      right: -10px;
+      top: 0;
+      z-index: 1;
+    }
+  } */
+}
+
+mat-cell,
+mat-header-cell {
+  border-right: 1px solid rgba(0, 0, 0, 0.12);
+  /* &:not(:nth-child(1)) {
+    padding: 0 10px;
+  } */
+}
+
+/* mat-header-cell {
   overflow: auto;
-  font-size: 14px;
   font-weight: 900;
+  color: black;
+  border-right: 0.1px solid rgb(196, 196, 196);
+  border-left: 0.1px solid rgb(196, 196, 196);
 }
-
-mat-header-cell, mat-cell {
-  /* color: red; */
-  justify-content: center;
-  border-right: 0.5px solid #004a9f;
-  overflow: hidden;
-}
-
 
 mat-header-row {
   border-bottom: 4px solid #004a9f;
-}
+} */
+
+/* 
+
+
+
+
+
+
+
 
 mat-card {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* padding: 0.5% 3%; */
   height: 10%;
   margin: 0 0 1% 0;
 }
@@ -41,18 +77,6 @@ mat-card {
 mat-card-content {
   font-size: 19px;
   font-weight: 900;
-}
-
-.mat-row {
-  /* border: 1px solid black; */
-}
-
-.mat-row:nth-child(even){
-  background-color: rgb(205, 224, 243);
-}
-
-.mat-row:nth-child(even){
-  background-color: rgb(212, 212, 212);
 }
 
 mat-table {
@@ -95,7 +119,6 @@ tr.mat-row {
 }
 
 .tablename {
-    /* text-align: center; */
     width: 70%;
     font-size: 18px;
     font-weight: 600;
@@ -115,4 +138,12 @@ mat-label {
 .tablefilter {
   width: 30%;
   padding-right: 2%;
-};
+}; */
+
+/* .mat-row:nth-child(even){
+  background-color: rgb(205, 224, 243);
+}
+
+.mat-row:nth-child(even){
+  background-color: rgb(212, 212, 212);
+} */
