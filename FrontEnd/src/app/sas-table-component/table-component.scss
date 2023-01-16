@@ -22,6 +22,7 @@
     .mat-header-cell {
         border-right: 1px solid rgba(0, 0, 0, 0.12);
         font-size: 12px;
+        padding: 0 1em;
 
         &:not(:nth-child(1)) {
             padding: 0 10px;
