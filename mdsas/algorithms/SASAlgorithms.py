@@ -153,7 +153,7 @@ class SASAlgorithms:
                     cbsd_grant_start_time = datetime.strptime(request.vtGrantParams.startTime, self.DEFAULT_TIME_FORMAT)
                     cbsd_grant_end_time = datetime.strptime(request.vtGrantParams.endTime, self.DEFAULT_TIME_FORMAT)
                     conflict_grant_start_time = datetime.strptime(grant["startTime"], self.DEFAULT_TIME_FORMAT)
-                    conflict_grant_end_time = datetime.strptime(grant["endTime"], self.DEFAULT_TIME_FORMAT)
+                    conflict_grant_end_time = datetime.strptime(grant["grantExpireTime"], self.DEFAULT_TIME_FORMAT)
 
                     if (cbsd_grant_start_time > conflict_grant_end_time) or (cbsd_grant_end_time <
                                                                              conflict_grant_start_time):
