@@ -11,8 +11,72 @@ import {
 } from '../_models/models';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpRequestsService } from '../_services/http-requests.service';
-import {MatSort} from '@angular/material/sort';
+import { MatSort } from '@angular/material/sort';
+import { SasTableComponentComponent } from '../sas-table-component/sas-table-component.component';
 
+const SCHEMA = [
+	{
+		key: "timestamp",
+		type: "epoch",
+		label: "Timestamp"
+	},
+	{
+		key: "cbsdId",
+		type: "number",
+		label: "CBSD ID"
+	},
+	{
+		key: "grantId",
+		type: "number",
+		label: "Grant ID"
+	},
+	{
+		key: "minFrequency",
+		type: "frequency",
+		label: "Minimum Frequency(MHz)"
+	},
+	{
+		key: "maxFrequency",
+		type: "frequency",
+		label: "Maximum Frequency(MHz)"
+	},
+	{
+		key: "minBandwidth",
+		type: "frequency",
+		label: "Minimum Bandwidth(MHz)"
+	},
+	{
+		key: "preferredBandwidth",
+		type: "frequency",
+		label: "Preferred Bandwidth(MHz)"
+	},
+	{
+		key: "dataType",
+		type: "text",
+		label: "Data Type"
+	},
+	{
+		key: "startepoch",
+		type: "epoch",
+		label: "Grant Start"
+	},
+	{
+		key: "endepoch",
+		type: "epoch",
+		label: "Grant End"
+	},
+	{
+		key: "grantInterval",
+		type: "number",
+		label: "Grant Duration (secs)"
+	},
+	{
+		key: "status",
+		type: "text",
+		label: "Status",
+		minWidth: "200px"
+	},
+];
 
 @Component({
 	selector: 'app-grant-list',
@@ -36,7 +100,9 @@ export class GrantListComponent implements AfterViewInit {
 	dataSource = new MatTableDataSource<GrantList>(this.SpectrumGrants);
 	// sortedData: GrantList[];
 	@ViewChild(MatPaginator, { static: false }) paginator: MatPaginator;
-	@ViewChild(MatSort, { static: false }  ) sort: MatSort;
+	@ViewChild(MatSort, { static: false }) sort: MatSort;
+	@ViewChild(SasTableComponentComponent, { static: false })
+	table: SasTableComponentComponent;
 
 	displayedColumns: string[] = [
 		'grantId', 'secondaryUserID', 'frequency', 'minBandwidth', 'preferredBandwidth', 'startTime',
@@ -57,56 +123,47 @@ export class GrantListComponent implements AfterViewInit {
 			if (user.userType != 'ADMIN') {
 				router.navigate(['/']);
 			} else {
-				this.route.params.subscribe((params) => {
-					this.type = params.type;
-					this.active = false;
-					this.logged = false;
-					this.requests = false;
-					if (this.type == 'active') {
-						this.active = true;
-					} else if (this.type == 'logged') {
-						this.logged = true;
-					} else if (this.type == 'requests') {
-						this.requests = true;
-					}
-					// if (this.active) {
-						this.httpRequests.getSpectrumGrants().subscribe(
-							(data) => {
-								if (data['status'] == '1') {
-									for (const grant of data['spectrumGrants']) {
-										var grant_obj: GrantList = {
-											grantId: grant.grantId,
-											cbsdId:grant.cbsdId,
-											approximateByteSize:grant.approximateByteSize,
-											secondaryUserID: grant.secondaryUserID,
-											dataType:grant.dataType,
-											frequency: (grant.minFrequency/1000000).toString() + " - " + (grant.maxFrequency/1000000).toString(),
-											minBandwidth: grant.minBandwidth,
-											preferredBandwidth: grant.preferredBandwidth,
-											startTime: grant.startTime,
-											endTime: grant.endTime,
-											frequencyAbsolute:grant.frequencyAbsolute,
-											status: grant.status,
-											location: grant.location,
-											maxVelocity:grant.maxVelocity,
-											mobility:grant.mobility,
-											powerLevel:grant.powerLevel,
-											preferredFrequency:grant.preferredFrequency,
-											range:grant.range,
-											tier:grant.tier,
-											secondaryUserName:grant.secondaryUserName
-										}
+				this.httpRequests.getSpectrumGrants().subscribe(
+					(data) => {
+						data["spectrumGrants"].forEach((element) => {
+							console.log("element", element);
+							element["endepoch"] = (element["startepoch"] != undefined) ? element["startepoch"] + element["grantInterval"] : null;
+						});
+						this.table.setTable(data["spectrumGrants"], SCHEMA);
+						this.table.setTableHeader("Spectrum Grant Logs");
+						// if (data['status'] == '1') {
+						// 	for (const grant of data['spectrumGrants']) {
+						// 		var grant_obj: GrantList = {
+						// 			grantId: grant.grantId,
+						// 			cbsdId:grant.cbsdId,
+						// 			approximateByteSize:grant.approximateByteSize,
+						// 			secondaryUserID: grant.secondaryUserID,
+						// 			dataType:grant.dataType,
+						// 			frequency: (grant.minFrequency/1000000).toString() + " - " + (grant.maxFrequency/1000000).toString(),
+						// 			minBandwidth: grant.minBandwidth,
+						// 			preferredBandwidth: grant.preferredBandwidth,
+						// 			startTime: grant.startTime,
+						// 			endTime: grant.endTime,
+						// 			frequencyAbsolute:grant.frequencyAbsolute,
+						// 			status: grant.status,
+						// 			location: grant.location,
+						// 			maxVelocity:grant.maxVelocity,
+						// 			mobility:grant.mobility,
+						// 			powerLevel:grant.powerLevel,
+						// 			preferredFrequency:grant.preferredFrequency,
+						// 			range:grant.range,
+						// 			tier:grant.tier,
+						// 			secondaryUserName:grant.secondaryUserName
+						// 		}
 
-										this.SpectrumGrants.push(grant_obj); 
-									}
-								}
-								this.dataSource.data = this.SpectrumGrants;
-								// this.sortedData = this.dataSource.data.slice();
-							},
-							(error) => console.error(error)
-						);
-
-				});
+						// 		this.SpectrumGrants.push(grant_obj); 
+						// 	}
+						// }
+						// this.dataSource.data = this.SpectrumGrants;
+						// // this.sortedData = this.dataSource.data.slice();
+					},
+					(error) => console.error(error)
+				);
 			}
 		}
 	}
@@ -114,15 +171,14 @@ export class GrantListComponent implements AfterViewInit {
 	ngAfterViewInit() {
 		this.dataSource.paginator = this.paginator;
 		this.dataSource.sort = this.sort;
-		console.log(this.dataSource);
 	}
 
 
 	openPopup(grantId) {
 		this.displayStyle = "block";
 
-		for(let i=0;i<this.SpectrumGrants.length;i++){
-			if(this.SpectrumGrants[i]['grantId']===grantId){
+		for (let i = 0; i < this.SpectrumGrants.length; i++) {
+			if (this.SpectrumGrants[i]['grantId'] === grantId) {
 				console.log("here");
 				this.currentGrantRequest = this.SpectrumGrants[i];
 			}
@@ -168,23 +224,23 @@ export class GrantListComponent implements AfterViewInit {
 
 export interface GrantList {
 	grantId: any;
-	approximateByteSize:any;
+	approximateByteSize: any;
 	secondaryUserID: any;
 	frequency: any;
-	cbsdId:any;
-	dataType:any;
+	cbsdId: any;
+	dataType: any;
 	minBandwidth: any;
 	preferredBandwidth: any;
 	startTime: any;
 	endTime: any;
-	powerLevel:any;
-	mobility:any;
-	frequencyAbsolute:any;
+	powerLevel: any;
+	mobility: any;
+	frequencyAbsolute: any;
 	status: any;
 	location: any;
-	tier:any;
-	secondaryUserName:any;
-	range:any;
-	preferredFrequency:any;
-	maxVelocity:any;
+	tier: any;
+	secondaryUserName: any;
+	range: any;
+	preferredFrequency: any;
+	maxVelocity: any;
 }

@@ -1,40 +1,9 @@
-﻿<h1 *ngIf="active">Active Grants</h1>
+﻿<sas-table-component></sas-table-component>
+<!-- <h1 *ngIf="active">Active Grants</h1>
 <h1 *ngIf="logged">Logged Grants</h1>
 
 
 <p *ngIf="!SpectrumGrants"><em>Loading...</em></p>
-
-<!-- <table class='table' *ngIf="SpectrumGrants">
-    <thead>
-        <tr>
-            <th>Tier</th>
-            <th>Grant ID</th>
-            <th>SU ID</th>
-            <th>Frequency</th>
-            <th>Minimum BW</th>
-            <th>Preferred BW</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Status</th>
-            <th>Location</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let SG of SpectrumGrants">
-            <td>{{ SG.tier }}</td>
-            <td *ngIf="active"><a routerLink="/grant-details/active/{{SG.grantID}}">{{ SG.grantId }}</a></td>
-            <td *ngIf="logged"><a routerLink="/grant-details/logged/{{SG.grantID}}">{{ SG.grantId }}</a></td>
-            <td>{{ SG.secondaryUserID }}</td>
-            <td>{{ SG.minFrequency }} - {{ SG.maxFrequency }}</td>
-            <td>{{ SG.minBandwidth }}</td>
-            <td>{{ SG.preferredBandwidth }}</td>
-            <td>{{ SG.startTime }}</td>
-            <td>{{ SG.endTime }}</td>
-            <td>{{ SG.status }}</td>
-            <td>{{ SG.location }}</td>
-        </tr>
-    </tbody>
-</table> -->
 
 <h3 style="margin-left: 65rem; margin-bottom: 2rem">Grant List</h3>
 
@@ -134,4 +103,4 @@
 
     <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons aria-label="Select page of periodic elements">
     </mat-paginator>
-</div>
+</div> -->

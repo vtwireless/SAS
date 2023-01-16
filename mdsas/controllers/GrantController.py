@@ -209,9 +209,9 @@ class GrantController:
             ).start()
 
         return {
-            'status': 1,
-            "spectrumInquiryResponse": inquiryArr
-        }, radiosToCommunicate
+                   'status': 1,
+                   "spectrumInquiryResponse": inquiryArr
+               }, radiosToCommunicate
 
     def initiateSensing(self, lowFreq, highFreq):
         count, radioCountLimit = 0, 3
@@ -273,33 +273,37 @@ class GrantController:
 
                 grants = self.get_grants()['spectrumGrants']
                 grantResponse = self.algorithms.runGrantAlgorithm(grants, self.rem, grantRequest)
+
                 if grantResponse.response.responseCode == "0":
-                    item["endTime"] = str(grantResponse.grantExpireTime)
+                    item["grantExpireTime"] = str(grantResponse.grantExpireTime)
+                    item["startepoch"] = int(time.mktime(time.strptime(item["startTime"], "%Y-%m-%dT%H:%M")))
+                    item["grantInterval"] = int(time.mktime(time.strptime(item["grantExpireTime"], "%Y-%m-%dT%H:%M"))) \
+                        - item["startepoch"]
 
-                    self.CONNECTION.execute(self.GRANTS.insert(), [item])
-                    query = select([self.GRANTS]).where(and_(
-                        self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
-                        self.GRANTS.columns.minFrequency == item["minFrequency"],
-                        self.GRANTS.columns.maxFrequency == item["maxFrequency"],
-                        self.GRANTS.columns.startTime == item['startTime']
-                    ))
-                    rows = self._execute_query(query)
+                item["timestamp"] = int(time.time())
+                item["status"] = WinnForum.responseDecode(int(grantResponse.response.responseCode))
 
-                    if len(rows) < 1:
-                        grantResponse = WinnForum.GrantResponse()
-                        grantResponse.response = self.algorithms.generateResponse(103)
-                        grantResponse.response.responseData = \
-                            "Grant Request data not committed to DB. Please contact an administrator"
-                        # return {
-                        #     "status": 0,
-                        #     "message": "Grant Request could not be processed"
-                        # }
+                self.CONNECTION.execute(self.GRANTS.insert(), [item])
 
-                    # grantResponse.grantId = rows[0]['grantId']
-                    # grant = WinnForum.Grant(
-                    #     grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
-                    #     vtgp, grantResponse.grantExpireTime
-                    # )  # TODO: Check if this can be returned
+                # query = select([self.GRANTS]).where(and_(
+                #     self.GRANTS.columns.secondaryUserID == item['secondaryUserID'],
+                #     self.GRANTS.columns.minFrequency == item["minFrequency"],
+                #     self.GRANTS.columns.maxFrequency == item["maxFrequency"],
+                #     self.GRANTS.columns.startTime == item['startTime']
+                # ))
+                # rows = self._execute_query(query)
+                #
+                # if len(rows) < 1:
+                #     grantResponse = WinnForum.GrantResponse()
+                #     grantResponse.response = self.algorithms.generateResponse(103)
+                #     grantResponse.response.responseData = \
+                #         "Grant Request data not committed to DB. Please contact an administrator"
+
+                # grantResponse.grantId = rows[0]['grantId']
+                # grant = WinnForum.Grant(
+                #     grantResponse.grantId, item["cbsdId"], grantResponse.operationParam,
+                #     vtgp, grantResponse.grantExpireTime
+                # )  # TODO: Check if this can be returned
 
                 responseArr.append(grantResponse.asdict())
 
@@ -344,7 +348,7 @@ class GrantController:
                 response = {"response": Utilities.generateResponse(102)}
             else:
                 if self.cancel_grant_for_cbsd(
-                    relinquishmentRequest["cbsdId"], relinquishmentRequest["grantId"], True
+                        relinquishmentRequest["cbsdId"], relinquishmentRequest["grantId"], True
                 ):
                     response = {
                         "cbsdId": relinquishmentRequest["cbsdId"],
