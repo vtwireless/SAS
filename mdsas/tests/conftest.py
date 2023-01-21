@@ -3,6 +3,7 @@ import os
 import glob
 
 import pytest
+print(os.getcwd())
 from rest_server import socket as flask_app
 import re
 
@@ -33,8 +34,12 @@ def app():
 
 @pytest.fixture
 def data():
-    with open("./tests/data_assets/test_data.json", "r+") as infile:
-        return json.load(infile)
+    try:
+        with open("./tests/data_assets/test_data.json", "r+") as infile:
+            return json.load(infile)
+    except FileNotFoundError as err:
+        with open("./data_assets/test_data.json", "r+") as infile:
+            return json.load(infile)
 
 
 @pytest.fixture
