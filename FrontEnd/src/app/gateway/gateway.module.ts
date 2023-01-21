@@ -1,12 +1,12 @@
 /*
 
-import { NgModule } from '@angular/core';
+import { NgModule } from '@angular/src';
 import { CommonModule } from '@angular/common';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 
-// import { CoreModule } from '@app/core/core.module';
+// import { CoreModule } from '@app/src/src.module';
 import { ApiGatewayService } from '../_services/api-gateway.service';
-import { CoreService } from './core.service';
+import { CoreService } from './src.service';
 import { MapService } from './map.service';
 import { MinuteManService } from './mm.service';
 import { ReportsService } from './reports.service';

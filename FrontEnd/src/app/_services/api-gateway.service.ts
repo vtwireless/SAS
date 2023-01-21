@@ -1,10 +1,10 @@
 /*
-import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/src';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material';
 import { Observable } from 'rxjs/Observable';
 
-import { AuthService, MessageService } from '@app/core';
+import { AuthService, MessageService } from '@app/src';
 
 import { environment } from '@env/environment';
 

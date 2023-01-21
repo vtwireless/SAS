@@ -40,7 +40,7 @@ export class AuthenticationService {
 /**]
  * 
 
-import { Injectable } from '@angular/core';
+import { Injectable } from '@angular/src';
 import { Observable } from 'rxjs/Observable';
 import { AuthenticationDetails, CognitoUser, CognitoUserAttribute } from 'amazon-cognito-identity-js';
 import { Observer } from 'rxjs/Observer';
