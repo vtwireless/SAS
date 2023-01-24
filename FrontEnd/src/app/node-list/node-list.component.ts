@@ -21,7 +21,7 @@ export class NodeListComponent implements AfterViewInit {
 
     displayedColumns: string[] = [
         'nodeID', 'nodeName', 'location', 'trustLevel', 'freqRange', 'sampleRange',
-        'nodeType', 'mobility', 'status'
+        'nodeType', 'mobility', 'priorityScore' ,'status'
     ];
 
     constructor(private httpRequests: HttpRequestsService, router: Router) {
@@ -46,6 +46,7 @@ export class NodeListComponent implements AfterViewInit {
                             sampleRange: '',
                             nodeType: '',
                             mobility: '',
+                            priorityScore: 0,
                             status: ''
                         };
                         node_model.nodeID = node.cbsdID;
@@ -56,6 +57,7 @@ export class NodeListComponent implements AfterViewInit {
                         node_model.sampleRange = node.minSampleRate.toString() + "-" + node.maxSampleRate.toString();
                         node_model.nodeType = node.nodeType;
                         node_model.mobility = node.mobility == "true" ? 'Yes' : 'No';
+                        node_model.priorityScore = node.priorityScore;
                         node_model.status = node.status;
                         if(node_model.status === "ACTIVE"){
                             this.checkActive = true;
@@ -84,5 +86,6 @@ export interface NodeList {
     sampleRange: string;
     nodeType: string;
     mobility: string;
+    priorityScore: number;
     status: string;
 }

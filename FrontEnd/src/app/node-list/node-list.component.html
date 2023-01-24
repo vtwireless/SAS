@@ -76,6 +76,11 @@
             <td mat-cell *matCellDef="let element"> {{element.mobility}} </td>
         </ng-container>
 
+        <ng-container matColumnDef="priorityScore">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header> PScore </th>
+            <td mat-cell *matCellDef="let element"> {{element.priorityScore}} </td>
+        </ng-container>
+
         <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef> Status </th>
             <td mat-cell *matCellDef="let element"> {{element.status}} <i *ngIf="checkActive" style="color:green; margin-left: 5px;" class="fa-solid fa-circle"></i></td>
