@@ -28,7 +28,7 @@ export class HttpRequestsService {
 		private httpClient: HttpClient,
 		private socketClient: SocketService
 	) {
-		this.socketClient.configure(AppConstants.SERVER_HOSTNAME, AppConstants.SERVER_PORT);
+		// this.socketClient.configure(AppConstants.SERVER_HOSTNAME, AppConstants.SERVER_PORT);
 	}
 
 
@@ -40,9 +40,9 @@ export class HttpRequestsService {
 		 */
 
 		if (reqProtocol == RequestProtocol.SOCKET) {
-			this.socketClient.emit(reqCode, reqBody);
+			// this.socketClient.emit(reqCode, reqBody);
 
-			return this.socketClient.listen(resCode);
+			// return this.socketClient.listen(resCode);
 		}
 
 		else if (reqProtocol == RequestProtocol.HTTP) {
