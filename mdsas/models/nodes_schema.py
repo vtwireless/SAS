@@ -34,5 +34,6 @@ def set_schema(metadata):
         Column('fullyTrusted', String(80), index=False, unique=False, nullable=False, default=''),
         Column('comment', String(80), index=False, unique=False, nullable=False, default=''),
         Column('justChangedParams', Boolean, index=False, unique=False, nullable=False, default=False),
-        Column('sid', String(80), index=False, unique=False, nullable=False)
+        Column('sid', String(80), index=False, unique=False, nullable=False),
+        Column('priorityScore', Integer, default=0)
     )
