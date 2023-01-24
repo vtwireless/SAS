@@ -56,79 +56,109 @@ class Context:
         })
 
 
-def get_priority_score(cbsd_object):
-    priority_score = 0
+class Score:
+    """
+    Interface for maintaining all types of score
+    """
+    weather_score: int
+    mobility_score: int
+    context: Context
+    rule: RULE
 
-    # Create Context Variable
-    context = Context(cbsd_object)
+    __score: int = 0
 
-    rule: policies.RULE = get_rule_for_band(context)
+    def __init__(self, context: Context):
+        self.weather_score = 0
+        self.mobility_score = 0
 
-    # Calculate Scores:
-    weather = get_weather_for_location(context.location)
-    weather_score = rule.weather.index(weather) + 1
-    mobility_score = 1 if context.mobile else 0
+        self.context = context
+        self.rule = self.get_rule_for_band()
 
-    # Sum Scores:
-    priority_score += weather_score + mobility_score
+        self.__score = 0
 
-    all_scores = f"Weather Score: {weather_score}, " \
-                 f"Mobility Score: {mobility_score}. " \
-                 f"Priority Score: {priority_score}"
-    logging.warning(all_scores)
-    return priority_score
+    def calculate(self):
+        self.calculate_weather_score()
+        self.calculate_mobility_score()
+
+    def get(self) -> int:
+        return self.__score
+
+    def get_rule_for_band(self) -> policies.RULE:
+        min, max = int(self.context.minFrequencyThreshold / 1e6), int(self.context.maxFrequencyThreshold / 1e6)
+
+        for name, band in policies.BANDS.items():
+            if band["min-op-fr"] == min or band["max-op-fr"] == max or \
+                    band["min-op-fr"] <= min < max <= band["max-op-fr"]:
+                rule: RULE = band['rule']
+
+                if rule:
+                    return policies.RULES[rule]
+                else:
+                    break
+
+        logging.warning("Could not match the provided frequency range to a band. Context:" + self.context.toString())
+        return policies.RULES['default']
+
+    @lru_cache(maxsize=20)
+    def get_weather_for_location(self):
+        lat, long = self.context.location.split(',')
+        url = f"{weather_url}/{lat}%2C{long}/today?unitGroup=metric" \
+              f"&key={APIKey}&contentType=json"
+
+        jsonData = None
+        try:
+            ResultBytes = urllib.request.urlopen(url)
+            logging.warning("Fetched Results at: " + str(datetime.datetime.now()))
+
+            # Parse the results as JSON
+            jsonData = json.loads(ResultBytes.read())
+        except Exception as e:
+            logging.error(e)
+
+        if not jsonData or 'currentConditions' not in jsonData or "conditions" not in jsonData['currentConditions']:
+            raise Exception('Current data not available')
+
+        currentConditions = jsonData['currentConditions']
+        currentWeather = currentConditions.get("conditions").lower().strip()
+
+        if currentWeather == 'clear':
+            return "clear"
+        elif currentWeather == 'overcast':
+            return "overcast"
+        elif ',' not in currentWeather and 'cloudy' in currentWeather:
+            return 'cloudy'
+        elif "rain" in currentWeather:
+            return "rain"
+        elif "snow" in currentWeather:
+            return "snow"
+        else:
+            logging.warning(f"Unidentified Weather: {currentWeather}. Corresponding policy not found for this type of "
+                            f"weather. Using default settings.")
+            return "clear"
+
+    def toString(self):
+        return json.dumps({
+            "Weather Score": self.weather_score,
+            "Mobility Score": self.mobility_score,
+            "Priority Score": self.__score
+        })
+
+    def calculate_weather_score(self):
+        weather = self.get_weather_for_location()
+        self.weather_score = self.rule.weather.index(weather) + 1
+
+    def calculate_mobility_score(self):
+        self.mobility_score = 1 if self.context.mobile else 0
 
 
-def get_rule_for_band(context) -> policies.RULE:
-    min, max = int(context.minFrequencyThreshold / 1e6), int(context.maxFrequencyThreshold / 1e6)
+class Engine:
+    @staticmethod
+    def get_priority_score(cbsd_object) -> int:
+        # Create Context Variable
+        context = Context(cbsd_object)
 
-    for name, band in policies.BANDS.items():
-        if band["min-op-fr"] == min or band["max-op-fr"] == max or \
-                band["min-op-fr"] <= min < max <= band["max-op-fr"]:
-            rule: RULE = band['rule']
+        score = Score(context)
+        score.calculate()
 
-            if rule:
-                return policies.RULES[rule]
-            else:
-                return policies.RULES['default']
-
-    logging.warning("Could not match the provided frequency range to a band. Context:" + context.toString())
-    return policies.RULES['default']
-
-
-@lru_cache(maxsize=20)
-def get_weather_for_location(location):
-    lat, long = location.split(',')
-    url = f"{weather_url}/{lat}%2C{long}/today?unitGroup=metric" \
-          f"&key={APIKey}&contentType=json"
-
-    jsonData = None
-    try:
-        ResultBytes = urllib.request.urlopen(url)
-        logging.warning("Fetched Results at: " + str(datetime.datetime.now()))
-
-        # Parse the results as JSON
-        jsonData = json.loads(ResultBytes.read())
-    except Exception as e:
-        logging.error(e)
-
-    if not jsonData or 'currentConditions' not in jsonData or "conditions" not in jsonData['currentConditions']:
-        raise Exception('Current data not available')
-
-    currentConditions = jsonData['currentConditions']
-    currentWeather = currentConditions.get("conditions").lower().strip()
-
-    if currentWeather == 'clear':
-        return "clear"
-    elif currentWeather == 'overcast':
-        return "overcast"
-    elif ',' not in currentWeather and 'cloudy' in currentWeather:
-        return 'cloudy'
-    elif "rain" in currentWeather:
-        return "rain"
-    elif "snow" in currentWeather:
-        return "snow"
-    else:
-        print(f"Unidentified Weather: {currentWeather}")
-        print("Corresponding policy not found for this type of weather. Using default.")
-        return "clear"
+        logging.info(score.toString())
+        return score.get()

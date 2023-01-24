@@ -12,7 +12,7 @@ from algorithms.SASAlgorithms import SASAlgorithms
 from Utilities import Utilities
 from algorithms import CBSD
 from algorithms import Server_WinnForum as WinnForum
-from algorithms import PrioritizationFramework
+from algorithms.PrioritizationFramework import Engine
 
 
 class CBSDController:
@@ -91,7 +91,7 @@ class CBSDController:
             item['sid'] = sid
 
             # Need to add priority score. Provide data here.
-            item['priorityScore'] = PrioritizationFramework.get_priority_score(item)
+            item['priorityScore'] = Engine.get_priority_score(item)
 
             cbsdID = self.create_cbsd(item)
             if not cbsdID:
