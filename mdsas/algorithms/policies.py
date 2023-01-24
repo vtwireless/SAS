@@ -18,7 +18,7 @@ class RULE:
 # In[CONSTANTS]
 PU_TYPE = ['DBS', 'MVDDS', 'NGSOFSS']
 USER_TYPE = ['ordinary', 'scientific', 'educational', 'government', 'emergency']
-WEATHER = ['sunny', 'cloudy', 'foggy', 'rainy', 'snowy', 'emergency']
+WEATHER = ['clear', 'overcast', 'cloudy', 'rain', 'snow', 'emergency']
 DENSITY = ['rural', 'semi-urban', 'urban']
 TRAFFIC = ['video', 'data', 'voice', 'emergency']
 

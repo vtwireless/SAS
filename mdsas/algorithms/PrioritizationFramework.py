@@ -87,6 +87,7 @@ class Score:
         min, max = int(self.context.minFrequencyThreshold / 1e6), int(self.context.maxFrequencyThreshold / 1e6)
 
         for name, band in policies.BANDS.items():
+            logging.warning(band)
             if band["min-op-fr"] == min or band["max-op-fr"] == max or \
                     band["min-op-fr"] <= min < max <= band["max-op-fr"]:
                 rule: RULE = band['rule']
@@ -94,47 +95,10 @@ class Score:
                 if rule:
                     return policies.RULES[rule]
                 else:
-                    break
+                    return policies.RULES['default']
 
         logging.warning("Could not match the provided frequency range to a band. Context:" + self.context.toString())
         return policies.RULES['default']
-
-    @lru_cache(maxsize=20)
-    def get_weather_for_location(self):
-        lat, long = self.context.location.split(',')
-        url = f"{weather_url}/{lat}%2C{long}/today?unitGroup=metric" \
-              f"&key={APIKey}&contentType=json"
-
-        jsonData = None
-        try:
-            ResultBytes = urllib.request.urlopen(url)
-            logging.warning("Fetched Results at: " + str(datetime.datetime.now()))
-
-            # Parse the results as JSON
-            jsonData = json.loads(ResultBytes.read())
-        except Exception as e:
-            logging.error(e)
-
-        if not jsonData or 'currentConditions' not in jsonData or "conditions" not in jsonData['currentConditions']:
-            raise Exception('Current data not available')
-
-        currentConditions = jsonData['currentConditions']
-        currentWeather = currentConditions.get("conditions").lower().strip()
-
-        if currentWeather == 'clear':
-            return "clear"
-        elif currentWeather == 'overcast':
-            return "overcast"
-        elif ',' not in currentWeather and 'cloudy' in currentWeather:
-            return 'cloudy'
-        elif "rain" in currentWeather:
-            return "rain"
-        elif "snow" in currentWeather:
-            return "snow"
-        else:
-            logging.warning(f"Unidentified Weather: {currentWeather}. Corresponding policy not found for this type of "
-                            f"weather. Using default settings.")
-            return "clear"
 
     def toString(self):
         return json.dumps({
@@ -144,21 +108,65 @@ class Score:
         })
 
     def calculate_weather_score(self):
-        weather = self.get_weather_for_location()
+        weather = get_weather_for_location(self.context.location)
         self.weather_score = self.rule.weather.index(weather) + 1
+
+        self.__score += self.weather_score
 
     def calculate_mobility_score(self):
         self.mobility_score = 1 if self.context.mobile else 0
 
+        self.__score += self.mobility_score
 
-class Engine:
-    @staticmethod
-    def get_priority_score(cbsd_object) -> int:
-        # Create Context Variable
-        context = Context(cbsd_object)
 
-        score = Score(context)
-        score.calculate()
+@lru_cache(maxsize=20)
+def get_weather_for_location(location):
+    lat, long = location.split(',')
+    url = f"{weather_url}/{lat}%2C{long}/today?unitGroup=metric" \
+          f"&key={APIKey}&contentType=json"
+    weather = None
 
-        logging.info(score.toString())
-        return score.get()
+    jsonData = None
+    try:
+        ResultBytes = urllib.request.urlopen(url)
+        logging.warning("Fetched Results at: " + str(datetime.datetime.now()))
+
+        # Parse the results as JSON
+        jsonData = json.loads(ResultBytes.read())
+    except Exception as e:
+        logging.error(e)
+
+    if not jsonData or 'currentConditions' not in jsonData or "conditions" not in jsonData['currentConditions']:
+        raise Exception('Current data not available')
+
+    currentConditions = jsonData['currentConditions']
+    currentWeather = currentConditions.get("conditions").lower().strip()
+
+    if currentWeather == 'clear':
+        weather = "clear"
+    elif currentWeather == 'overcast':
+        weather = "overcast"
+    elif ',' not in currentWeather and 'cloudy' in currentWeather:
+        weather = 'cloudy'
+    elif "rain" in currentWeather:
+        weather = "rain"
+    elif "snow" in currentWeather:
+        weather = "snow"
+    else:
+        logging.warning(f"Unidentified Weather: {currentWeather}. Corresponding policy not found for this type of "
+                        f"weather. Using default settings.")
+        weather = "clear"
+
+    logging.warning(f"Location: {location}, Weather: {weather}")
+    return weather
+
+
+def get_priority_score(cbsd_object) -> int:
+    # Create Context Variable
+    context = Context(cbsd_object)
+
+    score = Score(context)
+    score.calculate()
+
+    logging.warning(score.toString())
+    return score.get()
