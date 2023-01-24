@@ -1,32 +1,20 @@
 .mat-table {
     height: 80%;
-    background-color: #d2e5fa;
+    width: 100%;
+    min-width: 100%;
     .mat-header-cell {
-        position: relative;
-        font-size: 14px;
-        font-weight: 900;
         &:not(:last-child) {
             .resize-holder {
-                cursor: col-resize;
-                width: 20px;
-                height: 100%;
-                position: absolute;
-                right: -10px;
-                top: 0;
-                z-index: 1;
+                min-width: 20px;
             }
         }
     }
 
     .mat-cell,
     .mat-header-cell {
-        border-right: 1px solid rgba(0, 0, 0, 0.12);
         font-size: 12px;
         padding: 0 1em;
-
-        &:not(:nth-child(1)) {
-            padding: 0 10px;
-        }
+        text-align: center;
     }
 }
 
@@ -40,7 +28,7 @@
     display: flex;
     flex-direction: row;
     border-radius: 5px 5px 0 0;
-    background-color: #004a9f;
+    background-color: #0079ff;
     color: white !important;
 }
 
