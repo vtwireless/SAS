@@ -41,23 +41,23 @@ RULES["Another_Rule"].user = RULES["default"].user[::-1]
 # In[BANDS]
 BANDS = {
     "n1": {
-        "min-op-fr": 2300, "max-op-fr": 2400,
+        "min-op-fr": 3400, "max-op-fr": 3500,
         "rule": "NEW_RULE"
     },
     "n2": {
-        "min-op-fr": 2400, "max-op-fr": 2500,
+        "min-op-fr": 3500, "max-op-fr": 3600,
         "rule": None
     },
     "n3": {
-        "min-op-fr": 2500, "max-op-fr": 2600,
+        "min-op-fr": 3600, "max-op-fr": 3700,
         "rule": None
     },
     "n4": {
-        "min-op-fr": 2600, "max-op-fr": 2700,
+        "min-op-fr": 3700, "max-op-fr": 3800,
         "rule": None
     },
     "n5": {
-        "min-op-fr": 2700, "max-op-fr": 2800,
-        "rule": None
+        "min-op-fr": 3800, "max-op-fr": 3900,
+        "rule": "NEW_RULE"
     },
 }
