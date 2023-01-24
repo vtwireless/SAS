@@ -13,7 +13,7 @@ class HttpMethod(Enum):
 class Client:
     POST_HEADERS, GET_HEADERS = {'Content-Type': 'application/json'}, {}
     HOST, PORT = 'localhost', 8000
-    ASSETS = 'data_assets/test_data.json'
+    ASSETS = 'data_assets/seed_data.json'
     payloads = None
 
     def __init__(self):
@@ -43,14 +43,14 @@ if __name__ == '__main__':
     # Create Users
     res = client.send_request_to_server(HttpMethod.POST, 'createSU')
     print(res)
-    res = client.send_request_to_server(HttpMethod.POST, 'createSU', 'createSUs')
-    print(res)
+    # res = client.send_request_to_server(HttpMethod.POST, 'createSU', 'createSUs')
+    # print(res)
 
     # Add Nodes
     res = client.send_request_to_server(HttpMethod.POST, 'registrationRequest')
     print(res)
-    res = client.send_request_to_server(HttpMethod.POST, 'registrationRequest', 'registrationRequests')
-    print(res)
+    # res = client.send_request_to_server(HttpMethod.POST, 'registrationRequest', 'registrationRequests')
+    # print(res)
 
     # Spectrum Inquiry
     res = client.send_request_to_server(HttpMethod.POST, 'spectrumInquiryRequest')
