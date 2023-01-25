@@ -43,7 +43,7 @@
                 "IPAddress": "1.1.1.2",
                 "trustLevel": "1",
                 "minFrequency": "3600000000",
-                "maxFrequency": "365000000000",
+                "maxFrequency": "3650000000",
                 "minSampleRate": "10000000",
                 "maxSampleRate": "20000000",
                 "nodeType": "VT-CRTS-Node",
