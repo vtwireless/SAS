@@ -15,6 +15,7 @@ import logging
 import urllib.request
 import urllib.error
 from functools import lru_cache
+import requests
 
 import policies
 from policies import RULE
@@ -124,18 +125,14 @@ def get_weather_for_location(location):
     lat, long = location.split(',')
     url = f"{weather_url}/{lat}%2C{long}/today?unitGroup=metric" \
           f"&key={APIKey}&contentType=json"
-    weather = None
 
     jsonData = None
     try:
-        ResultBytes = urllib.request.urlopen(url)
-        logging.warning("Fetched Results at: " + str(datetime.datetime.now()))
-
-        # Parse the results as JSON
-        jsonData = json.loads(ResultBytes.read())
+        response = requests.request(
+            "GET", url, headers={'Content-Type': 'application/json'})
+        jsonData = response.json()
     except Exception as e:
         logging.error(e)
-
     if not jsonData or 'currentConditions' not in jsonData or "conditions" not in jsonData['currentConditions']:
         raise Exception('Current data not available')
 
@@ -157,7 +154,7 @@ def get_weather_for_location(location):
                         f"weather. Using default settings.")
         weather = "clear"
 
-    logging.warning(f"Location: {location}, Weather: {weather}")
+    logging.info(f"Location: {location}, Weather: {weather}")
     return weather
 
 
