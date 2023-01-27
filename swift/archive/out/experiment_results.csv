@@ -1,9 +1,0 @@
-cbsd_id,type,band,weather,density,traffic,min_freq,max_freq,score
-5,educational,n1,rainy,rural,video,2300,2400,10
-7,ordinary,n1,sunny,semi-urban,data,2300,2400,11
-9,scientific,n1,emergency,urban,voice,2300,2400,7
-11,emergency,n1,rainy,urban,emergency,2300,2400,13
-6,educational,n2,rainy,rural,video,2400,2500,9
-8,ordinary,n2,sunny,semi-urban,data,2400,2500,6
-10,scientific,n2,emergency,urban,voice,2400,2500,14
-12,emergency,n2,rainy,urban,emergency,2400,2500,16
