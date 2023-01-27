@@ -13,6 +13,7 @@ import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatDatepickerModule, MatNativeDateModule, MatPaginatorModule  } from '@angular/material';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatCardModule } from '@angular/material/card';
+import { AgmCoreModule } from '@agm/core';
 
 //import { MatSliderModule } from '@angular/material';
 
@@ -50,6 +51,7 @@ import { InquiryLogsComponent } from './inquiry-logs/inquiry-logs.component';
 import { SasTableComponentComponent } from './sas-table-component/sas-table-component.component';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import {AgmOverlays} from "agm-overlays";
 
 @NgModule({
   declarations: [
@@ -83,7 +85,10 @@ import { MatInputModule } from '@angular/material/input';
   ],
 
   imports: [
-    BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
+    BrowserModule.withServerTransition({appId: 'ng-cli-universal'}),
+    AgmCoreModule.forRoot({
+      apiKey: 'AIzaSyAg1LX7QqZa7ixpGqHO_B89q9YoIXBiz3w'
+    }),
     AppRoutingModule,
     HttpClientModule,
     FormsModule,
@@ -103,6 +108,7 @@ import { MatInputModule } from '@angular/material/input';
     MatDatepickerModule,
     MatNativeDateModule,
     MatCardModule,
+    AgmOverlays,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

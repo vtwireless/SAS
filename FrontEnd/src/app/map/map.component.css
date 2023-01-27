@@ -1,31 +1,34 @@
-.top-bar{
-    margin-bottom: 6rem;   
-}
-.legend-block{
-    position: absolute;
-    right:5rem;
-    top:3.5rem;
-    width: 25rem;
-    border-radius: 15px;
-    -webkit-box-shadow: 0 0 10px rgb(0,0,0);
-    padding: 1rem;
-}
+/*.top-bar{*/
+/*    margin-bottom: 6rem;   */
+/*}*/
+/*.legend-block{*/
+/*    position: absolute;*/
+/*    right:5rem;*/
+/*    top:3.5rem;*/
+/*    width: 25rem;*/
+/*    border-radius: 15px;*/
+/*    -webkit-box-shadow: 0 0 10px rgb(0,0,0);*/
+/*    padding: 1rem;*/
+/*}*/
 
-.legend-row{
-    display: flex;
-    flex-direction: row;
-    font-size: 2rem;
-    justify-content: space-between;
-}
+/*.legend-row{*/
+/*    display: flex;*/
+/*    flex-direction: row;*/
+/*    font-size: 2rem;*/
+/*    justify-content: space-between;*/
+/*}*/
 
-.legend-row > p {
-    letter-spacing: 2px;
-}
+/*.legend-row > p {*/
+/*    letter-spacing: 2px;*/
+/*}*/
 
-.su{
-    color:blue;
-}
+/*.su{*/
+/*    color:blue;*/
+/*}*/
 
-.nodes{
-    color:orange;
+/*.nodes{*/
+/*    color:orange;*/
+/*}*/
+agm-map {
+    height: 800px;
 }

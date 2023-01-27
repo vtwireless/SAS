@@ -1,28 +1,39 @@
-﻿<section class="top-bar">
-    <h2>SAS Map</h2>
-    <div class="legend-block">
-        <div class="legend-row">
-            <p>Secondary User: </p>
-            <i class="fa-solid fa-location-dot su"></i>
-        </div>
-        <div class="legend-row">
-            <p>Nodes: </p>
-            <i class="fa-solid fa-location-dot nodes"></i>
-        </div>
-    </div>
-    <button *ngIf="!showingPUs" type="button" class="btn btn-default" (click)="togglePUs();" style="background-color:#ADD8EC;float:left;">PUs</button>
-    <button *ngIf="showingPUs" type="button" class="btn btn-default" (click)="togglePUs();" style="background-color:#2554C7;float:left;color:white;">PUs</button>
-    <button *ngIf="!showingSUs" type="button" class="btn btn-default" (click)="toggleSUs();" style="background-color:#ADD8EC;float:left;">SUs</button>
-    <button *ngIf="showingSUs" type="button" class="btn btn-default" (click)="toggleSUs();" style="background-color:#2554C7;float:left;color:white;">SUs</button>
-    <button *ngIf="!showingNodes" type="button" class="btn btn-default" (click)="toggleNodes();" style="background-color:#ADD8EC;float:left;">Nodes</button>
-    <button *ngIf="showingNodes" type="button" class="btn btn-default" (click)="toggleNodes();" style="background-color:#2554C7;float:left;color:white;">Nodes</button>
-    <button *ngIf="!showingRegions" type="button" class="btn btn-default" (click)="toggleRegions();" style="background-color:#ADD8EC;float:left;">Regions</button>
-    <button *ngIf="showingRegions" type="button" class="btn btn-default" (click)="toggleRegions();" style="background-color:#2554C7;float:left;color:white;">Regions</button>
-    <button *ngIf="!showingGrants" type="button" class="btn btn-default" (click)="toggleGrants();" style="background-color:#ADD8EC;float:left;">Grants</button>
-    <button *ngIf="showingGrants" type="button" class="btn btn-default" (click)="toggleGrants();" style="background-color:#2554C7;float:left;color:white;">Grants</button>
-</section>
+﻿<!--<section class="top-bar">-->
+<!--    <h2>SAS Map</h2>-->
+<!--    <div class="legend-block">-->
+<!--        <div class="legend-row">-->
+<!--            <p>Secondary User: </p>-->
+<!--            <i class="fa-solid fa-location-dot su"></i>-->
+<!--        </div>-->
+<!--        <div class="legend-row">-->
+<!--            <p>Nodes: </p>-->
+<!--            <i class="fa-solid fa-location-dot nodes"></i>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--    <button *ngIf="!showingPUs" type="button" class="btn btn-default" (click)="togglePUs();" style="background-color:#ADD8EC;float:left;">PUs</button>-->
+<!--    <button *ngIf="showingPUs" type="button" class="btn btn-default" (click)="togglePUs();" style="background-color:#2554C7;float:left;color:white;">PUs</button>-->
+<!--    <button *ngIf="!showingSUs" type="button" class="btn btn-default" (click)="toggleSUs();" style="background-color:#ADD8EC;float:left;">SUs</button>-->
+<!--    <button *ngIf="showingSUs" type="button" class="btn btn-default" (click)="toggleSUs();" style="background-color:#2554C7;float:left;color:white;">SUs</button>-->
+<!--    <button *ngIf="!showingNodes" type="button" class="btn btn-default" (click)="toggleNodes();" style="background-color:#ADD8EC;float:left;">Nodes</button>-->
+<!--    <button *ngIf="showingNodes" type="button" class="btn btn-default" (click)="toggleNodes();" style="background-color:#2554C7;float:left;color:white;">Nodes</button>-->
+<!--    <button *ngIf="!showingRegions" type="button" class="btn btn-default" (click)="toggleRegions();" style="background-color:#ADD8EC;float:left;">Regions</button>-->
+<!--    <button *ngIf="showingRegions" type="button" class="btn btn-default" (click)="toggleRegions();" style="background-color:#2554C7;float:left;color:white;">Regions</button>-->
+<!--    <button *ngIf="!showingGrants" type="button" class="btn btn-default" (click)="toggleGrants();" style="background-color:#ADD8EC;float:left;">Grants</button>-->
+<!--    <button *ngIf="showingGrants" type="button" class="btn btn-default" (click)="toggleGrants();" style="background-color:#2554C7;float:left;color:white;">Grants</button>-->
+<!--</section>-->
 
-<br>
-<div style="min-height:700px;width:100%">
-<div #mapContainer id="mapContainer" style="height:100%;min-height:700px;width: 100%;min-width:500px;"></div>
-</div>
+<!--<br>-->
+<!--<div style="min-height:700px;width:100%">-->
+<!--<div #mapContainer id="mapContainer" style="height:100%;min-height:700px;width: 100%;min-width:500px;"></div>-->
+<!--</div>-->
+<h1>{{ title }}</h1>
+
+<!-- this creates a google map on the page with the given lat/lng from -->
+
+<!-- the component as the initial center of the map: -->
+<agm-map [maxZoom]="20" [minZoom]="20" [disableDefaultUI]="true"  [usePanning]="true" [latitude]="lat" [longitude]="lng" [zoom]="20">
+<!--    <agm-marker [latitude]="lat" [longitude]="lng"></agm-marker>-->
+    <agm-overlay [latitude]="lat" [longitude]="lng">
+        <img style="width: 75rem; transform: rotate(49deg); position:relative; left:-33rem; top:-14rem;" src="../../assets/img/FloorPlan.png" >
+    </agm-overlay>
+</agm-map>
