@@ -181,7 +181,7 @@ export class MapComponent implements AfterViewInit{
                         }
                         for (var i = 0 ; i < this.spectrumGrants.length; i++){
                             this.spectrumGrants[i].marker = null;
-                            var coordinateArray = this.spectrumGrants[i].grant.requestLocation.split(',');
+                            var coordinateArray = this.spectrumGrants[i].grant.location.split(',');
                             var coor = new google.maps.LatLng(Number(coordinateArray[0]), Number(coordinateArray[1]));
                             var markerLabel = this.spectrumGrants[i].grant.secondaryUserName + " " + this.spectrumGrants[i].grant.frequency + 'Hz';
                             this.spectrumGrants[i].marker = new google.maps.Marker({

@@ -50,7 +50,7 @@ export class SpectrumGrant {
         public requestApproximatelyByteSize: number,
         public requestDataType: string,
         public requestPowerLevel: number,
-        public requestLocation: string,
+        public location: string,
         public requestMobility: boolean,
         public requestMaxVelocity: number,
         public range: string,

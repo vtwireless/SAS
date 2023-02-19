@@ -53,8 +53,10 @@ export class NodeListComponent implements AfterViewInit {
                         node_model.nodeName = node.nodeName;
                         node_model.location = node.location;
                         node_model.trustLevel = node.trustLevel;
-                        node_model.freqRange = (node.minFrequency).toString() + "-" + (node.maxFrequency).toString();
-                        node_model.sampleRange = node.minSampleRate.toString() + "-" + node.maxSampleRate.toString();
+                        node_model.freqRange = (node.minFrequency/1000000).toString() + "-" +
+                            (node.maxFrequency/1000000).toString();
+                        node_model.sampleRange = (node.minSampleRate/1000000).toString() + "-" +
+                            (node.maxSampleRate/1000000).toString();
                         node_model.nodeType = node.nodeType;
                         node_model.mobility = node.mobility == "true" ? 'Yes' : 'No';
                         node_model.priorityScore = node.priorityScore;
