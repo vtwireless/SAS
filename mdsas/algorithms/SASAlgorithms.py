@@ -142,6 +142,7 @@ class SASAlgorithms:
         gr.heartbeatInterval = self.getHeartbeatIntervalForGrantId(gr.grantId)
         gr.measReportConfig = ["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"]
         conflict = False
+
         for grant in grants:
             rangea = grant["maxFrequency"]
             rangeb = grant["minFrequency"]
@@ -171,10 +172,12 @@ class SASAlgorithms:
         gr.channelType = "GAA"
         return gr
 
-    def tierGrantAlg(self, grants, REM, request):
+    @staticmethod
+    def tierGrantAlg(grants, REM, request):
         return True
 
-    def generateResponse(self, responseCode):
+    @staticmethod
+    def generateResponse(responseCode):
         response = WinnForum.Response(str(responseCode), WinnForum.responseDecode(responseCode))
         return response
 
@@ -183,10 +186,10 @@ class SASAlgorithms:
         latit = self.latitude
         longit = self.longitude
         rad = self.radius
-        if latitude != None and longitude != None:
+        if latitude is not None and longitude is not None:
             longit = longitude
             latit = latitude
-        if radius != None:
+        if radius is not None:
             rad = radius
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)  # GET ALL  REM DATA
         if not remData:
