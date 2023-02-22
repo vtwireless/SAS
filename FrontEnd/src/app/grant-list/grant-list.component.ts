@@ -76,6 +76,11 @@ const SCHEMA = [
 		label: "Status",
 		minWidth: "200px"
 	},
+	{
+		key: "region_identifier",
+		type: "text",
+		label: "Region Identifier"
+	},
 ];
 
 @Component({
