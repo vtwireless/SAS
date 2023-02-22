@@ -16,7 +16,10 @@ class Client:
     ASSETS = 'data_assets/seed_data.json'
     payloads = None
 
-    def __init__(self):
+    def __init__(self, assets=None):
+        if assets:
+            self.ASSETS = assets
+
         with open(self.ASSETS, 'r+') as infile:
             self.payloads = json.load(infile)
 

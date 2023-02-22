@@ -1,11 +1,9 @@
 import json
 import os
 import glob
-
-import pytest
-print(os.getcwd())
-from rest_server import socket as flask_app
 import re
+import pytest
+from rest_server import socket as flask_app
 
 
 @pytest.hookimpl(hookwrapper=True)
