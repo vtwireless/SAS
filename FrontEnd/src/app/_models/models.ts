@@ -27,7 +27,7 @@ export class SecondaryUser {
 export class SpectrumGrant {
 
     constructor(
-        public grantID: number,
+        public grantId: number,
         public approved: string,
         public secondaryUserID: string,
         public secondaryUserName: string,
