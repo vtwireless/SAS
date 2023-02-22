@@ -1,8 +1,10 @@
 import random
+import geopy.distance as gdist
 
 import algorithms.Server_WinnForum as WinnForum
 import algorithms.CBSD as CBSD
 from algorithms.SASAlgorithms import SASAlgorithms
+from settings import settings
 
 
 class Utilities:
@@ -180,4 +182,23 @@ class Utilities:
 
         return obfuscationArr
 
+    @classmethod
+    def get_region_identifier(cls, latitude, longitude):
+        for area in settings.PROTECTION_AREAS:
+            distance = cls.calculate_distance_between_coordinates(
+                latitude, longitude,
+                area["latitude"], area["longitude"]
+            )
 
+            if distance <= area["radius"]:
+                return area["identifier"]
+
+        return None
+
+    @staticmethod
+    def calculate_distance_between_coordinates(srcLatitude, srcLongitude, destLatitude, destLongitude):
+        if not srcLatitude or not srcLongitude or not destLatitude or not destLongitude:
+            return 0
+
+        else:
+            return gdist.geodesic((srcLatitude, srcLongitude), (destLatitude, destLongitude)).m

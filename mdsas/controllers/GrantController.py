@@ -66,6 +66,21 @@ class GrantController:
         except Exception as err:
             raise Exception(str(err))
 
+    def get_grants_by_region(self, region):
+        query = select([self.GRANTS]).where(
+            self.GRANTS.columns.region_identifier == region
+        )
+        self.log.debug(f"Getting grants for region {region}")
+        try:
+            rows = self._execute_query(query)
+
+            return {
+                'status': 1,
+                'spectrumGrants': rows
+            }
+        except Exception as err:
+            raise Exception(str(err))
+
     def get_inquiries(self):
         query = select([self.INQUIRIES])
         self.log.debug("Getting All Spectrum Inquiries")
@@ -244,12 +259,13 @@ class GrantController:
         responseArr = []
 
         for item in payload['grantRequest']:
+            node = self.nodeCtrl.get_node_by_id(item['cbsdId'])
+
             if 'secondaryUserID' not in item:
-                cbsd = self.nodeCtrl.get_cbsd_by_id(item['cbsdId'])
-                item['secondaryUserID'] = cbsd.userId
+                item['secondaryUserID'] = node["userId"]
 
             minFreq = round(int(item['minFrequency']) / self.algorithms.minimumGrantSize) * \
-                      self.algorithms.minimumGrantSize
+                self.algorithms.minimumGrantSize
             number_of_channels = math.ceil(
                 (item['maxFrequency'] - item['minFrequency']) / self.algorithms.defaultChannelSize
             )
@@ -271,8 +287,15 @@ class GrantController:
                 )
                 grantRequest.vtGrantParams = vtgp
 
-                grants = self.get_grants()['spectrumGrants']
+                # Get successful grants for a particular region.
+                grantQuery = select([self.GRANTS]).where(and_(
+                    self.GRANTS.columns.region_identifier == node["region_identifier"],
+                    self.GRANTS.columns.status == "SUCCESS",
+                ))
+                grants = self._execute_query(grantQuery)
+                self.log.debug(f"Grants for region {node['region_identifier']}: {grants}")
                 grantResponse = self.algorithms.runGrantAlgorithm(grants, self.rem, grantRequest)
+                item["region_identifier"] = node["region_identifier"]
 
                 if grantResponse.response.responseCode == "0":
                     item["grantExpireTime"] = str(grantResponse.grantExpireTime)

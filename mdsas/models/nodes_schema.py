@@ -35,5 +35,6 @@ def set_schema(metadata):
         Column('comment', String(80), index=False, unique=False, nullable=False, default=''),
         Column('justChangedParams', Boolean, index=False, unique=False, nullable=False, default=False),
         Column('sid', String(80), index=False, unique=False, nullable=False),
-        Column('priorityScore', Integer, default=0)
+        Column('priorityScore', Integer, default=0),
+        Column('region_identifier', String(80), default="global")
     )

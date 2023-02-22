@@ -32,4 +32,5 @@ def set_schema(metadata):
         Column('startepoch', Integer, index=False),
         Column('grantInterval', Integer, index=False),
         Column('grantExpireTime', String(80), index=False),
+        Column('region_identifier', String(80), index=False, default='global')
     )

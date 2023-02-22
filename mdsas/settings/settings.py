@@ -29,4 +29,15 @@ INQUIRYLOG = 'inquirylogs'
 GRANTREQUEST = 'grantrequest'
 
 # App Settings
-APP_NAME = 'swift_ascent'
+APP_NAME = 'mdsas'
+
+# Protection Areas
+PROTECTION_AREAS = [
+    {
+        "identifier": "HCRO",
+        "latitude": 40.817132,
+        "longitude": -121.470741,
+        "radius": 200000  # in metres
+
+    }
+]

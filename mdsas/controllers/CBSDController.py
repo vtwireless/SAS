@@ -52,12 +52,20 @@ class CBSDController:
             'nodes': rows
         }
 
-    def get_cbsd_by_id(self, cbsdID):
+    def get_node_by_id(self, cbsdID):
         query = select([self.CBSD]).where(
             self.CBSD.columns.cbsdID == cbsdID
         )
 
         rows = self._execute_query(query)
+
+        if len(rows) > 0:
+            return rows[0]
+
+        return None
+
+    def get_cbsd_by_id(self, cbsdID):
+        rows = self.get_node_by_id(cbsdID)["nodes"]
 
         if len(rows) > 0:
             return Utilities.loadCBSDFromJSON(rows[0])
@@ -93,6 +101,13 @@ class CBSDController:
             # Need to add priority score. Provide data here.
             item['priorityScore'] = PrioritizationFramework.get_priority_score(cbsd_object=item)
 
+            # Need to add region identifier here, if any
+            location = item['location'].split(',')
+            # TODO: Is region identification needed here? Or only during grant request processing stage?
+            region_identifier = Utilities.get_region_identifier(location[0], location[1])
+            if region_identifier:
+                item['region_identifier'] = region_identifier
+
             cbsdID = self.create_cbsd(item)
             if not cbsdID:
                 return {
@@ -102,7 +117,6 @@ class CBSDController:
 
             radio = CBSD.CBSD(cbsdID, item.get("trustLevel", 1), item['fccId'])
             # Flatten Structure
-            location = item['location'].split(',')
             radio.latitude = location[0]
             radio.longitude = location[1]
             radio.nodeType = item["nodeType"]
