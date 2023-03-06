@@ -38,25 +38,25 @@ else:
 REM = SASREM.SASREM()
 SASAlgorithms = SASAlgorithms.SASAlgorithms()
 
-socket = Flask(settings.APP_NAME)
-cors = CORS(socket, resources={r"/*": {"origins": "*"}})
+server = Flask(settings.APP_NAME)
+cors = CORS(server, resources={r"/*": {"origins": "*"}})
 
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter(
     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 handler.setLevel(logging.INFO)
-socket.logger.handlers.clear()
-socket.logger.addHandler(handler)
-socket.logger.setLevel(logging.DEBUG)
+server.logger.handlers.clear()
+server.logger.addHandler(handler)
+server.logger.setLevel(logging.DEBUG)
 
 
-@socket.route('/', methods=['GET', 'POST'])
+@server.route('/', methods=['GET', 'POST'])
 def root():
     return {"message": "Server is Running!"}
 
 
 # In[ --- User Management ---]
-@socket.route('/suLogin', methods=['POST'])
+@server.route('/suLogin', methods=['POST'])
 def suLogin():
     """
     Login API for secondary users
@@ -74,7 +74,7 @@ def suLogin():
         }
 
 
-@socket.route('/adminLogin', methods=['POST'])
+@server.route('/adminLogin', methods=['POST'])
 def adminLogin():
     try:
         response = db.authenticate_user(request.get_json(), True)
@@ -86,21 +86,21 @@ def adminLogin():
         }
 
 
-@socket.route('/createSU', methods=['POST'])
+@server.route('/createSU', methods=['POST'])
 def createSecondaryUser():
     try:
         response = db.create_user(request.get_json(), False)
         return response
 
     except Exception as err:
-        socket.logger.debug(traceback.format_exc())
+        server.logger.debug(traceback.format_exc())
         return {
             'status': 0,
             'message': f"ErrorType: {err.__class__.__name__}, Message: {str(err)}"
         }
 
 
-@socket.route('/createAdminUserINsas', methods=['POST'])
+@server.route('/createAdminUserINsas', methods=['POST'])
 def createAdminUser():
     try:
         response = db.create_user(request.get_json(), True)
@@ -112,7 +112,7 @@ def createAdminUser():
         }
 
 
-@socket.route('/getUsers', methods=['GET'])
+@server.route('/getUsers', methods=['GET'])
 def getSecondaryUsers():
     try:
         response = db.get_secondary_users()
@@ -124,7 +124,7 @@ def getSecondaryUsers():
         }
 
 
-@socket.route('/getUser', methods=['POST'])
+@server.route('/getUser', methods=['POST'])
 def getUser():
     try:
         response = db.get_secondary_user(request.get_json())
@@ -136,7 +136,7 @@ def getUser():
         }
 
 
-@socket.route('/checkEmailAvail', methods=['POST'])
+@server.route('/checkEmailAvail', methods=['POST'])
 def checkEmailAvailability():
     try:
         response = db.check_email_availability(request.get_json())
@@ -150,7 +150,7 @@ def checkEmailAvailability():
 
 # In[ --- Node Management ---]
 
-@socket.route('/getNodesRequest', methods=['GET'])
+@server.route('/getNodesRequest', methods=['GET'])
 def getNodes():
     try:
         response = db.get_nodes()
@@ -162,7 +162,7 @@ def getNodes():
         }
 
 
-@socket.route('/registrationRequest', methods=['POST'])
+@server.route('/registrationRequest', methods=['POST'])
 def register():
     # response, assignmentArr = db.register_nodes(1, request.get_json())
 
@@ -183,13 +183,13 @@ def register():
         }
 
 
-@socket.route('/deregistrationRequest', methods=['POST'])
+@server.route('/deregistrationRequest', methods=['POST'])
 def deregister():
     response = db.deregister_nodes(request.get_json())
     return response
 
 
-@socket.route('/updateNode', methods=['POST'])
+@server.route('/updateNode', methods=['POST'])
 def updateNode():
     try:
         response = db.update_nodes(request.get_json())
@@ -202,7 +202,7 @@ def updateNode():
 # In[ --- Grant Management --- ]
 
 
-@socket.route('/spectrumInquiryRequest', methods=['POST'])
+@server.route('/spectrumInquiryRequest', methods=['POST'])
 def spectrumInquiryRequest():
     try:
         response, radiosToCommunicate = db.spectrum_inquiry(request.get_json())
@@ -221,7 +221,7 @@ def spectrumInquiryRequest():
         }
 
 
-@socket.route('/getSpectrumInquiryRequest', methods=['GET'])
+@server.route('/getSpectrumInquiryRequest', methods=['GET'])
 def getSpectrumInquiryRequest():
     try:
         response = None
@@ -233,7 +233,7 @@ def getSpectrumInquiryRequest():
         }
 
 
-@socket.route('/getGrantsRequest', methods=['GET'])
+@server.route('/getGrantsRequest', methods=['GET'])
 def getGrantRequests():
     try:
         response = db.get_grants()
@@ -244,7 +244,7 @@ def getGrantRequests():
         }
 
 
-@socket.route('/getSpectrumInquiries', methods=['GET'])
+@server.route('/getSpectrumInquiries', methods=['GET'])
 def getInquiryRequests():
     try:
         response = db.get_inquiries()
@@ -255,7 +255,7 @@ def getInquiryRequests():
         }
 
 
-@socket.route('/grantRequest', methods=['POST'])
+@server.route('/grantRequest', methods=['POST'])
 def grantRequest():
     try:
         response = db.create_grant_request(request.get_json())
@@ -266,7 +266,7 @@ def grantRequest():
         }
 
 
-@socket.route('/heartbeatRequest', methods=['POST'])
+@server.route('/heartbeatRequest', methods=['POST'])
 def heartbeat():
     response, grantArray = db.heartbeat_request(request.get_json())
 
@@ -278,7 +278,7 @@ def heartbeat():
     return response
 
 
-@socket.route('/relinquishmentRequest', methods=['POST'])
+@server.route('/relinquishmentRequest', methods=['POST'])
 def relinquishment():
     try:
         response = db.relinquishment_request(request.get_json())
@@ -291,7 +291,7 @@ def relinquishment():
         }
 
 
-@socket.route('/deleteGrantRequest', methods=['POST'])
+@server.route('/deleteGrantRequest', methods=['POST'])
 def deleteGrantRequest():
     try:
         response = db.delete_grant_by_id(request.get_json())
@@ -305,7 +305,7 @@ def deleteGrantRequest():
 
 # In[ --- Tier Class Management ---]
 
-@socket.route('/getTierClassById', methods=['POST'])
+@server.route('/getTierClassById', methods=['POST'])
 def getTierClassById():
     try:
         response = db.get_tierclass_by_id(request.get_json())
@@ -317,7 +317,7 @@ def getTierClassById():
         }
 
 
-@socket.route('/getTierClass', methods=['GET'])
+@server.route('/getTierClass', methods=['GET'])
 def getTierClass():
     try:
         response = db.get_tierclass()
@@ -329,7 +329,7 @@ def getTierClass():
         }
 
 
-@socket.route('/createTierClass', methods=['POST'])
+@server.route('/createTierClass', methods=['POST'])
 def createTierClass():
     try:
         response = db.create_tierclass(request.get_json())
@@ -343,6 +343,12 @@ def createTierClass():
 
 # In[ --- Main ---]
 if __name__ == "__main__":
-    # uvicorn.run(socket, host="0.0.0.0", port=8000)
-    socket.run(host='0.0.0.0', port=8000, debug=True, use_reloader=False)
-    # socket.run(host='0.0.0.0', port=8000)
+    # uvicorn.run(server, host="0.0.0.0", port=8000)
+    # server.run(host='0.0.0.0', port=8000)
+    server.run(
+        host='0.0.0.0',
+        port=8000,
+        debug=True,
+        use_reloader=False,
+        ssl_context='adhoc'
+    )
