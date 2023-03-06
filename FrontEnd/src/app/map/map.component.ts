@@ -176,8 +176,10 @@ export class MapComponent implements AfterViewInit{
                 this.httpRequests.getSpectrumGrants().subscribe(data => {
                     if(data['status'] == '1'){
                         for (var j = 0; j< data['spectrumGrants'].length; j++){
-                            let temp = new GrantMap(data['spectrumGrants'][j], null, null, null);
-                            this.spectrumGrants.push(temp);
+                            if (data['spectrumGrants'][j]["status"] == "SUCCESS") {
+                                let temp = new GrantMap(data['spectrumGrants'][j], null, null, null);
+                                this.spectrumGrants.push(temp);
+                            }
                         }
                         for (var i = 0 ; i < this.spectrumGrants.length; i++){
                             this.spectrumGrants[i].marker = null;
