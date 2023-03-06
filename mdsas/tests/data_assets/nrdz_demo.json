@@ -25,7 +25,7 @@
                 "userId": "abc@abc.com"
             }, {
                 "nodeName": "node2",
-                "location": "40.817132,-121.470741",
+                "location": "40.324767,-121.273374",
                 "IPAddress": "1.1.1.2",
                 "trustLevel": "1",
                 "minFrequency": "3550000000",
@@ -90,7 +90,7 @@
                 "approximateByteSize": 20,
                 "dataType": "AUDIO",
                 "powerLevel": 30,
-                "location": "40.817132,-121.470741",
+                "location": "40.324767,-121.273374",
                 "mobility": true,
                 "maxVelocity": 20
             },
