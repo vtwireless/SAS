@@ -15,27 +15,20 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatCardModule } from '@angular/material/card';
 import { AgmCoreModule } from '@agm/core';
 
-//import { MatSliderModule } from '@angular/material';
-
 import { AppComponent } from './app.component';
 import { NavMenuComponent } from './nav-menu/nav-menu.component';
 import { HomeComponent } from './home/home.component';
 import { MapComponent } from './map/map.component';
-import { ContactComponent } from './contact/contact.component';
 import { NodeListComponent } from './node-list/node-list.component';
-import { GrantListComponent } from './grant-list/grant-list.component';
 import { PUDetailsComponent } from './PU-details/PU-details.component';
-import { SUDetailsComponent } from './SU-details/SU-details.component';
 import { NodeDetailsComponent } from './node-details/node-details.component';
 import { GrantDetailsComponent } from './grant-details/grant-details.component';
-import { CreateSUComponent } from './create-su/create-su.component';
 import { CreateNodeComponent } from './create-node/create-node.component';
 import { LoginComponent } from './login/login.component';
 import { TiersComponent } from './tiers/tiers.component';
 import { TierComponent } from './tier/tier.component';
 import { AdminLoginComponent } from './admin-login/admin-login.component';
 import { SchedulesComponent } from './schedules/schedules.component';
-import { CreateRequestComponent } from './create-request/create-request.component';
 import { LogoutComponent } from './logout/logout.component';
 import { JwtInterceptor } from './_helpers';
 import { ErrorInterceptor } from './_helpers/error.interceptor';
@@ -58,13 +51,9 @@ import {AgmOverlays} from "agm-overlays";
     AppComponent,
     NavMenuComponent,
     HomeComponent,
-    ContactComponent,
-    CreateSUComponent,
     PUDetailsComponent,
     NodeDetailsComponent,
-    SUDetailsComponent,
     NodeListComponent,
-    GrantListComponent,
     CreateNodeComponent,
     LoginComponent,
     LogoutComponent,
@@ -74,7 +63,6 @@ import {AgmOverlays} from "agm-overlays";
     SchedulesComponent,
     AdminLoginComponent,
     GrantDetailsComponent,
-    CreateRequestComponent,
     NotFoundComponent,
     SepctrumInquiryRequestComponent ,
     NodeDeregisterComponent ,

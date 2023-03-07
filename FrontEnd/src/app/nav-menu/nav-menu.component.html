@@ -20,30 +20,10 @@
         <span class="icon-name"> ADD NODE</span>
     </button>
 
-    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button" routerLink="/create-request">
-        <mat-icon>edit</mat-icon>
-        <span class="icon-name"> GRANT REQUEST</span>
-    </button>
-
-    <!--        <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/requests">-->
-    <!--            <mat-icon>note_add</mat-icon>-->
-    <!--            <span class="icon-name"> GRANT REQUESTS</span>-->
-    <!--        </button>-->
-
-    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list">
-        <mat-icon>hourglass_empty</mat-icon>
-        <span class="icon-name"> GRANT LIST </span>
-    </button>
 
     <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/inquiry-logs">
         <mat-icon>hourglass_empty</mat-icon>
         <span class="icon-name"> SPECTRUM INQUIRY LOGS </span>
-    </button>
-
-    <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button"
-        routerLink="/grant-relinquishment">
-        <mat-icon>delete</mat-icon>
-        <span class="icon-name"> Grant Relinquishment</span>
     </button>
 
     <button *ngIf="userType == 'SU' || userType == 'ADMIN'" mat-button class="menu-button"
@@ -52,10 +32,6 @@
         <span class="icon-name">Spectrum Inquiry Request</span>
     </button>
 
-    <!-- <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/grant-list/logged">
-            <mat-icon>hourglass_full</mat-icon>
-            <span class="icon-name"> LOGGED GRANTS</span>
-        </button> -->
 
     <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/tiers/showAll">
         <mat-icon>equalizer</mat-icon>
@@ -67,10 +43,6 @@
         <span class="icon-name"> Node De-Register</span>
     </button>
 
-    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/schedules">
-        <mat-icon>room</mat-icon>
-        <span class="icon-name"> REGION SCHEDULES</span>
-    </button>
 
     <button *ngIf="userType == 'SU'" mat-button class="menu-button" routerLink="/SU-details/0">
         <mat-icon>book</mat-icon>
@@ -87,10 +59,10 @@
         <span class="icon-name"> ADMIN LOGIN</span>
     </button>
 
-    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/contact">
-        <mat-icon>phone</mat-icon>
-        <span class="icon-name"> CONTACT</span>
-    </button>
+<!--    <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/contact">-->
+<!--        <mat-icon>phone</mat-icon>-->
+<!--        <span class="icon-name"> CONTACT</span>-->
+<!--    </button>-->
 
     <button *ngIf="userType == 'ADMIN'" mat-button class="menu-button" routerLink="/socket">
         <mat-icon>settings_application</mat-icon>

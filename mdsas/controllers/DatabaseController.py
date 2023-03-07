@@ -19,6 +19,8 @@ from controllers.GrantController import GrantController
 from controllers.SettingsController import SettingsController
 from controllers.TierClassController import TierClassController
 from controllers.UsersController import UsersController
+from controllers.USRPController import USRPController
+
 from algorithms.SASAlgorithms import SASAlgorithms
 from algorithms import Server_WinnForum as WinnForum
 
@@ -113,6 +115,7 @@ class DatabaseController:
         self.grants_controller = GrantController(
             self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms, self.cbsd_controller
         )
+        self.usrp_controller = USRPController(self.METADATA, self.ENGINE, self.CONNECTION, self.algorithms)
 
         # self._get_secondaryUser_table()
         # self._get_nodes_table()
@@ -300,6 +303,12 @@ class DatabaseController:
 
     def get_grants(self):
         return self.grants_controller.get_grants()
+
+    def get_usrps(self):
+        return self.usrp_controller.get_usrps()
+
+    def create_usrp_request(self, payload):
+        return self.usrp_controller.create_usrp(payload)
 
     def get_inquiries(self):
         return self.grants_controller.get_inquiries()

@@ -21,12 +21,14 @@ SETTINGS_TABLE = 'settings'
 SECONDARY_USER_TABLE = 'secondaryUser'
 CBSD_TABLE = 'node'
 GRANT_TABLE = 'grants'
+USRP_TABLE = 'usrp'
 PUDETECTIONS = 'pudetections'
 TIERCLASS = 'tierclass'
 TIERASSIGNMENT = 'tierassignment'
 REGIONSCHEDULE = 'regionSchedule'
 INQUIRYLOG = 'inquirylogs'
 GRANTREQUEST = 'grantrequest'
+
 
 # App Settings
 APP_NAME = 'swift_ascent'

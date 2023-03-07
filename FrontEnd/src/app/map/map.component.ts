@@ -9,6 +9,41 @@ export class MapComponent {
     title = 'Kelly Hall Map';
     lat = 37.231396;
     lng = -80.422435;
+    lat1 = 37.231666;
+    lng1 = -80.422595;
+    lat2 = 37.231641;
+    lng2 = -80.422565;
+    lat3 = 37.231621;
+    lng3 = -80.422545;
+    lat4 = 37.231605;
+    lng4 = -80.422530;
+    lat5 = 37.231525;
+    lng5 = -80.422450;
+    lat6 = 37.231470;
+    lng6 = -80.422385;
+    lat7 = 37.231410;
+    lng7 = -80.422355;
+    lat8 = 37.231400;
+    lng8 = -80.422345;
+    lat9 = 37.231380;
+    lng9 = -80.422300;
+    lat10 = 37.231320;
+    lng10 = -80.422240;
+    lat11 = 37.231330;
+    lng11 = -80.422190;
+    lat12 = 37.231340;
+    lng12 = -80.422170;
+    lat13 = 37.231315;
+    lng13 = -80.422175;
+    lat14 = 37.231325;
+    lng14 = -80.422150;
+    icon = {
+        url: '../assets/img/marker.png',
+        scaledSize: {
+            width: 10,
+            height: 15
+        }
+    };
 }
 
 // import { Component, AfterViewInit, ViewChild, ElementRef, Inject } from '@angular/core';

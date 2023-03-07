@@ -123,6 +123,17 @@ def getSecondaryUsers():
             'status': 0, 'message': str(err)
         }
 
+@socket.route('/getUsrps', methods=['GET'])
+def getUsrpsRequest():
+    try:
+        response = db.get_usrps()
+        return response
+    except Exception:
+        return {
+            'status': 0, 'message': traceback.format_exc()
+        }
+
+
 
 @socket.route('/getUser', methods=['POST'])
 def getUser():
@@ -199,6 +210,7 @@ def updateNode():
     return response
 
 
+
 # In[ --- Grant Management --- ]
 
 
@@ -259,6 +271,17 @@ def getInquiryRequests():
 def grantRequest():
     try:
         response = db.create_grant_request(request.get_json())
+        return response
+    except Exception:
+        return {
+            'status': 0, 'message': traceback.format_exc()
+        }
+
+
+@socket.route('/usrpRequest', methods=['POST'])
+def usrpRequest():
+    try:
+        response = db.create_usrp_request(request.get_json())
         return response
     except Exception:
         return {

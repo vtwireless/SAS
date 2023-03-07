@@ -31,9 +31,94 @@
 <!-- this creates a google map on the page with the given lat/lng from -->
 
 <!-- the component as the initial center of the map: -->
-<agm-map [maxZoom]="20" [minZoom]="20" [disableDefaultUI]="true"  [usePanning]="true" [latitude]="lat" [longitude]="lng" [zoom]="20">
+<agm-map [maxZoom]="20" [minZoom]="20" [disableDefaultUI]="true" [tilt]="45" [usePanning]="true" [latitude]="lat" [longitude]="lng" [zoom]="20">
 <!--    <agm-marker [latitude]="lat" [longitude]="lng"></agm-marker>-->
-    <agm-overlay [latitude]="lat" [longitude]="lng">
-        <img style="width: 75rem; transform: rotate(49deg); position:relative; left:-33rem; top:-14rem;" src="../../assets/img/FloorPlan.png" >
+    <agm-overlay [latitude]="lat" [longitude]="lng" [zIndex]="-1">
+        <img style="width: 75rem; transform: rotate(-130deg); position:relative; left:-33rem; top:-14rem; z-index: -1; opacity: 0.5" src="../../assets/img/FloorPlan.png" >
     </agm-overlay>
+    <agm-marker
+            [latitude]="lat1"
+            [longitude]="lng1"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat2"
+            [longitude]="lng2"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat3"
+            [longitude]="lng3"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat4"
+            [longitude]="lng4"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat5"
+            [longitude]="lng5"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat6"
+            [longitude]="lng6"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat7"
+            [longitude]="lng7"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat8"
+            [longitude]="lng8"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat9"
+            [longitude]="lng9"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat10"
+            [longitude]="lng10"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat11"
+            [longitude]="lng11"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat12"
+            [longitude]="lng12"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat13"
+            [longitude]="lng13"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+    <agm-marker
+            [latitude]="lat14"
+            [longitude]="lng14"
+            [iconUrl]="icon"
+    >
+    </agm-marker>
+
 </agm-map>

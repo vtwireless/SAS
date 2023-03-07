@@ -14,7 +14,7 @@ import tierclass_schema
 import tierassignment_schema
 import regionschedule_schema
 import inquirylog_schema
-
+import usrp_schema
 
 class Schemas:
     def __init__(self, metadata: MetaData):
@@ -24,6 +24,7 @@ class Schemas:
         self.__get_settings()
         self.__get_user_table()
         self.__get_node_table()
+        self.__get_usrp_table()
         self.__get_grant_table()
         self.__get_puDetections()
         self.__get_tierclass_table()
@@ -39,6 +40,9 @@ class Schemas:
 
     def __get_node_table(self):
         nodes_schema.set_schema(self._metadata)
+
+    def __get_usrp_table(self):
+        usrp_schema.set_schema(self._metadata)
 
     def __get_grant_table(self):
         grants_schema.set_schema(self._metadata)
