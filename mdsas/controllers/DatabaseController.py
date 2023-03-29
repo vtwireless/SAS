@@ -293,6 +293,32 @@ class DatabaseController:
     def update_nodes(self, payload):
         self.cbsd_controller.update_cbsd(payload)
 
+    # In[ --- BaseStation CONTROLS --- ]
+
+    def get_base_station(self):
+        return self.cbsd_controller.get_bstation()
+
+    def get_base_station_by_id(self, bsID):
+        return self.cbsd_controller.get_bstation_by_id(bsID)
+
+    def register_base_stations(self, payload):
+        returnable = []
+        for entry in payload:
+            returnable.append(self.cbsd_controller.create_bstation(entry))
+
+        if len(payload) != len(returnable):
+            status = 0
+        else:
+            status = 1
+
+        return {
+            "status": status,
+            "base_stations": returnable
+        }
+
+    def change_base_station_status(self, payload):
+        self.cbsd_controller.change_bstation_status(payload)
+
     # In[ --- GRANT CONTROLS --- ]
 
     # def get_grant_records(self):

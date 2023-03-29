@@ -272,3 +272,15 @@ class CBSDController:
             return None
 
         return existing_bstation['base_stations']['bsID']
+
+    def change_bstation_status(self, payload):
+        updateQuery = update(self.BSTATIONS).where(self.BSTATIONS.columns.bsID == payload['bsID']).values(
+            status=payload["status"]
+        )
+        ResultProxy = self.CONNECTION.execute(updateQuery)
+
+    def remove_bstation(self, payload):
+        query = delete(self.BSTATIONS).where(
+            self.BSTATIONS.columns.bsID == payload['bsId']
+        )
+        rows = self._execute_query(query)
