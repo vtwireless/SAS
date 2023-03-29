@@ -27,6 +27,7 @@ TIERASSIGNMENT = 'tierassignment'
 REGIONSCHEDULE = 'regionSchedule'
 INQUIRYLOG = 'inquirylogs'
 GRANTREQUEST = 'grantrequest'
+BASESTATION_TABLE = 'basestations'
 
 # App Settings
 APP_NAME = 'swift_ascent'

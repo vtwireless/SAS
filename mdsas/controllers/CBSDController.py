@@ -17,6 +17,7 @@ from algorithms import PrioritizationFramework
 
 class CBSDController:
     CBSD = None
+    BSTATIONS = None
 
     def __init__(self, metadata, engine, connection, algorithms):
         self.METADATA = metadata
@@ -230,3 +231,44 @@ class CBSDController:
             'comment': '',
             'sid': 100
         }
+
+    def _set_basestations_table(self):
+        self.BSTATIONS = db.Table(
+            settings.BASESTATION_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+
+    def get_bstation(self):
+        query = select([self.BSTATIONS])
+        rows = self._execute_query(query)
+
+        return {
+            'status': 1,
+            'base_stations': rows
+        }
+
+    def get_bstation_by_id(self, bsID):
+        query = select([self.BSTATIONS]).where(
+            self.BSTATIONS.columns.bsID == bsID
+        )
+
+        rows = self._execute_query(query)
+
+        if len(rows) > 0:
+            return {
+                'status': 1,
+                'base_station': rows[0]
+            }
+
+        return None
+
+    def create_bstation(self, payload):
+        existing_bstation = self.get_bstation_by_id(payload["bsID"])
+        if existing_bstation:
+            return None
+
+        self.CONNECTION.execute(self.BSTATIONS.insert(), [payload])
+        existing_bstation = self.get_bstation_by_id(payload["bsID"])
+        if not existing_bstation:
+            return None
+
+        return existing_bstation['base_stations']['bsID']
