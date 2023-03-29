@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Integer, Float, SmallInteger, Boolean
-from sqlalchemy import Table
+from sqlalchemy import Column, String, Integer, Float
+from sqlalchemy import Table, CheckConstraint
 
 from settings import settings
 
@@ -12,5 +12,6 @@ def set_schema(metadata):
         Column('IPAddress', String(80), index=False, unique=False, nullable=True),
         Column('minFrequency', Float, index=False, unique=False, nullable=False),
         Column('maxFrequency', Float, index=False, unique=False, nullable=False),
-        Column('status', String(80), index=False, unique=False, nullable=False),
+        Column('status', String(80), CheckConstraint("status IN ('active', 'inactive')"), index=False, unique=False,
+               nullable=False, default='inactive'),
     )
