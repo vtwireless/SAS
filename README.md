@@ -9,6 +9,7 @@ This software needs GNURadio and UHD to be installed in the system, along with a
 other python libraries. For setting up the relevant python libraries, please refer
 to the `requirements.txt [WIP]` file.
 
+
 GNURadio: **3.8.5.0**, UHD: **3.15.0.0-2build5**
 
 ## GNURadio and UHD Setup:
