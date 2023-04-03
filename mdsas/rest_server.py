@@ -199,6 +199,42 @@ def updateNode():
     return response
 
 
+# In[ --- Base Station Management ---]
+
+@server.route('/getBaseStations', methods=['GET'])
+def getBaseStations():
+    try:
+        response = db.get_base_station()
+        return response
+
+    except Exception as err:
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
+@server.route('/registerBaseStations', methods=['POST'])
+def registerBaseStations():
+    try:
+        response = db.register_base_stations(request.get_json())
+        return response
+    except Exception as err:
+        print(traceback.format_exc())
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
+@server.route('/updateBaseStationStatus', methods=['POST'])
+def updateBSStatus():
+    try:
+        response = db.change_base_station_status(request.get_json())
+    except Exception as err:
+        response = {'status': 0, 'message': str(err)}
+
+    return response
+
+
 # In[ --- Grant Management --- ]
 
 

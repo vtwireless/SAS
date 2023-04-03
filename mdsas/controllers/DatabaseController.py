@@ -317,7 +317,7 @@ class DatabaseController:
         }
 
     def change_base_station_status(self, payload):
-        self.cbsd_controller.change_bstation_status(payload)
+        return self.cbsd_controller.change_bstation_status(payload)
 
     # In[ --- GRANT CONTROLS --- ]
 

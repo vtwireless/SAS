@@ -26,6 +26,7 @@ class CBSDController:
         self.algorithms = algorithms
 
         self._set_cbsds_table()
+        self._set_basestations_table()
 
     def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
@@ -262,22 +263,27 @@ class CBSDController:
         return None
 
     def create_bstation(self, payload):
-        existing_bstation = self.get_bstation_by_id(payload["bsID"])
-        if existing_bstation:
-            return None
-
         self.CONNECTION.execute(self.BSTATIONS.insert(), [payload])
-        existing_bstation = self.get_bstation_by_id(payload["bsID"])
-        if not existing_bstation:
+
+        query = select([self.BSTATIONS]).where(and_(
+            self.BSTATIONS.columns.IPAddress == payload['IPAddress'],
+            self.BSTATIONS.columns.bsName == payload['bsName']
+        ))
+        rows = self._execute_query(query)
+        if len(rows) > 0:
             return None
 
-        return existing_bstation['base_stations']['bsID']
+        return rows[0]['bsID']
 
     def change_bstation_status(self, payload):
         updateQuery = update(self.BSTATIONS).where(self.BSTATIONS.columns.bsID == payload['bsID']).values(
             status=payload["status"]
         )
         ResultProxy = self.CONNECTION.execute(updateQuery)
+
+        return {
+            "status": 1
+        }
 
     def remove_bstation(self, payload):
         query = delete(self.BSTATIONS).where(
