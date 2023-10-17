@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 
@@ -20,7 +21,7 @@ class SASAlgorithms:
     def __init__(self):
         self.grantAlgorithm = 'DEFAULT'
         self.REMAlgorithm = 'DEFAULT'  # DEFAULT = EQUALWEIGHT, CELLS, TRUSTED, TRUST SCORE, RADIUS
-        self.defaultHeartbeatInterval = 60
+        self.defaultHeartbeatInterval = 20
         self.retryInterval = 30
         self.transmitExpireTime = 240
         self.minimumGrantSize = self.TENMHZ / 2
@@ -35,6 +36,7 @@ class SASAlgorithms:
         self.ignoringREM = True
         self.offerNewParams = True
         self.maxEIRP = 30
+        self.interferenceThresholdBm = -100
         self.cells = []
 
     def setGrantAlgorithm(self, algorithm):
@@ -62,8 +64,61 @@ class SASAlgorithms:
     def getMaxEIRP(self):
         return self.maxEIRP
 
-    def runGrantAlgorithm(self, grants, REM, request):
+    def calculateDistance(self, a, b):
+        lat1, lon1 = a
+        lat2, lon2 = b
+        radius = 6371  # km
+
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
+            math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+            math.sin(dlon / 2) * math.sin(dlon / 2))
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        d = radius * c
+
+        return d
+    
+    def calculateInterferenceRadius(self, request):
+        transmission_power_dBm = request.operationParam.maxEirp
+        # Calulate the interference radius based on the request
+        # PL(d)=15+36log10d (3.5 GHz)
+        # https://ieeexplore-ieee-org.ezproxy.lib.vt.edu/document/4735242
+        path_loss = transmission_power_dBm - self.interferenceThresholdBm
+        log10_distance = (path_loss - 15) / 36
+        distance = 10 ** log10_distance
+        return distance
+
+    def get_center_freq(self, channel):
+        channel_width = 10.0e6  # The width of each channel in MHz.
+        base_freq = 3550.0e6  # The frequency of the first channel in MHz.
+
+        # Calculate the center frequency of the specified channel using the formula:
+        # centerFreq = baseFreq + (channel * channelWidth) + (channelWidth / 2.0)
+        center_freq = base_freq + (channel * channel_width) + (channel_width / 2.0)
+
+        # Return the center frequency to the caller.
+        return center_freq
+
+    def get_freq_range(self, channel):
+        center_freq = self.get_center_freq(channel)
+        channel_width = 10.0e6  # The width of each channel in MHz.
+
+        # Calculate the low and high frequencies for the specified channel
+        freq_low = center_freq - (channel_width / 2.0)
+        freq_high = center_freq + (channel_width / 2.0)
+
+        # Return the low and high frequencies as a tuple
+        return freq_low, freq_high
+
+    def runGrantAlgorithm(self, grants, REM, request, CbsdList, SpectrumList, socket):
         grantResponse = WinnForum.GrantResponse()
+        IsPAL = False
+        for i, cbsd in enumerate(CbsdList):
+                if(cbsd['cbsdId'] == request.cbsdId):
+                    if(cbsd['accessPriority'] == "PAL"):
+                        IsPAL = True
+        
         lowFreq, highFreq = self.getLowFreqFromOP(request.operationParam), self.getHighFreqFromOP(
             request.operationParam)
 
@@ -78,10 +133,65 @@ class SASAlgorithms:
             return grantResponse
 
         if self.grantAlgorithm == 'DEFAULT':
-            grantResponse = self.defaultGrantAlg(grants, REM, request)
+            grantResponse = self.defaultGrantAlg(grants, request, IsPAL, CbsdList, SpectrumList, socket)
         elif self.grantAlgorithm == 'TIER':
             grantResponse = self.tierGrantAlg(grants, REM, request)
         return grantResponse
+
+    def createDPAGrant(self, dpa, grants, CbsdList, SpectrumList, socket):
+        grantResponse = WinnForum.GrantResponse()
+        grantRequest = WinnForum.GrantRequest(dpa["id"], None)
+        ofr = WinnForum.FrequencyRange(dpa["spectrum"][0][0], dpa["spectrum"][0][1])
+        op = WinnForum.OperationParam(30, ofr)
+        grantRequest.operationParam = op
+        # request = { "cbsdId" : dpa["id"], "operationParam": { "operationFrequencyRange": { "lowFrequency": dpa["spectrum"][0][0], "highFrequency": dpa["spectrum"][0][1] } } }
+        grantRequest.lat = dpa["latitude"]
+        grantRequest.long = dpa["longitude"]
+        grantRequest.IsDPA = True
+        grantRequest.dist = dpa["radius"]
+        grantResponse = self.defaultGrantAlg(grants, grantRequest, True, CbsdList, SpectrumList, socket)
+        g = WinnForum.Grant(grantResponse.grantId, dpa["id"], grantResponse.operationParam, None, grantResponse.grantExpireTime)
+        g.IsDpa = True
+        g.lat = dpa["latitude"]
+        g.long = dpa["longitude"]
+        g.id = dpa["id"]
+        g.dist = dpa["radius"] 
+        return g
+    
+    # Create a incumbent grant
+    def createIncumbentGrant(self, sensorInfo, channel, grants, CbsdList, SpectrumList, socket):
+        sensorId = sensorInfo["sensor_id"]
+        sensorLat = sensorInfo["lat"]
+        sensorLon = sensorInfo["lon"]
+
+        t = datetime.now(timezone.utc)
+        t = t + timedelta(seconds = self.maxGrantTime)
+        ExpiryTime = t.strftime("%Y%m%dT%H:%M:%S%Z")
+
+        grantResponse = WinnForum.GrantResponse()
+        frequency_low, frequency_high = self.get_freq_range(channel)
+        
+        grantRequest = WinnForum.GrantRequest(f"incumbent-{sensorId}-channel{channel}", None)
+        ofr = WinnForum.FrequencyRange(frequency_low, frequency_high)
+        op = WinnForum.OperationParam(30, ofr)
+        grantRequest.operationParam = op
+        
+        grantRequest.lat = sensorLat
+        grantRequest.long = sensorLon
+        
+        grantRequest.dist = 1000
+        grantResponse.grantExpireTime = ExpiryTime
+        grantResponse = self.defaultGrantAlg(grants, grantRequest, True, CbsdList, SpectrumList, socket)
+        g = WinnForum.Grant(grantResponse.grantId, f"incumbent-{sensorId}-channel{channel}", grantResponse.operationParam, None, grantResponse.grantExpireTime)
+        
+        g.lat = sensorLat
+        g.long = sensorLon
+        
+        g.id = f"incumbent-{sensorId}-channel{channel}"
+        
+        g.dist = 1000
+        
+        return g
 
     def runHeartbeatAlgorithm(self, grants, REM, heartbeat, grant):
         response = WinnForum.HeartbeatResponse()
@@ -90,6 +200,11 @@ class SASAlgorithms:
             return response
         response.cbsdId = grant.cbsdId
         response.grantId = grant.id
+        if(hasattr(grant, 'status')):
+            if grant.status == "TERMINATED":
+                response.response = self.generateResponse(501)
+                return response
+        
         if "grantRenew" in heartbeat:
             if heartbeat["grantRenew"] == True:
                 response.grantExpireTime = self.calculateGrantExpireTime(grants, REM, grant, True)
@@ -134,40 +249,66 @@ class SASAlgorithms:
         # return "SUSPENDED_GRANT"
         return "SUCCESS"
 
-    def defaultGrantAlg(self, grants, REM, request: WinnForum.GrantRequest):
+    def defaultGrantAlg(self, grants, REM, request, IsPAL, CbsdList, SpectrumList, socket):
         gr = WinnForum.GrantResponse()
         gr.grantId = None
-        gr.cbsdId = request.cbsdId
+        # gr.cbsdId = request.cbsdId
         gr.grantExpireTime = self.calculateGrantExpireTime(grants, REM, None, True, request)
         gr.heartbeatInterval = self.getHeartbeatIntervalForGrantId(gr.grantId)
         gr.measReportConfig = ["RECEIVED_POWER_WITH_GRANT", "RECEIVED_POWER_WITHOUT_GRANT"]
         conflict = False
-        for grant in grants:
+        for grant in list(grants):
+            if hasattr(grant, 'status'):
+                if grant.status == "TERMINATED":
+                    print("Skipping terminated grant")
+                    continue
+            
             rangea = grant["maxFrequency"]
             rangeb = grant["minFrequency"]
             freqa = self.getHighFreqFromOP(request.operationParam)
             freqb = self.getLowFreqFromOP(request.operationParam)
 
+            dist = self.calculateDistance((grant.lat, grant.long), (request.lat, request.long)) * 1000
+            print("Distance: " + str(dist))
+            print("Grant Distance: " + str(grant.dist))
+            print("Request Distance: " + str(request.dist))
+
             if self.frequencyOverlap(freqa, freqb, rangea, rangeb):
-                if request.vtGrantParams and request.vtGrantParams.startTime and request.vtGrantParams.endTime:
-                    cbsd_grant_start_time = datetime.strptime(request.vtGrantParams.startTime, self.DEFAULT_TIME_FORMAT)
-                    cbsd_grant_end_time = datetime.strptime(request.vtGrantParams.endTime, self.DEFAULT_TIME_FORMAT)
-                    conflict_grant_start_time = datetime.strptime(grant["startTime"], self.DEFAULT_TIME_FORMAT)
-                    conflict_grant_end_time = datetime.strptime(grant["grantExpireTime"], self.DEFAULT_TIME_FORMAT)
+                if IsPAL:
+                    if(dist < grant.dist or dist < request.dist or dist < (grant.dist + request.dist)):
+                        grant.status = "TERMINATED"
+                        for i, item in enumerate(SpectrumList):
+                            if(item['cbsdId'] == grant.cbsdId):
+                                item['state'] = 1
+                                item['stateText'] = "Registered"
+                                SpectrumList[i] = item
+                        for i, cbsd in enumerate(CbsdList):
+                            if(cbsd['cbsdId'] == grant.cbsdId):
+                                cbsd['state'] = 1
+                                cbsd['stateText'] = "Registered"
+                                CbsdList[i] = cbsd
+                        socket.emit('spectrumUpdate', SpectrumList)
+                        socket.emit('cbsdUpdate', CbsdList)
+                        time.sleep(1)
+                else:
+                    if(dist < (grant.dist + request.dist)):
+                        conflict = True
+                    else:
+                        print("Distance greater than threshold")
 
-                    if (cbsd_grant_start_time > conflict_grant_end_time) or (cbsd_grant_end_time <
-                                                                             conflict_grant_start_time):
-                        conflict = False
-                        continue
-
-                conflict = True
-                break
-
-        if conflict:
+        if conflict == True:
+            print("Conflict detected")
+            delattr(gr, 'grantExpireTime')
+            delattr(gr, 'heartbeatInterval')
+            delattr(gr, 'measReportConfig')
+            delattr(gr, 'grantId')
+            delattr(gr, 'channelType')
             gr.response = self.generateResponse(401)
+            print(gr.response)
         else:
             gr.response = self.generateResponse(0)
             gr.operationParam = request.operationParam
+        
         gr.channelType = "GAA"
         return gr
 
@@ -191,8 +332,8 @@ class SASAlgorithms:
         remData = REM.getSpectrumDataWithParameters(longit, latit, highFreq, lowFreq, rad)  # GET ALL  REM DATA
         if not remData:
             # print("Currently no spectrum data") # TODO: remove comment
-            # return 2
-            self.setREMAlgorithm('DEFAULT')
+            return 2
+            # self.setREMAlgorithm('DEFAULT')
         if self.getREMAlgorithm() == 'DEFAULT':
             if self.defaultREMAlgorithm(remData):
                 return 1
