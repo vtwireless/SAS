@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 
@@ -446,3 +447,39 @@ class SASAlgorithms:
     def acceptableBandwidth(self, lowFreq, highFreq):
         return self.minimumGrantSize <= highFreq - lowFreq <= self.maximumGrantSize and lowFreq % 5 == 0 and \
                highFreq % 5 == 0
+
+    def createDPAGrant(self, dpa, grants, CbsdList, SpectrumList):
+        grantResponse = WinnForum.GrantResponse()
+        grantRequest = WinnForum.GrantRequest(dpa["id"], None)
+        ofr = WinnForum.FrequencyRange(dpa["spectrum"][0][0], dpa["spectrum"][0][1])
+        op = WinnForum.OperationParam(30, ofr)
+        grantRequest.operationParam = op
+        # request = { "cbsdId" : dpa["id"], "operationParam": { "operationFrequencyRange": { "lowFrequency": dpa["spectrum"][0][0], "highFrequency": dpa["spectrum"][0][1] } } }
+        grantRequest.lat = dpa["latitude"]
+        grantRequest.long = dpa["longitude"]
+        grantRequest.IsDPA = True
+        grantRequest.dist = dpa["radius"]
+        grantResponse = self.defaultGrantAlg(grants, None, grantRequest)
+        g = WinnForum.Grant(grantResponse.grantId, dpa["id"], grantResponse.operationParam, None,
+                            grantResponse.grantExpireTime)
+        g.IsDpa = True
+        g.lat = dpa["latitude"]
+        g.long = dpa["longitude"]
+        g.id = dpa["id"]
+        g.dist = dpa["radius"]
+        return g
+
+    def calculateDistance(self, a, b):
+        lat1, lon1 = a
+        lat2, lon2 = b
+        radius = 6371  # km
+
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = (math.sin(dlat / 2) * math.sin(dlat / 2) +
+             math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+             math.sin(dlon / 2) * math.sin(dlon / 2))
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        d = radius * c
+
+        return d
