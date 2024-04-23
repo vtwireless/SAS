@@ -5,6 +5,9 @@ operation of the USRPs in Kelly Hall. The SAS is to adhere to WinnForum and FCC 
 
 ## Python Dev Environment Setup
 This application needs atleast **python 3.8**.
+
+Set the python version to **less than or equal to version 3.9** for the required packages to be installed as part of backend setup without any issue. 
+
 1. Verify that python3.X is installed in your system.
    * `which python3` [or if you have a specific version installed, then `which python3.8`]
 2. Create a virtual environment at the base of the repository.
@@ -14,6 +17,14 @@ This application needs atleast **python 3.8**.
 3. Activate the environment and install required packages:
    * Activate environment: `source lib/bin/activate`.
    * Install packages: `pip install -r requirements.txt`.
+4. Follow the **steps.txt** file for HTTPS SSL Certificate Generation and Installation
+NOTE: We can comment on the **ssl_context part** for the setup to run locally.
+
+
+## SQLITE DB Environment Setup
+
+1. Install **SQlite** to set up the database locally.
+2. You can execute **seed_rendered.py in tests dir** to get some seed data into our database.  
    
 ## FrontEnd Dev Environment Setup
 1. Install nodejs and npm.
@@ -36,8 +47,9 @@ access this service.
 
 * ### FrontEnd directory
 This directory contains an angular frontend to view/access the features of the MD-SAS. While MD-SAS can be directly
-accessed via REST APIs, this frontend provides an easier way to view/access MD-SAS features. To start the frontend, one
-needs to simply execute `npm run start` in a terminal. At the time of creating this document, the frontend server is
+accessed via REST APIs, this frontend provides an easier way to view/access MD-SAS features. To start the frontend, 
+Use this command: **$env:NODE_OPTIONS="--openssl-legacy-provider"** before running `npm run start` Or: **use node version <=16**. 
+One needs to simply execute `npm run start` in a terminal. At the time of creating this document, the frontend server is
 accessible over `port 4200`.
 
 * ### archive directory
