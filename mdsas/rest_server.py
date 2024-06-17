@@ -350,5 +350,5 @@ if __name__ == "__main__":
         port=8000,
         debug=True,
         use_reloader=False,
-        ssl_context=('certs/server.crt', 'certs/server.key')
+        # ssl_context=('certs/server.crt', 'certs/server.key')
     )

@@ -1,6 +1,6 @@
 import os
 import sys
-import os
+
 import uuid
 import threading
 import time
@@ -19,6 +19,7 @@ from controllers.GrantController import GrantController
 from controllers.SettingsController import SettingsController
 from controllers.TierClassController import TierClassController
 from controllers.UsersController import UsersController
+from controllers.ASCENTController import ASCENTController
 from algorithms.SASAlgorithms import SASAlgorithms
 from algorithms import Server_WinnForum as WinnForum
 
@@ -120,11 +121,12 @@ class DatabaseController:
         self._get_pudetections_table()
         # self._get_tierclass_table()
         # self._get_tierassignment_table()
+        self.ascent_controller = ASCENTController()
 
     # In[ --- SETTINGS CONTROLS --- ]
 
     def get_sas_settings(self, algorithm=None):
-        self.settings_controller.get_sas_settings(algorithm)
+        return self.settings_controller.get_sas_settings(algorithm)
 
     def set_algorithm_settings(self, result):
         self.settings_controller.set_algorithm_settings(result)
@@ -292,6 +294,33 @@ class DatabaseController:
 
     def update_nodes(self, payload):
         self.cbsd_controller.update_cbsd(payload)
+
+
+    # In[ --- BaseStation CONTROLS --- ]
+
+    def get_base_station(self):
+        return self.cbsd_controller.get_bstation()
+
+    def get_base_station_by_id(self, bsID):
+        return self.cbsd_controller.get_bstation_by_id(bsID)
+
+    def register_base_stations(self, payload):
+        returnable = []
+        for entry in payload:
+            returnable.append(self.cbsd_controller.create_bstation(entry))
+
+        if len(payload) != len(returnable):
+            status = 0
+        else:
+            status = 1
+
+        return {
+            "status": status,
+            "base_stations": returnable
+        }
+
+    def change_base_station_status(self, payload):
+        return self.cbsd_controller.change_bstation_status(payload)
 
     # In[ --- GRANT CONTROLS --- ]
 
@@ -536,3 +565,14 @@ class DatabaseController:
         ).start()
 
         return obstructionArr
+
+    # In[ --- ASCENT Simulator Feedback --- ]
+
+    def get_simulator_input(self):
+        return self.ascent_controller.get_simulator_input()
+
+    def update_simulator_settings(self, payload):
+        return self.ascent_controller.configure_simulator_settings(payload)
+
+    def accept_simulalator_feedback(self, payload):
+        return self.ascent_controller.implement_simulator_feedback(payload)
