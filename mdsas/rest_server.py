@@ -199,6 +199,42 @@ def updateNode():
     return response
 
 
+# In[ --- Base Station Management --- ]
+
+@server.route('/getBaseStations', methods=['GET'])
+def getBaseStations():
+    try:
+        response = db.get_base_station()
+        return response
+
+    except Exception as err:
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
+@server.route('/registerBaseStations', methods=['POST'])
+def registerBaseStations():
+    try:
+        response = db.register_base_stations(request.get_json())
+        return response
+    except Exception as err:
+        print(traceback.format_exc())
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
+@server.route('/updateBaseStationStatus', methods=['POST'])
+def updateBSStatus():
+    try:
+        response = db.change_base_station_status(request.get_json())
+    except Exception as err:
+        response = {'status': 0, 'message': str(err)}
+
+    return response
+
+
 # In[ --- Grant Management --- ]
 
 
@@ -341,6 +377,44 @@ def createTierClass():
         }
 
 
+# In[ --- ASCENT Simulator Feedback --- ]
+
+@server.route('/getSimulatorInput', methods=['GET'])
+def getSimulatorInput():
+    try:
+        response = db.get_simulator_input()
+        return response
+
+    except Exception as err:
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
+@server.route('/updateSimulatorSettings', methods=['POST'])
+def updateSimulatorSettings():
+    try:
+        response = db.update_simulator_settings(request.get_json())
+        return response
+
+    except Exception as err:
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
+@server.route('/submitSimulatorFeedback', methods=['POST'])
+def submitSimulatorFeedback():
+    try:
+        response = db.accept_simulalator_feedback(request.get_json())
+        return response
+
+    except Exception as err:
+        return {
+            'status': 0, 'message': str(err)
+        }
+
+
 # In[ --- Main ---]
 if __name__ == "__main__":
     # uvicorn.run(server, host="0.0.0.0", port=8000)
@@ -350,5 +424,5 @@ if __name__ == "__main__":
         port=8000,
         debug=True,
         use_reloader=False,
-        # ssl_context=('certs/server.crt', 'certs/server.key')
+        ssl_context=('certs/server.crt', 'certs/server.key')
     )
