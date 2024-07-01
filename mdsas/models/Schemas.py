@@ -14,6 +14,7 @@ import tierclass_schema
 import tierassignment_schema
 import regionschedule_schema
 import inquirylog_schema
+import basestation_schema
 
 
 class Schemas:
@@ -30,6 +31,7 @@ class Schemas:
         # self.__get_tierassignment_table()
         self.__get_regionschedule_table()
         self.__get_inquirylog_table()
+        self.__get_basestation_table()
 
     def __get_settings(self):
         settings_schema.set_schema(self._metadata)
@@ -58,3 +60,5 @@ class Schemas:
     def __get_inquirylog_table(self):
         inquirylog_schema.set_schema(self._metadata)
 
+    def __get_basestation_table(self):
+        basestation_schema.set_schema(self._metadata)

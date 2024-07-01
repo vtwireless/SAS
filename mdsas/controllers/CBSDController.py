@@ -17,6 +17,7 @@ from algorithms import PrioritizationFramework
 
 class CBSDController:
     CBSD = None
+    BSTATIONS = None
 
     def __init__(self, metadata, engine, connection, algorithms):
         self.METADATA = metadata
@@ -25,6 +26,7 @@ class CBSDController:
         self.algorithms = algorithms
 
         self._set_cbsds_table()
+        self._set_basestations_table()
 
     def _execute_query(self, query):
         resultProxy: CursorResult = self.CONNECTION.execute(query)
@@ -230,3 +232,61 @@ class CBSDController:
             'comment': '',
             'sid': 100
         }
+
+    def _set_basestations_table(self):
+        self.BSTATIONS = db.Table(
+            settings.BASESTATION_TABLE, self.METADATA, autoload=True, autoload_with=self.ENGINE
+        )
+
+    def get_bstation(self):
+        query = select([self.BSTATIONS])
+        rows = self._execute_query(query)
+
+        return {
+            'status': 1,
+            'base_stations': rows
+        }
+
+    def get_bstation_by_id(self, bsID):
+        query = select([self.BSTATIONS]).where(
+            self.BSTATIONS.columns.bsID == bsID
+        )
+
+        rows = self._execute_query(query)
+
+        if len(rows) > 0:
+            return {
+                'status': 1,
+                'base_station': rows[0]
+            }
+
+        return None
+
+    def create_bstation(self, payload):
+        self.CONNECTION.execute(self.BSTATIONS.insert(), [payload])
+
+        query = select([self.BSTATIONS]).where(and_(
+            self.BSTATIONS.columns.IPAddress == payload['IPAddress'],
+            self.BSTATIONS.columns.bsName == payload['bsName']
+        ))
+        rows = self._execute_query(query)
+        if len(rows) > 0:
+            return None
+
+        return rows[0]['bsID']
+
+    def change_bstation_status(self, payload):
+        updateQuery = update(self.BSTATIONS).where(self.BSTATIONS.columns.bsID == payload['bsID']).values(
+            status=payload["status"]
+        )
+        ResultProxy = self.CONNECTION.execute(updateQuery)
+
+        return {
+            "status": 1
+        }
+
+    def remove_bstation(self, payload):
+        query = delete(self.BSTATIONS).where(
+            self.BSTATIONS.columns.bsID == payload['bsId']
+        )
+        rows = self._execute_query(query)
