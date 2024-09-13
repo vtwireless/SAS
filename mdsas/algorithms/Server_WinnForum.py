@@ -6,7 +6,15 @@ https://winnf.memberclicks.net/assets/CBRS/WINNF-TS-0016.pdf
 Document Version: V1.2.5
 
 Revised: November 14, 2020
-Authored by: Cameron Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
+Authored by: Camero
+
+
+
+
+
+
+
+n Makin (cammakin8@vt.edu), Joseph Tolley (jtolley@vt.edu)
 Advised by Carl Dietrich (cdietric@vt.edu)
 For Wireless@VT
 
